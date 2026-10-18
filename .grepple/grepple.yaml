@@ -96,7 +96,7 @@ directory:
                 - hooks
                 - make
             - name: README.md
-              checksum: 4d35ad1e33045cafac1b8435efe96a002024a6d62737c70e0e9ac6c152c2f64b
+              checksum: 02813a9a0d6488d50b5dcab2b352d6cc4212dbc917f0b6c1edd54e9cd309f983
               description: Introduces Grepple's local code-search CLI and documents common workflows, installation, agent integrations and advanced features.
               purpose: documentation
               domainAreas:
@@ -1231,7 +1231,7 @@ directory:
                 - risk
                 - type-spread
             - name: cli-boundary-tracing.md
-              checksum: 7b1e1b8e1a623311fb2d406cb2b8d877c1168ba2bb7aed21f5512ae6e95b0581
+              checksum: ba0a661b0c1aec141ea356f21815672cb533b8afc548b2751cc62579148a8abb
               description: Specifies implemented CLI tracing spans, safe attributes, execution boundaries, and validation constraints.
               purpose: documentation
               domainAreas:
@@ -1254,7 +1254,7 @@ directory:
                 - cursor
                 - remote-search
             - name: cli-telemetry.md
-              checksum: 20e43083c32e4a28ac4c8a7d48cb60e6d5c99bee15851c17311e9a85da2ea42b
+              checksum: 72601686021475361ce09bd74d662df75a1bd1d6e889ae0630f7e4af8b752cb5
               description: Explains opt-in local CLI trace configuration and how to inspect traces without changing backend deployment settings.
               purpose: documentation
               domainAreas:
@@ -1279,6 +1279,18 @@ directory:
                 - opentelemetry
                 - propagation
                 - trust-boundary
+            - name: cli-usage-telemetry-contract.md
+              checksum: bd2967e552d6968e2e70607f9e4ff852996bf5a81bb7dbbf9d2edb6e4ad81749
+              description: Defines proposed privacy-safe CLI usage counters, output accounting, phase timing, and verification semantics.
+              purpose: documentation
+              domainAreas:
+                - observability
+              functionalAreas:
+                - cli-telemetry
+              keywords:
+                - opentelemetry
+                - privacy
+                - telemetry
             - name: compact-navigation-index.md
               checksum: 5e306a0dcdd7d7270e04785e63051bcfe87122809ecb6d0f9c2f866378f99f84
               description: Specifies an experimental compact navigation query representation and summarizes parity, measurements, and rollout gates.
@@ -1334,7 +1346,7 @@ directory:
                 - parser
                 - search
             - name: file-type-support.md
-              checksum: b44e652097407ddae428a2bea93a1e35b3c21092042811baa9cd9af1759de562
+              checksum: 8c3460f48aadbc9f672933a0b015b5fb450decd730bc90f7ed273cb98e372e29
               description: Lists file-language capabilities and explains text, structural, navigation, extraction, and GritQL support and limitations.
               purpose: documentation
               domainAreas:
@@ -1540,7 +1552,7 @@ directory:
                 - checksums
                 - goreleaser
             - name: result-metadata.md
-              checksum: 01c9766a4032a457ebc6ef29a252f93f6e5d1b980be2d6cece811dc3eb483e2e
+              checksum: c8ac2a488c84e5cf8f39f625d7c0448d3b96b0f7a88b849a07d5694b767c4e0d
               description: Specifies the bounded-execution JSON metadata envelope and how scope, completeness, limits, omissions, and continuations are interpreted.
               purpose: documentation
               domainAreas:
@@ -1719,7 +1731,7 @@ directory:
                 - go
                 - python
             - name: 08-verified-scope-navigation.md
-              checksum: ffe1a50c13ba0a2ac4799c7cc2e13bf7b59f711dd8bdde9f8ca909b9e4443326
+              checksum: aa824c4fc8a6ee337080d5bbc3b3be6e84310ea02f2bd0eca3638b76943b946b
               description: Shows how line-only matches provide verified local selectors for retrieving code and structured-content scopes.
               purpose: documentation
               domainAreas:
@@ -2167,7 +2179,7 @@ directory:
                 - cgroups
                 - queries
             - name: pi-hook
-              checksum: a21a3e3499d51034513b8eeb054da10d51b594e7fd3b5b44b5f7a85de82400f1
+              checksum: c1b070d6deaa5e5b06c19bd0a3fa7945e20c53f874fcd10f9937f2c39a7483ad
               description: Compiled ELF executable identified by the accompanying metadata as the Pi hook runtime.
               purpose: implementation
               domainAreas:
@@ -3066,7 +3078,7 @@ directory:
                 - checksums
                 - snapshots
             - name: graph_languages.go
-              checksum: b9a7b1cbe447f6d8e220c622365bd0fbd4721de6237f940373d5628f2240680f
+              checksum: af3c3dd7649560cdf54c1c962a3a5dea7e45965775c140d1f5838a36493fd031
               description: Builds or queries language-partitioned stored graphs, falling back to a monolithic graph when a query spans partitions.
               purpose: implementation
               domainAreas:
@@ -3126,7 +3138,7 @@ directory:
                 - paths
                 - working-directory
             - name: graph_stored.go
-              checksum: b7832bc67ffe806564d529a8ee196d25bf00ca1bd0dc29090d7f86e15f2e0bc0
+              checksum: 4dd87894055409e651b5c3476e94c3ab89c1f2c90bb7c2f718b89ff932d753fb
               description: Builds and queries source-fenced stored navigation graph views, including cache key generation and monolithic reference behavior.
               purpose: implementation
               domainAreas:
@@ -3265,7 +3277,7 @@ directory:
                 - python
                 - rust
             - name: universe.go
-              checksum: f019600268b6c0590e28d41c2d1a515dd0b1d15ba219e3a74a1ce82aa282a84a
+              checksum: 49edb5556d550aa87cf1a74a7d2b42b67c0446675aee77342838036ff994759e
               description: Loads and parses selected sources once, builds a resolved navigation graph, tracks completeness, and manages parsed document lifetime.
               purpose: implementation
               domainAreas:
@@ -3279,6 +3291,17 @@ directory:
                 - parser
                 - truncation
                 - universe
+            - name: work_account_test.go
+              checksum: 3d47db2a62aae883cf07835631f234c1868172e1130c094d1877b5ab1e6fdd93
+              description: Tests source read attempts, failed reads, byte totals and parse gating against a max-files navigation universe.
+              purpose: testing
+              domainAreas:
+                - navigation-graph
+              functionalAreas:
+                - actual-work-accounting
+              keywords:
+                - parsing
+                - telemetry
     internal/anchor:
         files:
             - name: provider.go
@@ -3631,7 +3654,7 @@ directory:
                 - directory-architecture
                 - responsibilities
             - name: args.go
-              checksum: 7c3eb17486c2e939b58dacbff2216b1e70195676aaed03159945a1d967b7b32b
+              checksum: b4ef07f77ec7c926a6ccff193aa8868eb07c393bdf2fbc6d7702acccffe720c8
               description: Parses and normalizes CLI arguments, validates command availability, loads invocation settings, starts telemetry and output-spill handling, then executes the selected command.
               purpose: implementation
               domainAreas:
@@ -3672,7 +3695,7 @@ directory:
                 - build
                 - version
             - name: boundary_telemetry_test.go
-              checksum: 96bd218e0d4f669c9800893fd08c3a1e8b9ba8c4eef63d841922258b9180ad8c
+              checksum: 7d870ab74583f04e2f892b2ddd374bb31ffd601b4220df9ed4a586d153ca33a4
               description: Exercises search telemetry phases and verifies bounded spans, safe attributes, private-input exclusion, and disabled or unsampled behavior.
               purpose: testing
               domainAreas:
@@ -3687,6 +3710,28 @@ directory:
                 - opentelemetry
                 - rendering
                 - sampling
+            - name: command_trace.go
+              checksum: f5408dd5057a00cb1b40f629ae0990c83ff31d803532da69ed7be747c96abcd1
+              description: Records finite typed command modes and selected option attributes on CLI invocation traces without exporting argument values.
+              purpose: implementation
+              domainAreas:
+                - telemetry
+              functionalAreas:
+                - command-tracing
+              keywords:
+                - attributes
+                - privacy
+            - name: command_trace_test.go
+              checksum: 5b2f16882df7e285d58dfaacc97c83d42835350ef651198a51079ba95d9f0b7c
+              description: Tests parsed CLI telemetry options, offline OTLP capture, output parity, error paths, and private-input exclusion.
+              purpose: testing
+              domainAreas:
+                - telemetry
+              functionalAreas:
+                - trace-validation
+              keywords:
+                - command-options
+                - privacy
             - name: common_args_test.go
               checksum: ac9c4f7992a4bd24e3e8b69d75cbbc86c4220dfb60a56fc64c8fec8d27f7c401
               description: Checks that embedded common arguments accept both server-address flag aliases.
@@ -3787,7 +3832,7 @@ directory:
                 - json
                 - report
             - name: navigation_telemetry_test.go
-              checksum: d663a5e1841d43ada50884e47070fecb904cfddfce69aabec98efb9dfbe0b283
+              checksum: 6554e90df00b98f3521db080649085b8bb784adb14a8079a4d64ea543875f209
               description: Tests bounded graph navigation telemetry across cold and warm runs, daemon cache hits and misses, and error cases while checking for private-input leakage.
               purpose: testing
               domainAreas:
@@ -3816,7 +3861,7 @@ directory:
                 - stdout
                 - temporary-directory
             - name: output_finalize_telemetry_test.go
-              checksum: 1cb4cffee14e32497198be9c402d0ce812255b64c09b01dbfe3cb46b91b9e344
+              checksum: aea427bbe881beb4f055a7ef8c01cb8c6be5f4dcb06b96bb7d8b5fc2ba8e80f7
               description: Checks telemetry behavior during artifact output finalization and ensures preparation failures do not fabricate command or finalization spans.
               purpose: testing
               domainAreas:
@@ -3870,7 +3915,7 @@ directory:
                 - local-only
                 - overview
             - name: phase_contract_test.go
-              checksum: 8ddf105a802b2ef8f9768f9d9347a8cb089925a5ee541fbc58011e479d4c2b0c
+              checksum: bd2827653fb27848f90930e4d9dabc0d99838470ea3c7e8aa7808807f275fc09
               description: Defines allowed CLI telemetry spans, attributes, and values, and verifies trace-tree structure and command-to-output-finalization ordering.
               purpose: testing
               domainAreas:
@@ -3920,7 +3965,7 @@ directory:
                 - local
                 - remote
             - name: render_telemetry_test.go
-              checksum: 487ba3c6b97c3eb34013316ad0a36702bd9eee6615edbe4bee8a408603a09cbc
+              checksum: 6ceeb437ece80abb278bffafad30ed0bd9de7acf12a02c022c8a8a79d634cc9b
               description: Tests render spans for search and graph output branches, truncation, remote graph responses, and unchanged output when telemetry is disabled.
               purpose: testing
               domainAreas:
@@ -4018,6 +4063,29 @@ directory:
                 - collector
                 - opentelemetry
                 - traceparent
+            - name: trace_matrix_test.go
+              checksum: ef2b224c1b4530a85c9f911fedb1f6eba20868af4cadc13f7f48ec31086b7027
+              description: Exercises bounded offline CLI traces and stdout parity across local search, outline, tree, empty and high-file-count modes and benchmarks disabled-path invocation cost.
+              purpose: testing
+              domainAreas:
+                - telemetry
+              functionalAreas:
+                - phase-cardinality
+                - output-accounting
+              keywords:
+                - benchmark
+                - privacy
+            - name: work_telemetry_test.go
+              checksum: 08f7a41c4126a606f185659554bb9b2b01ea6f36e4c39899f236b88bd3f43839
+              description: Captures offline CLI traces across search, outline and graph modes and checks observed file, byte and parser counts against disabled-output parity.
+              purpose: testing
+              domainAreas:
+                - telemetry
+              functionalAreas:
+                - actual-work-accounting
+              keywords:
+                - cli
+                - privacy
     internal/cli/anchors:
         files:
             - name: anchors_doctor.go
@@ -4914,6 +4982,41 @@ directory:
               keywords:
                 - latency
                 - source-discovery
+            - name: metadata.go
+              checksum: b4ca5e752730524ccf954d5a8fb7a618d6822268edb1611628843f24e7ed7909
+              description: Implements local graph file metadata intersection, freshness diagnostics, and safe replay selector flags.
+              purpose: implementation
+              domainAreas:
+                - code-navigation
+              functionalAreas:
+                - metadata-filtering
+              keywords:
+                - graph-selection
+                - checksum-current
+            - name: metadata_e2e_test.go
+              checksum: e98f6052b4bdf733d7dfe3515fa81596591ec5202d43eb15f7ab4a6f42ed8a99
+              description: Exercises filtered graph source scope through stored snapshots, live daemon hits, cancellation, and remote refusal.
+              purpose: testing
+              domainAreas:
+                - code-navigation
+              functionalAreas:
+                - integration-testing
+              keywords:
+                - daemon
+                - metadata
+                - graph
+            - name: metadata_test.go
+              checksum: 2a53e6200441c100795eb63472b727ae5dc42c22a37d733888a819572b0e5b81
+              description: Verifies graph metadata selector combinations, scope, freshness, replay commands, and filtered result diagnostics.
+              purpose: testing
+              domainAreas:
+                - code-navigation
+              functionalAreas:
+                - metadata-filtering
+              keywords:
+                - graph
+                - replay
+                - selectors
             - name: projection.go
               checksum: 184daf4d9cdc3baa74a5ff01e4801aeb6cd49b33923156a668afe102060d50d9
               description: Defines the normalized graph output projection and adapts analysis reports into its JSON-facing fields.
@@ -4927,7 +5030,7 @@ directory:
                 - json
                 - schema
             - name: query.go
-              checksum: 1bc90aa85de37ed8850f6f27815d1ef9e1f22237dee31a3d3486345099b46495
+              checksum: 10efeba0a8a7d4e3908efb8afebf5093cc15704efc396c1dfe6642ddc7b9ee00
               description: Parses and validates traversal selectors and filters, executes local or remote graph queries, and renders their results.
               purpose: implementation
               domainAreas:
@@ -5004,7 +5107,7 @@ directory:
                 - remote
                 - repository
             - name: resolve.go
-              checksum: 452aaa69a77acba4d5fb4cc0d505c1b609f254ce63d0dd33221debf51f1081df
+              checksum: 6347b58826f9e1b1c1b917725e5f0c4d1021c75aa303bed73fd7de06d9fc9162
               description: Resolves symbol names to ordered declaration matches and provides follow-up caller and callee commands in compact or JSON output.
               purpose: implementation
               domainAreas:
@@ -5028,7 +5131,7 @@ directory:
                 - exit-status
                 - resolve
             - name: runtime.go
-              checksum: c50bb1dd4598c92bc7a8f347b57924733cd7dee1895ad7353a9126890c7c2b06
+              checksum: 58caccc278f188bd297a5043aa7ee1aff697bc28fefd0f29756d5561a3984136
               description: Builds graph and diff result metadata, continuation commands, and remote analysis requests with partial-result notices.
               purpose: implementation
               domainAreas:
@@ -5041,7 +5144,7 @@ directory:
                 - diagnostics
                 - metadata
             - name: trace.go
-              checksum: 0c18861564a5bfda5c3ecda6829dda83f24af2fecef4e0a71bc8558965c4ee87
+              checksum: d2b6ac1cb971fc20ecf50773a7e86571bbb920ecbc1cd11ab0685515d96b771e
               description: Instruments local graph source resolution and daemon cache lookups with telemetry phases and result attributes.
               purpose: implementation
               domainAreas:
@@ -6170,7 +6273,7 @@ directory:
               functionalAreas:
                 - cursor-pagination
             - name: execution.go
-              checksum: ed727cf3243341157f7e28b80f8387d3c165bfb464c24e77d9f882a6635c5c9e
+              checksum: c408af5973c02abfd6d990fb4b46648f22d96c9d5c7f01adb7737e51e591cfd4
               description: Coordinates local and remote search, result paging, rendering, stdin input, and count workflows.
               purpose: implementation
               domainAreas:
@@ -6984,7 +7087,7 @@ directory:
     internal/clitelemetry:
         files:
             - name: phase.go
-              checksum: 954dc14d42f2557e480442265b451f28cd00d2e30f56128ca2caebfe4f676291
+              checksum: 5a481c4898202052c58e3cb7e42368b4a10283784b6df596a330054730c4f132
               description: Starts allowlisted CLI phase spans only for an enabled invocation with its own recording runtime, and ends them with a fixed outcome.
               purpose: implementation
               domainAreas:
@@ -7037,7 +7140,7 @@ directory:
                 - privacy
                 - rendering
             - name: runtime.go
-              checksum: cf5388ba44c324782e0ffc88c9269a1f2ef3f191ece74a3922d630eb9547e68a
+              checksum: 3d47adab4a9446731ee98582fa1ccf8402b15d200e52e73c93afe2f311decd6d
               description: Creates invocation-scoped tracing runtimes with optional bounded OTLP/HTTP export, fixed operation names, and best-effort shutdown.
               purpose: implementation
               domainAreas:
@@ -7065,6 +7168,17 @@ directory:
                 - otlp/http
                 - privacy
                 - sampling
+            - name: work.go
+              checksum: 6b41ee71705159947a84e71592e25be4213d1b8ef1445573c81fa1b7def2f079
+              description: Exports fixed nonnegative request-owned file, byte, and parse counts on a recording whole-operation span.
+              purpose: implementation
+              domainAreas:
+                - cli-telemetry
+              functionalAreas:
+                - work-accounting
+              keywords:
+                - attributes
+                - privacy
     internal/config:
         files:
             - name: ask.go
@@ -7618,7 +7732,7 @@ directory:
                 - keywords
                 - purpose
             - name: selectors_v1_test.go
-              checksum: a0a4d1f2e45b46c3bf6a9fc8ca31bafdc172259c2239dd7776cb3870bc95e254
+              checksum: 2c26eb5582d757620619b22f88cf8caa674d975a429ac852986bb6f2aed6eed5
               description: Tests selector logic, exact matching, case normalization, punctuation, invalid labels, and exclusion of stale annotations.
               purpose: testing
               domainAreas:
@@ -10926,6 +11040,17 @@ directory:
                 - visibility
     internal/outputspill:
         files:
+            - name: accounting_test.go
+              checksum: bb59ae092d926ae49f8bee916b18116a04530463b8be6e60f14ff07c4cc640da
+              description: Verifies observed captured, committed stdout, and newly persisted artifact byte counts across output modes, deduplication, bypass, partial writes and failure.
+              purpose: testing
+              domainAreas:
+                - output-spilling
+              functionalAreas:
+                - finalization
+              keywords:
+                - stdout
+                - telemetry
             - name: observed_test.go
               checksum: de396fc398d90c83157b6d30fae43857bc59505cc2b278ab0d96a6ed656acaaa
               description: Tests that output finalization preserves command errors and small output, restores stdout before finalization, and bypasses the finalizer for disabled artifact-clean commands.
@@ -10939,7 +11064,7 @@ directory:
                 - runwithfinalizer
                 - stdout
             - name: spill.go
-              checksum: 84dec55e97b63c2409c4167d971a54121902fca891eb611ca4d03f7cdb7705a0
+              checksum: 9e810f1b16cd042548472f7ef2fb466dfe60dfb9bc5d46b782c91e12b7d0766b
               description: Parses output-spill flags, captures command stdout, and either copies small output back or persists large output as a content-addressed artifact with a descriptor.
               purpose: implementation
               domainAreas:
@@ -10982,7 +11107,7 @@ directory:
                 - fixtures
                 - tree-sitter
             - name: analyze.go
-              checksum: a28bfc02578a321bd2eb05f3e6499d53309e5e44f4d7e999f2200d406a701ca6
+              checksum: 1a9099dac17a6306b6f209ecf804f8ce37301cdb80d8318852bf6f4f53ba5b6c
               description: Parses source once and builds AST-derived segments, reporting parse success and recovery.
               purpose: implementation
               domainAreas:
@@ -11969,7 +12094,7 @@ directory:
               keywords:
                 - visibility
             - name: outline.go
-              checksum: 39c76ca34f0ed25085dcdaf8db304019c4504984d59b1116c2e626b72669c5aa
+              checksum: 2376036bb75fb0d6ca2a0b464efebd6ea0ad8ba0c67a031374113f77e17343aa
               description: Builds file outlines and symbol projections from parsed syntax.
               purpose: implementation
               domainAreas:
@@ -12181,7 +12306,7 @@ directory:
               keywords:
                 - scopes
             - name: segments.go
-              checksum: 8d814dc6863e9fbf7c04f4bfa1fad0b1e906805fc0f05f4c2a2cec905a693535
+              checksum: b305255842d35112c844eaf824617abe25c3d05089726ccd9aecbe343ac3328c
               description: Builds structural or plain-text segments for matched lines and reports parse completeness.
               purpose: implementation
               domainAreas:
@@ -12463,7 +12588,7 @@ directory:
                 - content-fallback
                 - newline
             - name: outlines.go
-              checksum: b653d538735744c26798f63244c5323aec03a5a74ef98c6f16c2a20a1454dec2
+              checksum: 68f9ed861ab5577d54aeb68da1772ee2489229ec45a0ec4b0fb964b672ad882c
               description: Discovers files, loads and filters structural outlines, and writes human or JSON output with optional byte limits.
               purpose: implementation
               domainAreas:
@@ -12776,7 +12901,7 @@ directory:
     internal/search:
         files:
             - name: at.go
-              checksum: 55926aa81ac368efe6c40fea4ed323c148d2a5c08ca02e1f540063b7a8b40420
+              checksum: feae6b95b2bd39a7780911cd88605d5e21274cae17390eeeb5a60cadd45755b1
               description: Resolves a path and line range or verifies a typed scope selector, then builds a structural context match and optionally attaches related evidence.
               purpose: implementation
               domainAreas:
@@ -13245,6 +13370,18 @@ directory:
                 - navigation-metrics
               keywords:
                 - statistics
+            - name: phase_observer.go
+              checksum: 74f55dfcb3cbc4b4ec0072f19ce6c5f3f3a4a5d4e28c85b7e4585f46163ddf40
+              description: Attaches bounded whole-operation phase observation to a search request context without importing CLI telemetry into source packages.
+              purpose: implementation
+              domainAreas:
+                - code-search
+                - telemetry
+              functionalAreas:
+                - phase-tracing
+              keywords:
+                - observer
+                - scans
             - name: parse_once_test.go
               checksum: 9a0c226b4cd2780bd819fcdeb7429e978e2642527ff8e9156c88480847d54f9b
               description: Tests that source parsing is performed once where expected.
@@ -13435,7 +13572,7 @@ directory:
                 - annotations
                 - mixed-content
             - name: search_engine.go
-              checksum: 9c7d9fb97325b585a9dff1fcd6b1cc66d95ef6bc732eb1f0f0e755d84b80161f
+              checksum: 65eddbcc8b04d9b46f7379f34cef59d1d0776ec8f87570c778475676fee101f8
               description: Implements the search execution engine.
               purpose: implementation
               domainAreas:
@@ -13576,6 +13713,17 @@ directory:
                 - context-selection
               keywords:
                 - read
+                - window
+            - name: work_account_test.go
+              checksum: 3f98afeab40c643e6296a15d754e66e5ccd117e6ea41f402dd3b46ce3547c721
+              description: Tests windowed versus full scan reads, failed and repeated content reads, metadata selection, listings and early cancellation.
+              purpose: testing
+              domainAreas:
+                - code-search
+              functionalAreas:
+                - actual-work-accounting
+              keywords:
+                - telemetry
                 - window
             - name: workers.go
               checksum: 9c5f0e770d29f74b54dd0df5d7a6cb3b1ac9e434277802ae597cc7ab7e2b2d40
@@ -13880,6 +14028,30 @@ directory:
                 - diagnostics
                 - limits
                 - metadata
+    internal/workaccount:
+        files:
+            - name: counts.go
+              checksum: ffb2d158c2afe25b158bd67ab9ca6ee9d839e58f1c53c5394b1f0bfff3eac799
+              description: Holds invocation-owned atomic local file and parser counters with context-only opt-in and fixed aggregate snapshots.
+              purpose: implementation
+              domainAreas:
+                - telemetry
+              functionalAreas:
+                - actual-work-accounting
+              keywords:
+                - concurrency
+                - privacy
+            - name: counts_test.go
+              checksum: b00124368770a0cccdfcc77577d7123f183f7bc44718baa4c1f14d8d0bdc2b92
+              description: Verifies concurrent counters, failure accounting, and isolation across request contexts.
+              purpose: testing
+              domainAreas:
+                - telemetry
+              functionalAreas:
+                - actual-work-accounting
+              keywords:
+                - concurrency
+                - isolation
     roadmap:
         files:
             - name: language-support.md

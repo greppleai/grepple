@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/workaccount"
 )
 
 var storedExecutableOnce sync.Once
@@ -21,15 +23,23 @@ var storedExecutableDigest string
 // resolved graph/facts remain owned by the existing build path; the view is not
 // a replacement semantic artifact. Roots and directions share the same view.
 func BuildStoredGraph(sources []Source, maxFiles int, request GraphQuery) (GraphReport, error) {
-	if os.Getenv("GREPPLE_NAVIGATION_REFERENCE_GRAPH") == "1" || os.Getenv("GREPPLE_NAVIGATION_MONOLITHIC") == "1" {
-		return buildMonolithicStoredGraph(sources, maxFiles, request)
-	}
-	return buildLanguageStoredGraph(sources, maxFiles, request)
+	return BuildStoredGraphContext(context.Background(), sources, maxFiles, request)
 }
-func buildMonolithicStoredGraph(sources []Source, maxFiles int, request GraphQuery) (GraphReport, error) {
+
+// BuildStoredGraphContext counts parser calls on cold builds, not stored reports.
+func BuildStoredGraphContext(ctx context.Context, sources []Source, maxFiles int, request GraphQuery) (GraphReport, error) {
+	if work := workaccount.From(ctx); work != nil {
+		work.ParsingApplicable()
+	}
+	if os.Getenv("GREPPLE_NAVIGATION_REFERENCE_GRAPH") == "1" || os.Getenv("GREPPLE_NAVIGATION_MONOLITHIC") == "1" {
+		return buildMonolithicStoredGraph(ctx, sources, maxFiles, request)
+	}
+	return buildLanguageStoredGraph(ctx, sources, maxFiles, request)
+}
+func buildMonolithicStoredGraph(ctx context.Context, sources []Source, maxFiles int, request GraphQuery) (GraphReport, error) {
 	// Reference path is retained for same-binary rollout verification only.
 	if os.Getenv("GREPPLE_NAVIGATION_REFERENCE_GRAPH") == "1" {
-		return buildReferenceStoredGraph(sources, maxFiles, request)
+		return buildReferenceStoredGraph(ctx, sources, maxFiles, request)
 	}
 	if err := validateGraphQuery(request); err != nil {
 		return GraphReport{}, err
@@ -52,7 +62,7 @@ func buildMonolithicStoredGraph(sources []Source, maxFiles int, request GraphQue
 			// by the fresh path, never hidden behind an incomplete projection.
 		}
 	}
-	universe, err := NewUniverse(sources, maxFiles)
+	universe, err := NewUniverseContext(ctx, sources, maxFiles)
 	if err != nil {
 		return GraphReport{}, err
 	}
@@ -189,8 +199,8 @@ func storedGraphContextPaths(paths []string, cwd string) []string {
 	sort.Strings(result)
 	return result
 }
-func buildReferenceStoredGraph(sources []Source, maxFiles int, request GraphQuery) (GraphReport, error) {
-	universe, err := NewUniverse(sources, maxFiles)
+func buildReferenceStoredGraph(ctx context.Context, sources []Source, maxFiles int, request GraphQuery) (GraphReport, error) {
+	universe, err := NewUniverseContext(ctx, sources, maxFiles)
 	if err != nil {
 		return GraphReport{}, err
 	}

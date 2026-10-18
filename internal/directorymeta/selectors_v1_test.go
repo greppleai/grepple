@@ -9,7 +9,8 @@ func TestSelectorsV1ORWithinAndSameFileAcrossCategories(t *testing.T) {
 	inventory := InventoryV1{Files: map[string]FileStateV1{
 		"backend/one.go":     {Status: StatusCurrent, File: FileV1{Purpose: "Implementation", DomainAreas: []string{"Payments"}, FunctionalAreas: []string{"API"}, Keywords: []string{"c++"}}},
 		"backend/two.go":     {Status: StatusCurrent, File: FileV1{Purpose: "Testing", DomainAreas: []string{"Billing"}, FunctionalAreas: []string{"API"}, Keywords: []string{"Go"}}},
-		"backend/stale.go":   {Status: StatusStale, File: FileV1{Purpose: "Implementation", DomainAreas: []string{"Billing"}, Keywords: []string{"c++"}}},
+		"backend/stale.go":   {Status: StatusStale, File: FileV1{Purpose: "Implementation", DomainAreas: []string{"Billing"}, FunctionalAreas: []string{"API"}, Keywords: []string{"c++"}}},
+		"backend/invalid.go": {Status: StatusInvalid, File: FileV1{Purpose: "Implementation", DomainAreas: []string{"InvalidOnly"}, FunctionalAreas: []string{"API"}}},
 		"backend/missing.go": {Status: StatusMissing},
 	}}
 	for _, test := range []struct {
@@ -18,10 +19,12 @@ func TestSelectorsV1ORWithinAndSameFileAcrossCategories(t *testing.T) {
 		want      string
 	}{
 		{"OR then AND", SelectorsV1{Purposes: []string{"testing", "implementation", "TESTING"}, DomainAreas: []string{"payments"}, Keywords: []string{"c++"}}, "backend/one.go"},
-		{"different files do not join", SelectorsV1{Purposes: []string{"Testing"}, DomainAreas: []string{"Payments"}}, ""},
+		{"three categories on same file", SelectorsV1{Purposes: []string{"testing", "implementation"}, DomainAreas: []string{"payments"}, FunctionalAreas: []string{"api"}}, "backend/one.go"},
+		{"different files do not join", SelectorsV1{Purposes: []string{"Testing"}, DomainAreas: []string{"Payments"}, FunctionalAreas: []string{"API"}}, ""},
 		{"exact not substring", SelectorsV1{DomainAreas: []string{"Pay"}}, ""},
 		{"stale never trusts labels", SelectorsV1{DomainAreas: []string{"Billing"}, Keywords: []string{"c++"}}, ""},
-		{"keyword punctuation", SelectorsV1{Keywords: []string{"c++"}}, "backend/one.go"},
+		{"invalid never trusts labels", SelectorsV1{Purposes: []string{"implementation"}, DomainAreas: []string{"InvalidOnly"}, FunctionalAreas: []string{"API"}}, ""},
+		{"keyword punctuation", SelectorsV1{Keywords: []string{"c++"}, DomainAreas: []string{"Payments"}}, "backend/one.go"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			selector, err := CompileSelectorsV1(test.selection)
@@ -35,7 +38,7 @@ func TestSelectorsV1ORWithinAndSameFileAcrossCategories(t *testing.T) {
 		})
 	}
 	unfiltered, err := CompileSelectorsV1(SelectorsV1{})
-	if err != nil || unfiltered.Requested() || len(unfiltered.MatchingFiles(inventory)) != 4 {
+	if err != nil || unfiltered.Requested() || len(unfiltered.MatchingFiles(inventory)) != 5 {
 		t.Fatalf("unfiltered=%+v err=%v", unfiltered, err)
 	}
 	for _, test := range []struct {

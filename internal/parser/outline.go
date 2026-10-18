@@ -16,6 +16,12 @@ func OutlineFile(path, content string) FileOutline {
 // formats (JSON/YAML): maxDepth <= 0 means unlimited, maxDepth N shows at most N
 // levels of keys. The cap is ignored for code and Markdown outlines.
 func OutlineFileDepth(path, content string, maxDepth int) FileOutline {
+	return OutlineFileDepthObserved(path, content, maxDepth, nil)
+}
+
+// OutlineFileDepthObserved calls observe only for a real grammar parse, not
+// structured-data scanning or unsupported language fallbacks.
+func OutlineFileDepthObserved(path, content string, maxDepth int, observe func(error)) FileOutline {
 	if lang := structuredLang(path); lang != "" {
 		return FileOutline{Path: path, Language: lang, Symbols: nonNil(outlineStructured(content, maxDepth))}
 	}
@@ -26,6 +32,9 @@ func OutlineFileDepth(path, content string, maxDepth int) FileOutline {
 		return out
 	}
 	tree, err := adapter.Parse(content)
+	if observe != nil {
+		observe(err)
+	}
 	if err != nil {
 		return out
 	}

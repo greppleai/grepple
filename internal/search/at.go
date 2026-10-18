@@ -2,6 +2,7 @@ package search
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,11 +12,15 @@ import (
 	"github.com/greppleai/grepple/internal/linerange"
 	structure "github.com/greppleai/grepple/internal/parser"
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
+	"github.com/greppleai/grepple/internal/workaccount"
 )
 
 // At retrieves local structural context by legacy PATH:LINE[-END] or a typed,
 // current-file verified scope selector. Legacy callable navigation is unchanged.
-func At(params Params) (*FileMatch, error) {
+func At(params Params) (*FileMatch, error) { return AtContext(context.Background(), params) }
+
+// AtContext is At with optional request-owned read accounting.
+func AtContext(ctx context.Context, params Params) (*FileMatch, error) {
 	path, line, endLine, err := atReference(params)
 	if err != nil {
 		return nil, err
@@ -47,6 +52,9 @@ func At(params Params) (*FileMatch, error) {
 		}
 	}
 	contentBytes, err := os.ReadFile(absolute)
+	if work := workaccount.From(ctx); work != nil {
+		work.ReadAttempt(len(contentBytes), err)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("read --at path %q: %w", path, err)
 	}

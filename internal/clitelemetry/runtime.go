@@ -55,7 +55,7 @@ func New(settings *config.Telemetry) (*Runtime, error) {
 	if err != nil {
 		return nil, err
 	}
-	return newWithExporter(*settings, exporter), nil
+	return newWithExporter(*settings, quietExporter{SpanExporter: exporter}), nil
 }
 
 func newWithExporter(settings config.Telemetry, exporter sdktrace.SpanExporter) *Runtime {
@@ -64,10 +64,19 @@ func newWithExporter(settings config.Telemetry, exporter sdktrace.SpanExporter) 
 	return &Runtime{provider: sdk, sdk: sdk}
 }
 
+// quietExporter treats optional CLI telemetry as best-effort. The SDK otherwise
+// prints an export error to stderr when the local collector is stopped.
+type quietExporter struct{ sdktrace.SpanExporter }
+
+func (e quietExporter) ExportSpans(ctx context.Context, spans []sdktrace.ReadOnlySpan) error {
+	_ = e.SpanExporter.ExportSpans(ctx, spans)
+	return nil
+}
+
 // Start uses only fixed operation names, never user arguments or request URLs.
 func (r *Runtime) Start(ctx context.Context, operation string) (context.Context, trace.Span) {
 	switch operation {
-	case "cli.invocation", "cli.command", "cli.output_spill", "cli.search.local", "cli.sources.discover", "cli.sources.resolve", "cli.navigation.execute", "cli.navigation.cache_lookup", "cli.navigation.build", "cli.navigation.query", "cli.render":
+	case "cli.invocation", "cli.command", "cli.output_spill", "cli.search.local", "cli.search.scan", "cli.search.parse", "cli.sources.discover", "cli.sources.resolve", "cli.navigation.execute", "cli.navigation.cache_lookup", "cli.navigation.read", "cli.navigation.build", "cli.navigation.query", "cli.render":
 	default:
 		operation = "cli.operation"
 	}

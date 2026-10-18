@@ -14,6 +14,7 @@ import (
 	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/outputspill"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const DefaultResultLimit = searchcommand.DefaultResultLimit
@@ -56,21 +57,38 @@ func Run(args []string) error {
 	invocation, root := tracing.Start(context.Background(), "cli.invocation")
 	defer func() { root.End(); tracing.Close() }()
 	descriptorArgs := normalizedApplicationArgs(args)
-	err = outputspill.RunWithFinalizer(descriptorArgs, spill, settings.Repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(_ int) error {
+	var finalizeSpan trace.Span
+	var observeOutput func(outputspill.OutputReport)
+	if root.IsRecording() {
+		observeOutput = func(report outputspill.OutputReport) {
+			// The finalizer can return a command error. Export only measured bytes.
+			finalizeSpan.SetAttributes(attribute.Int64("cli.output.stdout_bytes", report.StdoutBytes))
+			if report.LogicalObserved {
+				finalizeSpan.SetAttributes(attribute.Int64("cli.output.logical_bytes", report.LogicalBytes))
+			}
+			if report.Mode == outputspill.ModeInline || report.Mode == outputspill.ModeSpilled {
+				finalizeSpan.SetAttributes(attribute.String("cli.output.mode", string(report.Mode)))
+			}
+			if report.Mode == outputspill.ModeSpilled {
+				finalizeSpan.SetAttributes(attribute.Int64("cli.output.artifact_bytes", report.ArtifactBytes))
+			}
+		}
+	}
+	err = outputspill.RunWithFinalizerObserved(descriptorArgs, spill, settings.Repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(_ int) error {
 		commandContext, commandSpan := tracing.Start(invocation, "cli.command")
 		defer commandSpan.End()
 		if commandSpan.IsRecording() {
-			commandSpan.SetAttributes(attribute.String("cli.command.name", values.traceCommandName()))
+			commandSpan.SetAttributes(values.traceCommandAttributes()...)
 		}
 		command := newCommandContextWithInvocation(repositoryOptions, exitState.Request, settings, commandContext)
 		return executeArguments(command, values)
 	}, func(finish func() error) error {
-		_, finalizeSpan := tracing.Start(invocation, "cli.output_spill")
+		_, finalizeSpan = tracing.Start(invocation, "cli.output_spill")
 		defer finalizeSpan.End()
 		// The returned error can include a command error even when the output
 		// copy succeeded. Do not label finalization with that ambiguous outcome.
 		return finish()
-	})
+	}, observeOutput)
 	if err != nil {
 		return err
 	}

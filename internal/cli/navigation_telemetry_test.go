@@ -26,16 +26,21 @@ func assertNavigationPhases(t *testing.T, spans []*spanpb.Span, command, cacheSt
 		if len(span.Events) != 0 {
 			t.Fatalf("unexpected events on %s", span.Name)
 		}
-		for key := range spanAttributes(span) {
-			switch key {
-			case "cli.command.name", "cli.phase.outcome", "cli.sources.count", "cli.cache.kind", "cli.cache.state", "cli.render.format":
-			default:
-				t.Fatalf("unexpected navigation attribute %q on %s", key, span.Name)
-			}
-		}
+		// The shared contract already checks each span's exact attributes.
 	}
-	if counts["cli.invocation"] != 1 || counts["cli.output_spill"] != 1 || counts["cli.command"] != 1 || counts["cli.sources.resolve"] != 1 || counts["cli.navigation.execute"] != 1 || counts["cli.render"] > 1 || counts["cli.navigation.cache_lookup"] > 1 || len(spans) != 5+counts["cli.navigation.cache_lookup"]+counts["cli.render"] || len(spans) > 7 {
+	wantBuild := command == "graph.resolve" && cacheState != "hit" && expectRender
+	wantRead := cacheState != "hit"
+	if counts["cli.invocation"] != 1 || counts["cli.output_spill"] != 1 || counts["cli.command"] != 1 || counts["cli.sources.resolve"] != 1 || counts["cli.navigation.execute"] != 1 || counts["cli.render"] > 1 || counts["cli.navigation.cache_lookup"] > 1 || (counts["cli.navigation.read"] == 1) != wantRead || (counts["cli.navigation.build"] == 1) != wantBuild || len(spans) != 5+counts["cli.navigation.cache_lookup"]+counts["cli.render"]+counts["cli.navigation.read"]+counts["cli.navigation.build"] || len(spans) > 9 {
 		t.Fatalf("unbounded or missing navigation phases: %+v", counts)
+	}
+	if wantRead && (!bytes.Equal(byName["cli.navigation.read"].ParentSpanId, byName["cli.navigation.execute"].SpanId) || byName["cli.navigation.read"].StartTimeUnixNano < byName["cli.navigation.execute"].StartTimeUnixNano || byName["cli.navigation.read"].EndTimeUnixNano > byName["cli.navigation.execute"].EndTimeUnixNano) {
+		t.Fatal("source read batch not bounded by navigation execution")
+	}
+	if wantBuild && (!bytes.Equal(byName["cli.navigation.build"].ParentSpanId, byName["cli.navigation.execute"].SpanId) || byName["cli.navigation.build"].StartTimeUnixNano < byName["cli.navigation.execute"].StartTimeUnixNano || byName["cli.navigation.build"].EndTimeUnixNano > byName["cli.navigation.execute"].EndTimeUnixNano) {
+		t.Fatal("graph resolve build stage not bounded by navigation execution")
+	}
+	if wantBuild && byName["cli.navigation.read"].EndTimeUnixNano > byName["cli.navigation.build"].StartTimeUnixNano {
+		t.Fatal("graph resolve build started before source reading completed")
 	}
 	if expectRender != (counts["cli.render"] == 1) || expectRender && (!bytes.Equal(byName["cli.render"].ParentSpanId, byName["cli.navigation.execute"].SpanId) || spanAttributes(byName["cli.render"])["cli.render.format"].GetStringValue() != "json") {
 		t.Fatalf("wrong graph render phase: %+v", counts)

@@ -28,6 +28,15 @@ grepple --line-only --at sample-files/Button.tsx @func:11-14
 
 The selector returns exactly the `handleClick` function, not the entire component. These examples work because TypeScript and TSX have parser adapters; they are not TypeScript type-checking or runtime call tracing. For caller questions, use `grepple graph resolve` followed by `graph callers` with the **graph's** `PATH:LINE` reference, not a scope token.
 
+To constrain that graph to local, currently annotated files (run these from the repository root, substituting labels reported by `grepple overview` for your checkout):
+
+```bash
+grepple graph resolve --symbol ParseDocumentV1 --purpose implementation --domain-area directory-metadata internal/directorymeta
+grepple graph callers --at internal/directorymeta/schema_v1.go:41 --purpose implementation --domain-area directory-metadata internal/directorymeta
+```
+
+A real `--at` location must be in a matching file. Repeat a flag to OR labels in that category; combining categories requires all labels on the same checksum-current file. Missing/stale entries are excluded (inspect `grepple verify`); a small `--max-files` cap is applied **after** filtering. Generated resolve follow-ups and truncation continuations retain these labels and the paths. This does not select remote `--repo` sources or make edges to excluded files complete.
+
 ## JSON, YAML and Markdown
 
 The same two-token local selector works with verified content scopes:

@@ -16,6 +16,7 @@ import (
 	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/shellquote"
 	"github.com/greppleai/grepple/internal/wire"
+	"github.com/greppleai/grepple/internal/workaccount"
 )
 
 const maxNavigationQueryDepth = 10
@@ -23,23 +24,26 @@ const maxNavigationQueryDepth = 10
 type graphQueryArgs struct {
 	JSON bool `arg:"--json" help:"emit the complete queried subgraph as JSON"`
 	cliruntime.CommonArgs
-	Repository     string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
-	Symbol         string   `arg:"--symbol" placeholder:"NAME" help:"select one exact declaration name"`
-	At             string   `arg:"--at" placeholder:"PATH:LINE" help:"select the declaration containing a source location"`
-	Package        string   `arg:"--package" placeholder:"NAME" help:"select every declaration in an exact package name or ID"`
-	Module         string   `arg:"--module" placeholder:"ID" help:"select every declaration in an exact module ID"`
-	RootPath       string   `arg:"--root-path" placeholder:"PATH" help:"select declarations at or below a repository-relative path"`
-	Languages      []string `arg:"--language,separate" placeholder:"ID" help:"retain one navigation language; repeatable"`
-	Confidences    []string `arg:"--confidence,separate" placeholder:"LEVEL" help:"retain one edge confidence; repeatable"`
-	Visibilities   []string `arg:"--visibility,separate" placeholder:"LEVEL" help:"retain public, non-public, or unknown declarations; repeatable"`
-	Depth          int      `arg:"--depth" default:"1" placeholder:"N" help:"maximum traversal depth (1-10)"`
-	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
-	Paths          []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
+	Repository      string   `arg:"--repo" placeholder:"OWNER/REPO[@REF]" help:"analyze one exact indexed repository"`
+	Symbol          string   `arg:"--symbol" placeholder:"NAME" help:"select one exact declaration name"`
+	At              string   `arg:"--at" placeholder:"PATH:LINE" help:"select a declaration in a metadata-selected file when filters are used"`
+	Package         string   `arg:"--package" placeholder:"NAME" help:"select every declaration in an exact package name or ID"`
+	Module          string   `arg:"--module" placeholder:"ID" help:"select every declaration in an exact module ID"`
+	RootPath        string   `arg:"--root-path" placeholder:"PATH" help:"select declarations at or below a repository-relative path"`
+	Purposes        []string `arg:"--purpose,separate" placeholder:"LABEL" help:"local current-file purpose; repeatable OR"`
+	DomainAreas     []string `arg:"--domain-area,separate" placeholder:"LABEL" help:"local current-file domain; repeatable OR, same-file AND"`
+	FunctionalAreas []string `arg:"--functional-area,separate" placeholder:"LABEL" help:"local current-file function; repeatable OR, same-file AND"`
+	Languages       []string `arg:"--language,separate" placeholder:"ID" help:"retain one navigation language; repeatable"`
+	Confidences     []string `arg:"--confidence,separate" placeholder:"LEVEL" help:"retain one edge confidence; repeatable"`
+	Visibilities    []string `arg:"--visibility,separate" placeholder:"LEVEL" help:"retain public, non-public, or unknown declarations; repeatable"`
+	Depth           int      `arg:"--depth" default:"1" placeholder:"N" help:"maximum traversal depth (1-10)"`
+	MaxFiles        int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
+	MaxOutputBytes  int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	Paths           []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to include; defaults to the working directory"`
 }
 
 func (graphQueryArgs) Description() string {
-	return "Query a deterministic local or exact indexed-repository navigation graph. Human output is the default; --json emits the complete subgraph. Exactly one root selector is required."
+	return "Query a deterministic local or exact indexed-repository navigation graph. Exactly one root selector is required. Repeatable metadata labels select checksum-current local files only (same-file AND); incompatible with --repo or --server. --json emits the selected subgraph."
 }
 
 // runQuery traverses a navigation graph.
@@ -59,15 +63,36 @@ func executeQueryWithDaemon(application cliruntime.Context, direction search.Nav
 	if err := validateGraphQueryArgs(*values); err != nil {
 		return err
 	}
-	if values.Repository != "" {
-		return runRemoteGraphQuery(application, application.Invocation(), direction, *values)
-	}
-	paths, err := resolveCLIPaths(application, values.Paths)
+	selector, err := compileGraphMetadataSelector(values.Purposes, values.DomainAreas, values.FunctionalAreas)
 	if err != nil {
 		return err
 	}
+	if selector.Requested() && (values.Repository != "" || values.Server != "") {
+		return fmt.Errorf("graph metadata selectors are local-only and cannot be combined with --repo or --server")
+	}
+	if values.Repository != "" {
+		return runRemoteGraphQuery(application, application.Invocation(), direction, *values)
+	}
+	paths, err := resolveCLIPathsSelected(application, values.Paths, selector)
+	if err != nil {
+		return err
+	}
+	if selector.Requested() {
+		if values.At != "" {
+			if err := requireSelectedGraphAt(values.At, paths); err != nil {
+				return err
+			}
+		}
+		if len(paths) == 0 {
+			return fmt.Errorf("no current local files match graph metadata selectors; run grepple overview or grepple verify")
+		}
+	}
 	navCtx, phase := clitelemetry.StartPhase(application.Invocation(), "cli.navigation.execute")
-	defer func() { clitelemetry.EndPhase(phase, navCtx, resultErr) }()
+	var work *workaccount.Counters
+	if phase.IsRecording() {
+		navCtx, work = workaccount.With(navCtx)
+	}
+	defer func() { clitelemetry.SetWork(phase, work); clitelemetry.EndPhase(phase, navCtx, resultErr) }()
 	query := analysis.GraphQuery{
 		Direction: string(direction), Depth: values.Depth,
 		Symbol: values.Symbol, At: values.At, Package: values.Package, Module: values.Module, RootPath: values.RootPath,
@@ -82,12 +107,12 @@ func executeQueryWithDaemon(application cliruntime.Context, direction search.Nav
 		})
 	}
 	if report.Schema == "" {
-		sources := analysis.ReadSources(paths)
+		sources := readGraphSources(navCtx, paths)
 		key := ""
 		if useDaemon {
 			key, _ = daemon.KeyGraph(paths, values.MaxFiles, sources, query)
 		}
-		report, err = analysis.BuildStoredGraph(sources, values.MaxFiles, query)
+		report, err = analysis.BuildStoredGraphContext(navCtx, sources, values.MaxFiles, query)
 		if err != nil {
 			return err
 		}
@@ -96,7 +121,7 @@ func executeQueryWithDaemon(application cliruntime.Context, direction search.Nav
 		}
 	}
 	output := FromAnalysis(report)
-	output.Metadata = graphResultMetadata(metadataInput{Paths: values.Paths, Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphQueryContinuationCommand(application, direction, *values, output.Truncation)})
+	output.Metadata = graphResultMetadata(metadataInput{Paths: values.Paths, Filtered: selector.Requested(), Returned: len(output.Declarations), MaxFiles: values.MaxFiles, MaxOutputBytes: values.MaxOutputBytes, JSON: values.JSON, Sources: output.Sources, Truncation: output.Truncation, NextCommand: graphQueryContinuationCommand(application, direction, *values, output.Truncation)})
 	output.Metadata.Scope.Languages = normalizedScope(output.Query.Languages, "")
 	format := "compact"
 	if values.JSON {
@@ -166,6 +191,7 @@ func graphQueryContinuationCommand(application cliruntime.Context, direction sea
 			parts = append(parts, selector.flag, shellquote.Argument(selector.value))
 		}
 	}
+	parts = appendGraphMetadataFlags(parts, values.Purposes, values.DomainAreas, values.FunctionalAreas)
 	for _, language := range values.Languages {
 		parts = append(parts, "--language", shellquote.Argument(language))
 	}

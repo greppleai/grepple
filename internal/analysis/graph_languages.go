@@ -1,6 +1,7 @@
 package analysis
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -11,7 +12,7 @@ import (
 
 var errMultipleLanguageRoots = errors.New("multi-partition roots require complete view")
 
-func buildLanguageStoredGraph(sources []Source, maxFiles int, request GraphQuery) (GraphReport, error) {
+func buildLanguageStoredGraph(ctx context.Context, sources []Source, maxFiles int, request GraphQuery) (GraphReport, error) {
 	if err := validateGraphQuery(request); err != nil {
 		return GraphReport{}, err
 	}
@@ -22,7 +23,7 @@ func buildLanguageStoredGraph(sources []Source, maxFiles int, request GraphQuery
 	}
 	key, path := storedGraphKey(sources, maxFiles, filter)
 	if path == "" {
-		return buildMonolithicStoredGraph(sources, maxFiles, request)
+		return buildMonolithicStoredGraph(ctx, sources, maxFiles, request)
 	}
 	if manifest, err := readLanguageManifest(path, key); err == nil {
 		report, queryErr := queryLanguageManifest(manifest, path, key, request, filter)
@@ -33,13 +34,13 @@ func buildLanguageStoredGraph(sources []Source, maxFiles int, request GraphQuery
 			return GraphReport{}, queryErr
 		}
 		if errors.Is(queryErr, errMultipleLanguageRoots) {
-			return buildMonolithicStoredGraph(sources, maxFiles, request)
+			return buildMonolithicStoredGraph(ctx, sources, maxFiles, request)
 		}
 	}
-	return buildFreshLanguageGraph(sources, maxFiles, request, filter, key, path, operations)
+	return buildFreshLanguageGraph(ctx, sources, maxFiles, request, filter, key, path, operations)
 }
-func buildFreshLanguageGraph(sources []Source, maxFiles int, request GraphQuery, filter navigation.NavigationGraphFilter, key, path string, operations navigation.GraphOperations) (GraphReport, error) {
-	universe, err := NewUniverse(sources, maxFiles)
+func buildFreshLanguageGraph(ctx context.Context, sources []Source, maxFiles int, request GraphQuery, filter navigation.NavigationGraphFilter, key, path string, operations navigation.GraphOperations) (GraphReport, error) {
+	universe, err := NewUniverseContext(ctx, sources, maxFiles)
 	if err != nil {
 		return GraphReport{}, err
 	}

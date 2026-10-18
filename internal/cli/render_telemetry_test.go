@@ -19,7 +19,7 @@ func assertOneRender(t *testing.T, spans []*spanpb.Span, format string, hasGraph
 	t.Helper()
 	assertCLIPhaseContract(t, spans)
 	counts := map[string]int{}
-	var render, command, navigation *spanpb.Span
+	var render, command, navigation, local, scan *spanpb.Span
 	for _, span := range spans {
 		counts[span.Name]++
 		switch span.Name {
@@ -29,17 +29,28 @@ func assertOneRender(t *testing.T, spans []*spanpb.Span, format string, hasGraph
 			command = span
 		case "cli.navigation.execute":
 			navigation = span
+		case "cli.search.scan":
+			scan = span
+		case "cli.search.local":
+			if spanAttributes(span)["cli.search.mode"].GetStringValue() == "outline" {
+				local = span
+			}
 		}
 	}
-	if counts["cli.render"] != 1 || counts["cli.command"] != 1 || len(spans) > 7 || spanAttributes(render)["cli.render.format"].GetStringValue() != format {
+	if counts["cli.render"] != 1 || counts["cli.command"] != 1 || len(spans) > 9 || spanAttributes(render)["cli.render.format"].GetStringValue() != format {
 		t.Fatalf("wrong/bounded render phase: %+v", counts)
 	}
 	parent := command
 	if hasGraph {
 		parent = navigation
+	} else if local != nil {
+		parent = local
 	}
 	if parent == nil || !bytes.Equal(render.ParentSpanId, parent.SpanId) || len(render.Events) != 0 {
 		t.Fatalf("wrong render parent/events: %+v", counts)
+	}
+	if local != nil && (scan == nil || !bytes.Equal(scan.ParentSpanId, local.SpanId) || scan.StartTimeUnixNano < render.StartTimeUnixNano || scan.EndTimeUnixNano > render.EndTimeUnixNano) {
+		t.Fatal("outline streaming scan must be nested within the actual render operation")
 	}
 }
 
@@ -84,7 +95,11 @@ func TestCLIRenderBranchesAndTruncatedOutput(t *testing.T) {
 		if bytes.Contains(payload, []byte(path)) || bytes.Contains(payload, []byte("private-needle")) || bytes.Contains(payload, []byte(root)) || bytes.Contains(payload, []byte("Target")) {
 			t.Fatal("source, selector or path escaped in render telemetry")
 		}
-		if test.graph && len(spans) != 6 || !test.graph && test.args[1] == "--outline" && len(spans) != 4 {
+		wantGraphSpans := 7 // cold graph query reads actual sources
+		if test.graph && test.args[1] == "resolve" {
+			wantGraphSpans++ // cold resolve's observed universe and graph build
+		}
+		if test.graph && len(spans) != wantGraphSpans || !test.graph && test.args[1] == "--outline" && len(spans) != 7 {
 			t.Fatalf("phase count varied with results or branch: %d", len(spans))
 		}
 	}

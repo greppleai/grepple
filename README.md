@@ -25,7 +25,7 @@ For metadata-filtered discovery, opt into **bounded** `grepple init --only-direc
 | Find matching lines | `grepple -F 'Name' --line-only PATH` |
 | List matching files / count matches | `grepple -F 'Name' --files-with-matches PATH` / `--count-summary` |
 | Find a declaration | `grepple --outline FILE` or `grepple graph resolve --symbol NAME PATH` |
-| Follow calls | `grepple graph callers --at FILE:LINE PATH` or `graph callees` |
+| Follow calls | `grepple graph callers --at FILE:LINE PATH` or `graph callees` (optional local [file metadata selectors](docs/file-type-support.md)) |
 | Map directory relations | `grepple architecture directory PATH` |
 | Find syntax shapes | `grepple grit --query-file checks.grit PATH` |
 | Learn by example | `grepple examples` or [worked examples](examples/README.md) |

@@ -3,6 +3,7 @@ package analysis
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"path/filepath"
 	"sort"
@@ -10,6 +11,7 @@ import (
 	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/workaccount"
 )
 
 // Source is one repository-relative source file and its complete content. ReadError
@@ -21,10 +23,17 @@ type Source struct {
 }
 
 // ReadSources loads already selected paths while retaining read failures for completeness accounting.
-func ReadSources(paths []string) []Source {
+func ReadSources(paths []string) []Source { return ReadSourcesContext(context.Background(), paths) }
+
+// ReadSourcesContext observes actual read attempts, not paths planned for later parsing.
+func ReadSourcesContext(ctx context.Context, paths []string) []Source {
 	sources := make([]Source, 0, len(paths))
+	work := workaccount.From(ctx)
 	for _, path := range paths {
 		content, err := os.ReadFile(path)
+		if work != nil {
+			work.ReadAttempt(len(content), err)
+		}
 		sources = append(sources, Source{Path: path, Content: content, ReadError: err})
 	}
 	return sources
@@ -65,11 +74,25 @@ type Universe struct {
 
 // NewUniverse parses each selected source once. Sources must use repository-relative paths.
 func NewUniverse(input []Source, maxFiles int) (*Universe, error) {
-	return NewUniverseWithOptions(input, maxFiles, navigation.BuildOptions{})
+	return NewUniverseContext(context.Background(), input, maxFiles)
+}
+
+// NewUniverseContext observes actual parser calls, excluding read failures,
+// unsupported and binary inputs; a reuse path never calls this method.
+func NewUniverseContext(ctx context.Context, input []Source, maxFiles int) (*Universe, error) {
+	return NewUniverseWithOptionsContext(ctx, input, maxFiles, navigation.BuildOptions{})
 }
 
 // NewUniverseWithOptions parses each selected source once using the requested graph options.
 func NewUniverseWithOptions(input []Source, maxFiles int, options navigation.BuildOptions) (*Universe, error) {
+	return NewUniverseWithOptionsContext(context.Background(), input, maxFiles, options)
+}
+
+func NewUniverseWithOptionsContext(ctx context.Context, input []Source, maxFiles int, options navigation.BuildOptions) (*Universe, error) {
+	work := workaccount.From(ctx)
+	if work != nil {
+		work.ParsingApplicable()
+	}
 	ordered := append([]Source(nil), input...)
 	sort.Slice(ordered, func(i, j int) bool { return ordered[i].Path < ordered[j].Path })
 	universe := &Universe{summary: SourceSummary{Discovered: len(ordered)}}
@@ -99,6 +122,9 @@ func NewUniverseWithOptions(input []Source, maxFiles int, options navigation.Bui
 			continue
 		}
 		document, err := parserService.Parse(parserService.LanguageFor(source.Path), string(source.Content))
+		if work != nil {
+			work.ParseAttempt(err)
+		}
 		if err != nil {
 			universe.summary.Failed++
 			continue

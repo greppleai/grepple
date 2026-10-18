@@ -14,6 +14,7 @@ import (
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/wire"
+	"github.com/greppleai/grepple/internal/workaccount"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -81,9 +82,15 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 			format = "json"
 		}
 		var printed bool
-		outlineErr := clitelemetry.RenderPhase(application.Invocation(), format, func() error {
+		ctx, span := beginLocalSearch(application, "outline")
+		var outlineErr error
+		defer func() {
+			clitelemetry.SetWork(span, workaccount.From(ctx))
+			clitelemetry.EndPhase(span, ctx, outlineErr)
+		}()
+		outlineErr = clitelemetry.RenderPhase(ctx, format, func() error {
 			var err error
-			printed, err = rendercommand.Outlines(rendercommand.OutlineOptions{Params: options.Params, Depth: options.Depth, Kinds: options.Kinds, JSON: options.JSON != "off", MaxOutputBytes: options.MaxOutputBytes, DefaultLimit: DefaultResultLimit, Output: application.Stdout(), ErrorOutput: application.Stderr()})
+			printed, err = rendercommand.Outlines(rendercommand.OutlineOptions{Context: ctx, Params: options.Params, Depth: options.Depth, Kinds: options.Kinds, JSON: options.JSON != "off", MaxOutputBytes: options.MaxOutputBytes, DefaultLimit: DefaultResultLimit, Output: application.Stdout(), ErrorOutput: application.Stderr()})
 			return err
 		})
 		if outlineErr == nil && !printed {
@@ -288,6 +295,7 @@ func beginLocalSearch(application cliruntime.Context, mode string) (context.Cont
 	ctx, span := clitelemetry.StartPhase(application.Invocation(), "cli.search.local")
 	if span.IsRecording() {
 		span.SetAttributes(attribute.String("cli.search.mode", mode))
+		ctx, _ = workaccount.With(ctx)
 		ctx = search.WithCandidateDiscoveryObserver(ctx, func(kind string) func(int, error) {
 			_, discovery := clitelemetry.StartPhase(ctx, "cli.sources.discover")
 			discovery.SetAttributes(attribute.String("cli.sources.mode", kind))
@@ -297,6 +305,10 @@ func beginLocalSearch(application cliruntime.Context, mode string) (context.Cont
 				}
 				clitelemetry.EndPhase(discovery, ctx, err)
 			}
+		})
+		ctx = search.WithLocalPhaseObserver(ctx, func(name string) func(error) {
+			_, phase := clitelemetry.StartPhase(ctx, name)
+			return func(err error) { clitelemetry.EndPhase(phase, ctx, err) }
 		})
 	}
 	return ctx, span
@@ -314,14 +326,22 @@ func searchLocal(application cliruntime.Context, options *Options) (results []wi
 		mode = "stdin"
 	}
 	ctx, span := beginLocalSearch(application, mode)
+	if params.At != "" && params.MetadataCandidates != nil {
+		if work := workaccount.From(ctx); work != nil {
+			work.Selected(len(params.MetadataCandidates))
+		}
+	}
 	defer func() {
-		if span.IsRecording() && err == nil {
-			span.SetAttributes(attribute.Int("cli.results.count", len(results)))
+		if span.IsRecording() {
+			clitelemetry.SetWork(span, workaccount.From(ctx))
+			if err == nil {
+				span.SetAttributes(attribute.Int("cli.results.count", len(results)))
+			}
 		}
 		clitelemetry.EndPhase(span, ctx, err)
 	}()
 	if params.At != "" {
-		match, err := search.At(params)
+		match, err := search.AtContext(ctx, params)
 		if err != nil {
 			return nil, err
 		}
@@ -379,8 +399,11 @@ func setSearchExit(application cliruntime.Context, results []wire.FileResult) er
 func countLocalMatches(application cliruntime.Context, options *Options, params search.Params) (matches []search.FileMatch, err error) {
 	ctx, span := beginLocalSearch(application, "count_summary")
 	defer func() {
-		if span.IsRecording() && err == nil {
-			span.SetAttributes(attribute.Int("cli.results.count", len(matches)))
+		if span.IsRecording() {
+			clitelemetry.SetWork(span, workaccount.From(ctx))
+			if err == nil {
+				span.SetAttributes(attribute.Int("cli.results.count", len(matches)))
+			}
 		}
 		clitelemetry.EndPhase(span, ctx, err)
 	}()
