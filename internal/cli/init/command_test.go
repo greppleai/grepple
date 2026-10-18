@@ -9,54 +9,7 @@ import (
 	"testing"
 
 	"github.com/greppleai/grepple/internal/cliruntime"
-	"github.com/greppleai/grepple/internal/directorymeta"
 )
-
-func TestParseGeneratedMetadataPreservesPathsAndChecksums(t *testing.T) {
-	files := []directorymeta.File{{Path: "file.go", Checksum: "abc"}}
-	metadata, err := parseGeneratedMetadata("description: Parses files.\nresponsibilities:\n- Parse files.\nfiles:\n- path: file.go\n  description: Contains parsing logic.\n  kind: production\n  checksum: ignored\n", files)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if metadata.Files[0].Path != "file.go" || metadata.Files[0].Checksum != "abc" || metadata.Files[0].Description != "Contains parsing logic." || metadata.Files[0].Kind != "production" {
-		t.Fatalf("metadata=%+v", metadata)
-	}
-}
-func TestParseGeneratedMetadataRequiresValidSourceKind(t *testing.T) {
-	files := []directorymeta.File{{Path: "file.go", Checksum: "abc"}}
-	for _, test := range []struct {
-		name string
-		kind string
-	}{
-		{name: "missing"},
-		{name: "invalid", kind: "application"},
-	} {
-		t.Run(test.name, func(t *testing.T) {
-			value := "description: Parses files.\nresponsibilities: [Parse files.]\nfiles:\n- path: file.go\n  description: Contains parsing logic.\n"
-			if test.kind != "" {
-				value += "  kind: " + test.kind + "\n"
-			}
-			if _, err := parseGeneratedMetadata(value, files); err == nil {
-				t.Fatal("invalid source kind succeeded")
-			}
-		})
-	}
-}
-
-func TestGenerationPromptPrimesAgentWithExistingMetadata(t *testing.T) {
-	directory := t.TempDir()
-	existing := directorymeta.Metadata{Description: "Existing architectural context.", Responsibilities: []string{"Own behavior."}, Files: []directorymeta.File{}}
-	if err := directorymeta.Write(directory, directory, existing); err != nil {
-		t.Fatal(err)
-	}
-	prompt, err := generationPrompt(directory, directory, []directorymeta.File{{Path: "file.go", Checksum: "abc"}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(prompt, existing.Description) || !strings.Contains(prompt, "Authoritative file manifest") {
-		t.Fatalf("prompt=%q", prompt)
-	}
-}
 
 func TestInitToolsReadGrepAndTreeWithinCurrentDirectory(t *testing.T) {
 	root := t.TempDir()

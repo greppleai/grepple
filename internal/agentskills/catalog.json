@@ -6,7 +6,7 @@
       "files": [
         {
           "path": "SKILL.md",
-          "sha256": "7ff1b53617c0d62cf3a2ec36adce70bf0fe4ad31dd60c41d81bb86c7ab06b806"
+          "sha256": "8675b26ec02e04c5913ccedca7dad20618b4d1917d8b95155a2cde6a9d5a37ea"
         }
       ]
     },
@@ -24,7 +24,7 @@
       "files": [
         {
           "path": "SKILL.md",
-          "sha256": "a2d27728ed3ab491f6003ab6f86feb7c4634c9073bcf32cc5b3946c4e2515eb3"
+          "sha256": "22466329a3154765157c86bffa72d4236787107df389c9d2b2af2d6edbd75584"
         }
       ]
     },
@@ -42,7 +42,16 @@
       "files": [
         {
           "path": "SKILL.md",
-          "sha256": "6671b4fe4e2cc761a364cc0399008df2d398a9b85b053985301632477ff08b0a"
+          "sha256": "e5f11c229e4a7e615b89e81fe815220ad42d05104e0c662d55907ccb452393e6"
+        }
+      ]
+    },
+    {
+      "name": "grepple-overview-first",
+      "files": [
+        {
+          "path": "SKILL.md",
+          "sha256": "ed5247b7fc3bba24254b5d4af9da413194c85e937773f7eb7fcf222e8df2db0a"
         }
       ]
     },
@@ -51,7 +60,7 @@
       "files": [
         {
           "path": "SKILL.md",
-          "sha256": "bc63edb5bb2cce132467ea5c75ab4def2ee16b800a8bde287e7a7320a7c45289"
+          "sha256": "7c38b0f27ec4d5a69164df90b038c857f6ea969c21b3b0aad46d9da0728bcc9c"
         }
       ]
     },
@@ -69,7 +78,7 @@
       "files": [
         {
           "path": "SKILL.md",
-          "sha256": "f4fc5f8f275177adac24c2576d5097e41fd873bee644d48eb5c5073528521f61"
+          "sha256": "33de667bb9a4903963c0f805cc367c44fb1365699c959712f5485ea754d9ec5d"
         }
       ]
     }

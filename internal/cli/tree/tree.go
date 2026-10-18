@@ -12,29 +12,30 @@ import (
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/directorymeta"
 	rendercommand "github.com/greppleai/grepple/internal/render"
-	sourcedomain "github.com/greppleai/grepple/internal/sources"
 	"github.com/greppleai/grepple/internal/wire"
 )
 
-// areaFlags consumes one value per --area so a following PATH stays positional.
-type areaFlags []string
+// selectorFlags consumes one argument per flag so the following PATH stays positional.
+type selectorFlags []string
 
-func (areas *areaFlags) UnmarshalText(value []byte) error {
-	*areas = append(*areas, string(value))
+func (values *selectorFlags) UnmarshalText(value []byte) error {
+	*values = append(*values, string(value))
 	return nil
 }
 
 // Request contains parsed tree command options.
 type Request struct {
 	cliruntime.CommonArgs
-	Depth      int       `arg:"--depth" default:"1" placeholder:"N" help:"levels to descend"`
-	JSON       bool      `arg:"--json" help:"print raw JSON"`
-	Kind       string    `arg:"--kind" placeholder:"KIND" help:"show only locally classified files of this kind (production, test, fixture, generated, vendor, unknown)"`
-	Areas      areaFlags `arg:"--area" placeholder:"AREA" help:"show files tagged with any requested area and their parent directories; repeatable, local only"`
-	Repository string    `arg:"--repo" placeholder:"OWNER/REPOSITORY[@REF]" help:"show one exact indexed repository instead of the local checkout"`
-	Repo       string    `arg:"-"`
-	Path       string    `arg:"-"`
-	Targets    []string  `arg:"positional" placeholder:"PATH" help:"local path (default .); legacy remote syntax also accepts OWNER/REPOSITORY [PATH]"`
+	Depth           int           `arg:"--depth" default:"1" placeholder:"N" help:"levels to descend"`
+	JSON            bool          `arg:"--json" help:"print raw JSON"`
+	Purposes        selectorFlags `arg:"--purpose" placeholder:"LABEL" help:"match local file purpose; repeatable"`
+	DomainAreas     selectorFlags `arg:"--domain-area" placeholder:"LABEL" help:"match local file domain area; repeatable"`
+	FunctionalAreas selectorFlags `arg:"--functional-area" placeholder:"LABEL" help:"match local file functional area; repeatable"`
+	Keywords        selectorFlags `arg:"--keyword" placeholder:"LABEL" help:"match local file keyword; repeatable"`
+	Repository      string        `arg:"--repo" placeholder:"OWNER/REPOSITORY[@REF]" help:"show one exact indexed repository instead of the local checkout"`
+	Repo            string        `arg:"-"`
+	Path            string        `arg:"-"`
+	Targets         []string      `arg:"positional" placeholder:"PATH" help:"local path (default .); legacy remote syntax also accepts OWNER/REPOSITORY [PATH]"`
 }
 
 // Description returns the command description used by the argument parser.
@@ -86,24 +87,20 @@ func (command *command) execute(values *Request) error {
 	if err != nil {
 		return err
 	}
-	var kind sourcedomain.Kind
-	if values.Kind != "" {
-		var valid bool
-		kind, valid = sourcedomain.ParseKind(values.Kind)
-		if !valid {
-			return fmt.Errorf("invalid --kind %q: expected production, test, fixture, generated, vendor, or unknown", values.Kind)
-		}
-		if remote {
-			return fmt.Errorf("--kind is only supported for local trees; indexed tree entries have no source-kind metadata")
-		}
-	}
-	for _, area := range values.Areas {
-		if !directorymeta.ValidArea(area) {
-			return fmt.Errorf("invalid --area %q: expected a lowercase name with single interior hyphens", area)
+	selections := directorymeta.SelectorsV1{Purposes: []string(values.Purposes), DomainAreas: []string(values.DomainAreas), FunctionalAreas: []string(values.FunctionalAreas), Keywords: []string(values.Keywords)}
+	for _, category := range []struct {
+		name   string
+		values []string
+	}{
+		{"--purpose", selections.Purposes}, {"--domain-area", selections.DomainAreas}, {"--functional-area", selections.FunctionalAreas}, {"--keyword", selections.Keywords},
+	} {
+		if remote && len(category.values) > 0 {
+			return fmt.Errorf("%s is only supported for local trees; remote indexes have no verified file annotations", category.name)
 		}
 	}
-	if remote && len(values.Areas) > 0 {
-		return fmt.Errorf("--area is only supported for local trees; indexed tree entries have no verified area metadata")
+	selector, err := directorymeta.CompileSelectorsV1(selections)
+	if err != nil {
+		return err
 	}
 	var data wire.TreeResponse
 	if remote {
@@ -114,7 +111,7 @@ func (command *command) execute(values *Request) error {
 		}
 		data, err = application.APIClient().Tree(application.Invocation(), server, apiclient.TreeRequest{Repo: values.Repo, Path: values.Path, Depth: values.Depth})
 	} else {
-		data, err = command.local(values.Path, values.Depth, kind, []string(values.Areas))
+		data, err = command.local(values.Path, values.Depth, selector)
 	}
 	if err != nil {
 		return err
@@ -122,8 +119,13 @@ func (command *command) execute(values *Request) error {
 	if err := rendercommand.Tree(data, application.Stdout(), values.JSON); err != nil {
 		return err
 	}
-	if !values.JSON && len(data.Entries) == 0 {
-		application.RequestExit(1)
+	if len(data.Entries) == 0 {
+		if selector.Requested() && !remote {
+			fmt.Fprintln(application.Stderr(), "No selected files match current metadata; run grepple overview or grepple verify to inspect missing, invalid or stale annotations.")
+		}
+		if !values.JSON || selector.Requested() && !remote {
+			application.RequestExit(1)
+		}
 	}
 	return nil
 }

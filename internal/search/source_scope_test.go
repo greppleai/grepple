@@ -75,15 +75,16 @@ func writeScopeFile(t *testing.T, root, relative string) {
 
 func writeScopeMetadata(t *testing.T, root string, kinds map[string]string) {
 	t.Helper()
-	files := make([]directorymeta.File, 0, len(kinds))
+	files := make([]directorymeta.FileV1, 0, len(kinds))
 	for name, kind := range kinds {
 		digest, err := filedigest.SHA256Hex(filepath.Join(root, name))
 		if err != nil {
 			t.Fatal(err)
 		}
-		files = append(files, directorymeta.File{Path: name, Description: "Scope fixture.", Kind: kind, Checksum: digest})
+		purpose := map[string]string{"production": "Implementation", "test": "Testing"}[kind]
+		files = append(files, directorymeta.FileV1{Name: name, Description: "Scope fixture.", Purpose: purpose, Checksum: digest})
 	}
-	if err := directorymeta.Write(root, root, directorymeta.Metadata{Description: "Scope fixtures.", Responsibilities: []string{"Test source scope."}, Files: files}); err != nil {
+	if err := directorymeta.WriteDirectoryV1(root, root, directorymeta.DirectoryV1{Files: files}); err != nil {
 		t.Fatal(err)
 	}
 }

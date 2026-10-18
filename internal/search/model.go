@@ -43,7 +43,10 @@ type Params struct {
 	// ImmutableNavigationRevision is a trusted caller's immutable source identity.
 	ImmutableNavigationRevision string `json:"-"`
 	NoRelated                   bool   `json:"-"`
-	At                          string `json:"-"`
+	// MetadataCandidates is a non-nil, source-discovered candidate universe for
+	// local metadata-filtered CLI searches. An empty slice means no selected files.
+	MetadataCandidates []string `json:"-"`
+	At                 string   `json:"-"`
 	// AtScope is local-only; RequestFromParams never serializes it to a router.
 	AtScope        *parser.ScopeSelector `json:"-"`
 	Root           string                `json:"-"`

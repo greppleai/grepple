@@ -54,6 +54,11 @@ func BuildSegments(content, language string, hitLines map[int]bool) []Segment {
 
 // BuildSegmentsWithStatus constructs segments and reports parser completeness.
 func BuildSegmentsWithStatus(content, language string, hitLines map[int]bool) ([]Segment, SegmentBuildStatus) {
+	return BuildSegmentsWithStatusObserved(content, language, hitLines, nil)
+}
+
+// BuildSegmentsWithStatusObserved calls observe only when a grammar is parsed.
+func BuildSegmentsWithStatusObserved(content, language string, hitLines map[int]bool, observe func(error)) ([]Segment, SegmentBuildStatus) {
 	if !utf8.ValidString(content) {
 		return buildPlainTextSegments(hitLines), SegmentBuildFailed
 	}
@@ -64,7 +69,7 @@ func BuildSegmentsWithStatus(content, language string, hitLines map[int]bool) ([
 	if adapter == nil {
 		return buildPlainTextSegments(hitLines), SegmentBuildUnsupported
 	}
-	segments, ok, recovered := analyzeStructure(adapter, content, hitLines)
+	segments, ok, recovered := analyzeStructureObserved(adapter, content, hitLines, observe)
 	if !ok {
 		return buildPlainTextSegments(hitLines), SegmentBuildFailed
 	}

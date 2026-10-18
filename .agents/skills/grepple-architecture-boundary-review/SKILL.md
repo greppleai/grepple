@@ -7,7 +7,7 @@ description: Use when deciding whether local code should move, split, merge, gai
 
 ## Investigate one proposed boundary
 
-1. Establish the source universe with `grepple sources explain SCOPE`, then inspect bounded physical relations with `grepple architecture directory --relations SCOPE`. Use `grepple architecture directory --json SCOPE` for the full source-linked relation evidence; follow cited ranges with `grepple --at PATH:START-END`. Directory ownership does not establish package intent.
+1. Check `grepple overview` for local coverage and candidate labels. Use `grepple tree --purpose implementation --domain-area LABEL SCOPE` to narrow leads only when the label is observed and current; metadata filters do not constrain architecture or graph. Establish the independent source universe with `grepple sources explain SCOPE`, then inspect bounded physical relations with `grepple architecture directory --relations SCOPE`. Use `grepple architecture directory --json SCOPE` for full source-linked relation evidence; follow cited ranges with `grepple --at PATH:START-END`. Directory ownership does not establish package intent.
 2. Search relevant files for repeated owner usage and concrete-type references. Inspect exact evidence with `grepple --at PATH:START-END`; verify public signatures before claiming API leakage.
 3. Test the proposed boundary from both sides: `grepple graph callers --at owner/file.go:LINE --depth 2 SCOPE` and `grepple graph callees --at consumer/file.go:LINE --depth 2 SCOPE`. Check candidates and omissions; static edges do not establish runtime behavior.
 

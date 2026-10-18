@@ -90,6 +90,8 @@ GREPPLE_CREATE_example
 
 The blank body line before the terminator preserves the new file's final newline. Creation does not overwrite an existing file. Existing-file edits preserve its LF/CRLF style and final-newline behavior.
 
+Unmarked bodies infer a missing end at EOF or before the next valid directive, with a warning. Use a named `--end-marker TOKEN` for directive-shaped source to prevent unintended splits; named terminators remain strict.
+
 Whole-file deletion requires the current lowercase SHA-256 digest, **not a three-character line anchor**:
 
 ```sh

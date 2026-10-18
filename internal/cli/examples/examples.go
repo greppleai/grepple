@@ -20,6 +20,13 @@ var taskExamples = []taskExample{
 		"grepple tree --depth 1 parser",
 		"grepple --outline parser/navigation.go",
 	}},
+	{Name: "metadata", Description: "Opt into bounded generation, inspect current labels, then filter local tree and search", Commands: []string{
+		"grepple init --only-directory internal/parser",
+		"grepple verify --json",
+		"grepple overview",
+		"grepple tree --purpose Implementation --depth 2 internal/parser",
+		"grepple --purpose Implementation --line-only -F 'Parse' internal/parser",
+	}},
 	{Name: "retrieve", Description: "Find content-matching files, then retrieve an exact declaration range", Commands: []string{
 		"grepple -F 'BuildNavigationGraph' --files-with-matches ./parser",
 		"grepple --line-only --enclosing -F 'BuildNavigationGraph' ./parser",

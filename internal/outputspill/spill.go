@@ -131,6 +131,31 @@ func Run(args []string, options Options, defaultThreshold int, workingDirectory 
 // RunWithFinalizer optionally observes only output copying/spilling after the
 // command callback returns. A nil finalizer preserves the ordinary Run behavior.
 func RunWithFinalizer(args []string, options Options, defaultThreshold int, workingDirectory string, run func(int) error, finalizer func(func() error) error) error {
+	return RunWithFinalizerObserved(args, options, defaultThreshold, workingDirectory, run, finalizer, nil)
+}
+
+// OutputMode is an allowlisted finalization outcome, never an artifact identity.
+type OutputMode string
+
+const (
+	ModeInline  OutputMode = "inline"
+	ModeSpilled OutputMode = "spilled"
+)
+
+// OutputReport contains only measured finalization bytes. LogicalObserved is
+// false when finalization could not stat the captured command output. ArtifactBytes
+// counts bytes newly persisted; a content-addressed deduplication writes zero.
+type OutputReport struct {
+	Mode            OutputMode
+	LogicalBytes    int64
+	LogicalObserved bool
+	StdoutBytes     int64
+	ArtifactBytes   int64
+}
+
+// RunWithFinalizerObserved reports finalization only when finish actually runs.
+// A nil observer retains the ordinary path with no additional write wrapping.
+func RunWithFinalizerObserved(args []string, options Options, defaultThreshold int, workingDirectory string, run func(int) error, finalizer func(func() error) error, observe func(OutputReport)) error {
 	if options.Disabled && len(args) >= 2 && args[0] == "artifacts" && args[1] == "clean" {
 		return run(int(^uint(0) >> 1))
 	}
@@ -171,7 +196,7 @@ func RunWithFinalizer(args []string, options Options, defaultThreshold int, work
 	commandErr := run(threshold)
 	os.Stdout = originalStdout
 	finish := func() error {
-		return finishOutputSpill(temporary, temporaryPath, outputDirectory, workingDirectory, threshold, args, originalStdout, commandErr)
+		return finishOutputSpill(temporary, temporaryPath, outputDirectory, workingDirectory, threshold, args, originalStdout, commandErr, observe)
 	}
 	if finalizer != nil {
 		return finalizer(finish)
@@ -189,7 +214,12 @@ func resolveOutputArtifactDirectory(configured, workingDirectory string) (string
 	return filepath.Join(workingDirectory, configured), nil
 }
 
-func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory, workingDirectory string, threshold int, args []string, stdout io.Writer, commandErr error) error {
+func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory, workingDirectory string, threshold int, args []string, stdout io.Writer, commandErr error, observe func(OutputReport)) error {
+	var report OutputReport
+	if observe != nil {
+		defer func() { observe(report) }()
+		stdout = &countedWriter{writer: stdout, written: &report.StdoutBytes}
+	}
 	if closeErr := temporary.Close(); commandErr == nil && closeErr != nil {
 		commandErr = closeErr
 	}
@@ -201,7 +231,10 @@ func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory, worki
 		}
 		return statErr
 	}
+	report.LogicalObserved = true
+	report.LogicalBytes = info.Size()
 	if info.Size() <= int64(threshold) {
+		report.Mode = ModeInline
 		copyErr := copySpillToStdout(temporaryPath, stdout)
 		_ = os.Remove(temporaryPath)
 		if commandErr != nil {
@@ -209,14 +242,31 @@ func finishOutputSpill(temporary *os.File, temporaryPath, outputDirectory, worki
 		}
 		return copyErr
 	}
-	descriptor, err := persistSpilledOutput(temporaryPath, outputDirectory, workingDirectory, info.Size(), args)
+	descriptor, persisted, err := persistSpilledOutput(temporaryPath, outputDirectory, workingDirectory, info.Size(), args)
 	if err == nil {
+		report.Mode = ModeSpilled
+		if persisted {
+			report.ArtifactBytes = info.Size()
+		}
 		err = writeSpillDescriptor(stdout, descriptor, outputIsJSON(args))
 	}
 	if commandErr != nil {
 		return commandErr
 	}
 	return err
+}
+
+// countedWriter measures committed bytes, including partial descriptor writes.
+// It is installed only for observed finalization and never holds output content.
+type countedWriter struct {
+	writer  io.Writer
+	written *int64
+}
+
+func (w *countedWriter) Write(p []byte) (int, error) {
+	n, err := w.writer.Write(p)
+	*w.written += int64(n)
+	return n, err
 }
 
 func copySpillToStdout(path string, stdout io.Writer) error {
@@ -229,18 +279,18 @@ func copySpillToStdout(path string, stdout io.Writer) error {
 	return err
 }
 
-func persistSpilledOutput(temporaryPath, outputDirectory, workingDirectory string, size int64, args []string) (Descriptor, error) {
+func persistSpilledOutput(temporaryPath, outputDirectory, workingDirectory string, size int64, args []string) (Descriptor, bool, error) {
 	file, err := os.Open(temporaryPath)
 	if err != nil {
-		return Descriptor{}, err
+		return Descriptor{}, false, err
 	}
 	hash := sha256.New()
 	if _, err := io.Copy(hash, file); err != nil {
 		_ = file.Close()
-		return Descriptor{}, err
+		return Descriptor{}, false, err
 	}
 	if err := file.Close(); err != nil {
-		return Descriptor{}, err
+		return Descriptor{}, false, err
 	}
 	digest := hex.EncodeToString(hash.Sum(nil))
 	format := "text"
@@ -249,10 +299,13 @@ func persistSpilledOutput(temporaryPath, outputDirectory, workingDirectory strin
 		format, extension = "json", ".json"
 	}
 	finalPath := filepath.Join(outputDirectory, digest+extension)
+	persisted := false
 	if _, err := os.Stat(finalPath); err == nil {
 		_ = os.Remove(temporaryPath)
 	} else if err := os.Rename(temporaryPath, finalPath); err != nil {
-		return Descriptor{}, err
+		return Descriptor{}, false, err
+	} else {
+		persisted = true
 	}
 	displayPath, err := filepath.Rel(workingDirectory, finalPath)
 	if err != nil {
@@ -275,7 +328,7 @@ func persistSpilledOutput(temporaryPath, outputDirectory, workingDirectory strin
 			_ = file.Close()
 		}
 	}
-	return descriptor, nil
+	return descriptor, persisted, nil
 }
 
 func writeSpillDescriptor(writer io.Writer, descriptor Descriptor, jsonMode bool) error {

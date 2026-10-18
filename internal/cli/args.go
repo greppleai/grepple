@@ -14,6 +14,7 @@ import (
 	"github.com/greppleai/grepple/internal/config"
 	"github.com/greppleai/grepple/internal/outputspill"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const DefaultResultLimit = searchcommand.DefaultResultLimit
@@ -56,21 +57,38 @@ func Run(args []string) error {
 	invocation, root := tracing.Start(context.Background(), "cli.invocation")
 	defer func() { root.End(); tracing.Close() }()
 	descriptorArgs := normalizedApplicationArgs(args)
-	err = outputspill.RunWithFinalizer(descriptorArgs, spill, settings.Repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(_ int) error {
+	var finalizeSpan trace.Span
+	var observeOutput func(outputspill.OutputReport)
+	if root.IsRecording() {
+		observeOutput = func(report outputspill.OutputReport) {
+			// The finalizer can return a command error. Export only measured bytes.
+			finalizeSpan.SetAttributes(attribute.Int64("cli.output.stdout_bytes", report.StdoutBytes))
+			if report.LogicalObserved {
+				finalizeSpan.SetAttributes(attribute.Int64("cli.output.logical_bytes", report.LogicalBytes))
+			}
+			if report.Mode == outputspill.ModeInline || report.Mode == outputspill.ModeSpilled {
+				finalizeSpan.SetAttributes(attribute.String("cli.output.mode", string(report.Mode)))
+			}
+			if report.Mode == outputspill.ModeSpilled {
+				finalizeSpan.SetAttributes(attribute.Int64("cli.output.artifact_bytes", report.ArtifactBytes))
+			}
+		}
+	}
+	err = outputspill.RunWithFinalizerObserved(descriptorArgs, spill, settings.Repository.Output.SpillThresholdBytes, cliruntime.WorkingDirectory(), func(_ int) error {
 		commandContext, commandSpan := tracing.Start(invocation, "cli.command")
 		defer commandSpan.End()
 		if commandSpan.IsRecording() {
-			commandSpan.SetAttributes(attribute.String("cli.command.name", values.traceCommandName()))
+			commandSpan.SetAttributes(values.traceCommandAttributes()...)
 		}
 		command := newCommandContextWithInvocation(repositoryOptions, exitState.Request, settings, commandContext)
 		return executeArguments(command, values)
 	}, func(finish func() error) error {
-		_, finalizeSpan := tracing.Start(invocation, "cli.output_spill")
+		_, finalizeSpan = tracing.Start(invocation, "cli.output_spill")
 		defer finalizeSpan.End()
 		// The returned error can include a command error even when the output
 		// copy succeeded. Do not label finalization with that ambiguous outcome.
 		return finish()
-	})
+	}, observeOutput)
 	if err != nil {
 		return err
 	}
@@ -156,7 +174,7 @@ func insertApplicationArgument(args []string, index int, value string) []string 
 }
 
 func explicitApplicationCommand(args []string) (string, []string) {
-	commands := map[string]bool{"setup": true, "search": true, "write": true, "grit": true, "hook": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "area": true, "start": true, "init": true, "verify": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
+	commands := map[string]bool{"setup": true, "search": true, "write": true, "grit": true, "hook": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "area": true, "start": true, "init": true, "verify": true, "overview": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
 	for index := 0; index < len(args); index++ {
 		value := args[index]
 		if value == "--artifact-dir" || value == "--spill-threshold-bytes" {
@@ -175,7 +193,7 @@ func explicitApplicationCommand(args []string) (string, []string) {
 }
 
 func hasExplicitApplicationCommand(args []string) bool {
-	commands := map[string]bool{"setup": true, "search": true, "write": true, "grit": true, "hook": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "area": true, "start": true, "init": true, "verify": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
+	commands := map[string]bool{"setup": true, "search": true, "write": true, "grit": true, "hook": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "area": true, "start": true, "init": true, "verify": true, "overview": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
 	for index := 0; index < len(args); index++ {
 		value := args[index]
 		if value == "--help" || value == "-h" || value == "--version" {
@@ -207,7 +225,7 @@ func validateCommandAvailability(command string, args []string) error {
 	}
 	availability := map[string]string{
 		"write": "local-only", "hook": "local-only", "anchors": "local-only", "examples": "source-independent", "artifacts": "local-only", "context": "local-only",
-		"languages": "source-independent", "sources": "local-only", "init": "local-only", "verify": "local-only", "ai-provider": "source-independent", "metrics": "local-only",
+		"languages": "source-independent", "sources": "local-only", "init": "local-only", "verify": "local-only", "overview": "local-only", "ai-provider": "source-independent", "metrics": "local-only",
 	}
 	remoteOnly := map[string]bool{"get": true, "repos": true, "refs": true, "rules": true, "login": true, "logout": true}
 	for _, argument := range args {

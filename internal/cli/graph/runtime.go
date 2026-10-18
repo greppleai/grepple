@@ -14,6 +14,7 @@ import (
 // metadataInput describes one graph result page.
 type metadataInput struct {
 	Paths                              []string
+	Filtered                           bool
 	Returned, MaxFiles, MaxOutputBytes int
 	JSON                               bool
 	Sources                            SourceSummary
@@ -66,7 +67,7 @@ func graphResultMetadata(input metadataInput) *wire.ResultMetadata {
 		Order:   "source",
 		Page:    wire.ResultPage{Returned: input.Returned, Complete: omitted == 0 && input.Sources.Failed == 0 && input.Sources.Recovered == 0},
 		Limits:  wire.ResultLimits{MaxFiles: input.MaxFiles, MaxOutputBytes: input.MaxOutputBytes, JSONByteUncapped: input.JSON},
-		Omitted: wire.ResultOmissions{Sources: omitted}, Diagnostics: sourceDiagnostics(input.Sources), NextCommand: input.NextCommand,
+		Omitted: wire.ResultOmissions{Sources: omitted}, Diagnostics: graphMetadataDiagnostics(sourceDiagnostics(input.Sources), input.Filtered, input.Filtered && input.Returned == 0), NextCommand: input.NextCommand,
 	}
 }
 

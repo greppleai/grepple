@@ -24,6 +24,14 @@ const DefaultResultLimit = search.DefaultPageLimit
 // DefaultTextOutputBytes keeps human-readable search output below common agent tool-result limits. JSON remains uncapped so it is never partial.
 const DefaultTextOutputBytes = 16 * 1024
 
+// metadataFlags consumes exactly one value per repeatable selector option.
+type metadataFlags []string
+
+func (flags *metadataFlags) UnmarshalText(value []byte) error {
+	*flags = append(*flags, string(value))
+	return nil
+}
+
 type Args struct {
 	Local      bool   `arg:"--local" help:"search only the local working directory (this is the default)"`
 	Remote     bool   `arg:"-R,--remote" help:"also query the remote shard/router (default: local only)"`
@@ -31,40 +39,44 @@ type Args struct {
 	Cursor     string `arg:"--cursor" placeholder:"TOKEN" help:"resume an account-bound remote content-search page; no local search"`
 	Recursive  bool   `arg:"-r,--recursive" help:"search directories recursively (compatibility alias; already the default)"`
 	cliruntime.CommonArgs
-	LineNumber       bool     `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
-	LineOnly         bool     `arg:"--line-only" help:"print only matching lines with parser-verified nearest construct and containing scope when available"`
-	Enclosing        bool     `arg:"--enclosing" help:"line-only: annotate body matches with the nearest enclosing multi-line syntax range"`
-	NoAnnotateScopes bool     `arg:"--no-annotate-scopes" help:"line-only: omit nearest/scope annotations and keep plain source rows"`
-	OnlyMatching     bool     `arg:"-o,--only-matching" help:"print each matched substring"`
-	Files            bool     `arg:"-l,--files" help:"list files by path; unlike grep -l, does not search contents (use --files-with-matches)"`
-	FilesWithMatches bool     `arg:"--files-with-matches" help:"list paths whose contents match (grep -l equivalent); accepts multiple PATHs"`
-	Outline          bool     `arg:"-O,--outline" help:"print each file's structural outline with verified local scope selectors"`
-	Kinds            []string `arg:"--kind,separate" placeholder:"CATEGORY" help:"outline: show only types, functions, or variables; repeat or comma-separate"`
-	Depth            int      `arg:"--depth" placeholder:"N" help:"outline: cap nesting depth for JSON/YAML (0 = unlimited)"`
-	Count            bool     `arg:"-c,--count" help:"print matching-line counts per file"`
-	CountByRepo      bool     `arg:"--count-by-repo" help:"print complete counts grouped by repository (compatibility name for --count-summary)"`
-	CountSummary     bool     `arg:"--count-summary" help:"print complete aggregate file/match counts independent of paging"`
-	JSON             bool     `arg:"--json" help:"print full JSON results"`
-	JSONMatches      bool     `arg:"--json-matches" help:"print compact JSON matches"`
-	Regex            bool     `arg:"-E,--regex" help:"use JavaScript regular expressions (default; -E is a compatibility alias)"`
-	Fixed            bool     `arg:"-F,--fixed-strings" help:"treat the pattern as a literal string"`
-	IgnoreCase       bool     `arg:"-i,--ignore-case" help:"ignore case distinctions"`
-	InvertMatch      bool     `arg:"-v,--invert-match" help:"select lines that do not match"`
-	Context          int      `arg:"-C,--context" placeholder:"N" help:"print N lines before and after matches"`
-	AfterContext     int      `arg:"-A,--after-context" placeholder:"N" help:"print N lines after matches"`
-	BeforeContext    int      `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
-	MaxFiles         int      `arg:"--max-files" placeholder:"N" help:"admit at most N matching result files before paging (0 = unlimited)"`
-	MaxOutputBytes   int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
-	Related          bool     `arg:"--related" help:"show repository-local types, callees, and callers (default for structural search)"`
-	NoRelated        bool     `arg:"--no-related" help:"disable automatic code navigation"`
-	FollowRelated    int      `arg:"--follow-related" placeholder:"N" help:"follow 1-3 outgoing call hops; search also shows direct callers of matches"`
-	At               string   `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve a declaration at PATH:LINE, exact legacy lines at PATH:START-END, or a verified local scope with --at PATH @KIND:LINE[-END]"`
-	Skip             int      `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
-	Limit            int      `arg:"--limit" default:"20" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
-	Sort             string   `arg:"--sort" default:"path" placeholder:"ORDER" help:"order result files by path (default) or matching-line count (matches)"`
-	Repos            []string `arg:"--repo,separate" placeholder:"PATTERN" help:"restrict remote repositories; repeatable"`
-	Query            string   `arg:"positional" placeholder:"PATTERN"`
-	Globs            []string `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to search; repeat for multiple roots"`
+	LineNumber       bool          `arg:"-n,--line-number" help:"include line numbers (enabled by default)"`
+	LineOnly         bool          `arg:"--line-only" help:"print only matching lines with parser-verified nearest construct and containing scope when available"`
+	Enclosing        bool          `arg:"--enclosing" help:"line-only: annotate body matches with the nearest enclosing multi-line syntax range"`
+	NoAnnotateScopes bool          `arg:"--no-annotate-scopes" help:"line-only: omit nearest/scope annotations and keep plain source rows"`
+	OnlyMatching     bool          `arg:"-o,--only-matching" help:"print each matched substring"`
+	Files            bool          `arg:"-l,--files" help:"list files by path; unlike grep -l, does not search contents (use --files-with-matches)"`
+	FilesWithMatches bool          `arg:"--files-with-matches" help:"list paths whose contents match (grep -l equivalent); accepts multiple PATHs"`
+	Outline          bool          `arg:"-O,--outline" help:"print each file's structural outline with verified local scope selectors"`
+	Kinds            []string      `arg:"--kind,separate" placeholder:"CATEGORY" help:"outline: show only types, functions, or variables; repeat or comma-separate"`
+	Depth            int           `arg:"--depth" placeholder:"N" help:"outline: cap nesting depth for JSON/YAML (0 = unlimited)"`
+	Count            bool          `arg:"-c,--count" help:"print matching-line counts per file"`
+	CountByRepo      bool          `arg:"--count-by-repo" help:"print complete counts grouped by repository (compatibility name for --count-summary)"`
+	CountSummary     bool          `arg:"--count-summary" help:"print complete aggregate file/match counts independent of paging"`
+	JSON             bool          `arg:"--json" help:"print full JSON results"`
+	JSONMatches      bool          `arg:"--json-matches" help:"print compact JSON matches"`
+	Regex            bool          `arg:"-E,--regex" help:"use JavaScript regular expressions (default; -E is a compatibility alias)"`
+	Fixed            bool          `arg:"-F,--fixed-strings" help:"treat the pattern as a literal string"`
+	IgnoreCase       bool          `arg:"-i,--ignore-case" help:"ignore case distinctions"`
+	InvertMatch      bool          `arg:"-v,--invert-match" help:"select lines that do not match"`
+	Context          int           `arg:"-C,--context" placeholder:"N" help:"print N lines before and after matches"`
+	AfterContext     int           `arg:"-A,--after-context" placeholder:"N" help:"print N lines after matches"`
+	BeforeContext    int           `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
+	MaxFiles         int           `arg:"--max-files" placeholder:"N" help:"admit at most N matching result files before paging (0 = unlimited)"`
+	MaxOutputBytes   int           `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	Related          bool          `arg:"--related" help:"show repository-local types, callees, and callers (default for structural search)"`
+	NoRelated        bool          `arg:"--no-related" help:"disable automatic code navigation"`
+	FollowRelated    int           `arg:"--follow-related" placeholder:"N" help:"follow 1-3 outgoing call hops; search also shows direct callers of matches"`
+	At               string        `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve a declaration at PATH:LINE, exact legacy lines at PATH:START-END, or a verified local scope with --at PATH @KIND:LINE[-END]"`
+	Skip             int           `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
+	Limit            int           `arg:"--limit" default:"20" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
+	Sort             string        `arg:"--sort" default:"path" placeholder:"ORDER" help:"order result files by path (default) or matching-line count (matches)"`
+	Repos            []string      `arg:"--repo,separate" placeholder:"PATTERN" help:"restrict remote repositories; repeatable"`
+	Purposes         metadataFlags `arg:"--purpose" placeholder:"LABEL" help:"restrict local files by exact purpose; repeatable"`
+	DomainAreas      metadataFlags `arg:"--domain-area" placeholder:"LABEL" help:"restrict local files by exact domain area; repeatable"`
+	FunctionalAreas  metadataFlags `arg:"--functional-area" placeholder:"LABEL" help:"restrict local files by exact functional area; repeatable"`
+	Keywords         metadataFlags `arg:"--keyword" placeholder:"LABEL" help:"restrict local files by exact keyword; repeatable"`
+	Query            string        `arg:"positional" placeholder:"PATTERN"`
+	Globs            []string      `arg:"positional" placeholder:"PATH" help:"file, directory, or glob to search; repeat for multiple roots"`
 }
 
 // searchArgs remains as a package-local compatibility name.
@@ -97,6 +109,13 @@ func parseSearchArgs(application cliruntime.Context, args []string) (*Options, s
 
 func optionsFromArgs(application cliruntime.Context, values *Args, usage interface{ WriteUsage(io.Writer) }) (*Options, string, bool, error) {
 	applyCountSummaryAlias(values)
+	metadataSelector, err := compileSearchMetadataSelector(values)
+	if err != nil {
+		return nil, "", false, err
+	}
+	if metadataSelector.Requested() && !values.Related && values.FollowRelated == 0 {
+		values.NoRelated = true
+	}
 	if err := configureRelatedDefaults(values); err != nil {
 		return nil, "", false, err
 	}
@@ -142,6 +161,7 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 	remoteEnabled := !values.Local && (values.Remote || values.RemoteOnly || values.Cursor != "" || values.Server != "")
 	return &Options{
 		Params:           params,
+		MetadataSelector: metadataSelector,
 		RemoteOnly:       values.RemoteOnly || values.Cursor != "",
 		Cursor:           values.Cursor,
 		LineOnly:         values.LineOnly,

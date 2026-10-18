@@ -2,9 +2,11 @@ package clitelemetry
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/greppleai/grepple/internal/config"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 )
 
@@ -82,5 +84,18 @@ func TestParallelInvocationsKeepIndependentTraceIDs(t *testing.T) {
 	defer two.Close()
 	if len(first.GetSpans()) != 1 || len(second.GetSpans()) != 1 {
 		t.Fatal("invocation exporters shared state")
+	}
+}
+
+// Export failures from an optional collector must not reach the SDK's stderr handler.
+type failingExporter struct{ sdktrace.SpanExporter }
+
+func (failingExporter) ExportSpans(context.Context, []sdktrace.ReadOnlySpan) error {
+	return errors.New("collector unavailable")
+}
+
+func TestQuietExporterIgnoresCollectorFailure(t *testing.T) {
+	if err := (quietExporter{SpanExporter: failingExporter{}}).ExportSpans(context.Background(), nil); err != nil {
+		t.Fatal(err)
 	}
 }

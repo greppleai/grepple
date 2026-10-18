@@ -37,7 +37,7 @@ func TestClassifyUsesFreshDirectoryMetadataOnly(t *testing.T) {
 	}
 }
 
-func TestClassifyMissingKindInCurrentMetadataIsUnknown(t *testing.T) {
+func TestClassifyCustomPurposeInCurrentMetadataIsUnknown(t *testing.T) {
 	root := t.TempDir()
 	path := filepath.Join(root, "ordinary.go")
 	if err := os.WriteFile(path, []byte("package ordinary\n"), 0o600); err != nil {
@@ -47,8 +47,8 @@ func TestClassifyMissingKindInCurrentMetadataIsUnknown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	metadata := directorymeta.Metadata{Description: "Legacy metadata.", Responsibilities: []string{"Describe source."}, Files: []directorymeta.File{{Path: "ordinary.go", Description: "Ordinary source.", Checksum: digest}}}
-	if err := directorymeta.Write(root, root, metadata); err != nil {
+	metadata := directorymeta.DirectoryV1{Files: []directorymeta.FileV1{{Name: "ordinary.go", Description: "Ordinary source.", Purpose: "Custom research", Checksum: digest}}}
+	if err := directorymeta.WriteDirectoryV1(root, root, metadata); err != nil {
 		t.Fatal(err)
 	}
 	if kind := Classify(path, root); kind != Unknown {
@@ -83,15 +83,16 @@ func TestParseKindDefaultsMissingToUnknownAndRejectsInvalid(t *testing.T) {
 
 func writeKinds(t *testing.T, root, directory string, kinds map[string]Kind) {
 	t.Helper()
-	files := make([]directorymeta.File, 0, len(kinds))
+	files := make([]directorymeta.FileV1, 0, len(kinds))
 	for name, kind := range kinds {
 		digest, err := filedigest.SHA256Hex(filepath.Join(directory, name))
 		if err != nil {
 			t.Fatal(err)
 		}
-		files = append(files, directorymeta.File{Path: name, Description: "Test fixture.", Kind: string(kind), Checksum: digest})
+		purpose := map[Kind]string{Production: "Implementation", Test: "Testing", Fixture: "Fixture", Generated: "Generated", Vendor: "Vendor"}[kind]
+		files = append(files, directorymeta.FileV1{Name: name, Description: "Test fixture.", Purpose: purpose, Checksum: digest})
 	}
-	if err := directorymeta.Write(root, directory, directorymeta.Metadata{Description: "Test sources.", Responsibilities: []string{"Support tests."}, Files: files}); err != nil {
+	if err := directorymeta.WriteDirectoryV1(root, directory, directorymeta.DirectoryV1{Files: files}); err != nil {
 		t.Fatal(err)
 	}
 }

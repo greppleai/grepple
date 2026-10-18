@@ -34,7 +34,7 @@ grepple setup --list
 
 ## Claude Code plugin
 
-The plugin provides eight skills and two hooks. It requires Node.js 18+ on Claude
+The plugin provides nine skills and two hooks. It requires Node.js 18+ on Claude
 Code's PATH (including native Claude Code installations) to run the hooks.
 In Claude Code 2.1.275 or later, one command in a Claude Code session registers
 this repository's marketplace and installs its `grepple` plugin:
@@ -64,8 +64,11 @@ SessionStart is the earliest supported automatic hook. Windows PowerShell tool
 sessions do not inherit this Bash PATH adjustment; add the installed directory
 to your PATH separately. Windows extraction uses PowerShell; Git Bash's
 `cygpath` is needed for the Bash PATH adjustment. Unsupported platforms or
-failed downloads leave the session unchanged and report an error. Run
-`grepple --version` in Claude's shell to check readiness.
+failed downloads leave the session unchanged and report an error. At each
+`SessionStart`, the hook checks the available CLI for `claude-grep-guard` support
+and supplies Claude one readiness line (active, inactive, or setup failed),
+plus a first-search hint. Run `grepple --version` in Claude's shell to check
+which CLI the agent will use.
 
 A `PreToolUse` hook denies the built-in Grep/Glob tools and shell invocations of
 `grep`, `rg`, `find`, `fd`, `ag`, `ack`, `locate`, and their variants. It returns
@@ -73,15 +76,18 @@ Grepple alternatives; ordinary shell arguments and quoted data are not blocked.
 For a genuinely necessary shell exception append `# grep-guard:allow` to the
 command. The guard fails open if its CLI cannot run. **The published CLI must
 include `claude-grep-guard`** for this hook to enforce anything: older binaries
-will leave the guard inactive until a new release is published. Plugin updates
-do not silently upgrade an existing working CLI; keep CLI and plugin versions
-aligned. If you prefer no automatic executable download or command blocking,
+leave the guard inactive until a new release is published. If a PATH CLI works,
+the installer does not replace it; an existing plugin-private CLI may still
+run the guard when the PATH CLI lacks support. SessionStart probes the actual
+hook capability, not version strings or plugin commits, and reports when the
+CLI needs an upgrade. Plugin updates do not silently upgrade an existing
+working CLI. If you prefer no automatic executable download or command blocking,
 use `grepple setup claude` instead of the plugin.
 
 Check `/plugin` and try `/grepple:grepple-local-grep-and-search`. Claude can
 also select skills automatically. The marketplace lives at
 `.claude-plugin/marketplace.json`; its source is `./.agents`, whose manifest is
-`.agents/.claude-plugin/plugin.json`. All eight canonical
+`.agents/.claude-plugin/plugin.json`. All nine canonical
 `.agents/skills/grepple-*/SKILL.md` files are discovered without duplicate skill
 copies. To test a local checkout without registering a marketplace, run
 `claude --plugin-dir /path/to/grepple/.agents`. Maintainers can run

@@ -12,6 +12,7 @@ import (
 	"sync/atomic"
 
 	"github.com/greppleai/grepple/internal/parser"
+	"github.com/greppleai/grepple/internal/workaccount"
 )
 
 // readInvocations counts candidate files whose contents were read, so tests can
@@ -195,8 +196,19 @@ func FilesContext(ctx context.Context, p Params, candidates []string) ([]FileMat
 	}
 	files := candidates
 	if files == nil {
+		files = p.MetadataCandidates
+	}
+	if p.MetadataCandidates != nil && candidates == nil {
+		if work := workaccount.From(ctx); work != nil {
+			work.Selected(len(files))
+		}
+	}
+	if files == nil {
 		finish := beginCandidateDiscovery(ctx, "content")
 		files, e = collectCandidateFilesConfiguredContext(ctx, p.Globs, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths, productionOnly: p.ProductionOnly})
+		if work := workaccount.From(ctx); work != nil {
+			work.Candidates(len(files))
+		}
 		if finish != nil {
 			finish(len(files), e)
 		}
@@ -210,10 +222,14 @@ func FilesContext(ctx context.Context, p Params, candidates []string) ([]FileMat
 	limit := resultLimit(p)
 	scan := candidateScan{ctx: ctx, p: p, m: m, repoFilter: NewRepoFilter(p.Repo, p.ExcludeRepo), fromIndex: candidates != nil}
 	var out []FileMatch
+	finishScan := beginLocalPhase(ctx, "cli.search.scan")
 	if limit <= 0 || p.Sort == ResultSortMatches {
 		out = scan.scanAll(files)
 	} else {
 		out = scan.scanWindowed(files, p.Skip+limit)
+	}
+	if finishScan != nil {
+		finishScan(ctx.Err())
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -225,11 +241,24 @@ func FilesContext(ctx context.Context, p Params, candidates []string) ([]FileMat
 	// Parse returned files only when the caller needs structural segments or
 	// multi-line construct ranges for matching lines.
 	if !p.SkipSegments || p.LineRanges || p.EnclosingRanges || p.AnnotateScopes {
+		// Scope/range and related navigation may run additional parsers. Only
+		// publish parse totals when this segment pass is the complete path.
+		var work *workaccount.Counters
+		if !p.Related && !p.LineRanges && !p.EnclosingRanges && !p.AnnotateScopes && !p.SkipSegments {
+			work = workaccount.From(ctx)
+			if work != nil {
+				work.ParsingApplicable()
+			}
+		}
+		finishParse := beginLocalPhase(ctx, "cli.search.parse")
 		runParallel(len(out), func(index int) {
 			if ctx.Err() == nil {
-				analyzeMatchStructure(&out[index], p)
+				analyzeMatchStructure(&out[index], p, work)
 			}
 		})
+		if finishParse != nil {
+			finishParse(ctx.Err())
+		}
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, err
@@ -320,7 +349,7 @@ func (s candidateScan) scanAll(files []string) []FileMatch {
 	results := make([]*FileMatch, len(files))
 	runParallel(len(files), func(index int) {
 		if s.ctx == nil || s.ctx.Err() == nil {
-			results[index] = scanCandidate(s.p, s.m, files[index], displayPathFrom(files[index], base), s.repoFilter, s.fromIndex)
+			results[index] = scanCandidate(s.ctx, s.p, s.m, files[index], displayPathFrom(files[index], base), s.repoFilter, s.fromIndex)
 		}
 	})
 	out := collectMatches(results)
@@ -353,7 +382,7 @@ func (s candidateScan) scanWindowed(files []string, target int) []FileMatch {
 		runParallel(end-start, func(k int) {
 			c := cands[start+k]
 			if s.ctx == nil || s.ctx.Err() == nil {
-				results[k] = scanCandidate(s.p, s.m, c.file, c.display, s.repoFilter, s.fromIndex)
+				results[k] = scanCandidate(s.ctx, s.p, s.m, c.file, c.display, s.repoFilter, s.fromIndex)
 			}
 		})
 		out = append(out, collectMatches(results)...)
@@ -379,7 +408,7 @@ func Content(p Params, name string, content []byte) (*FileMatch, error) {
 	}
 	fm := scanContent(p, m, content, name, name)
 	if fm != nil && (!p.SkipSegments || p.LineRanges || p.EnclosingRanges || p.AnnotateScopes) {
-		analyzeMatchStructure(fm, p)
+		analyzeMatchStructure(fm, p, nil)
 	}
 	return fm, nil
 }
@@ -389,7 +418,7 @@ func Content(p Params, name string, content []byte) (*FileMatch, error) {
 // candidates came from the Zoekt index (git-tracked, already inside the repo and
 // not .gitignored), letting us skip the path guards that only matter for a local
 // filesystem walk.
-func scanCandidate(p Params, m func(string) bool, file, display string, repoFilter *RepoFilter, fromIndex bool) *FileMatch {
+func scanCandidate(ctx context.Context, p Params, m func(string) bool, file, display string, repoFilter *RepoFilter, fromIndex bool) *FileMatch {
 	if fromIndex {
 		if !withinRoot(file, p.Root) || !pathMatchesGlobs(display, p.Globs) || pathContainsGitDirectory(file) {
 			return nil
@@ -400,6 +429,9 @@ func scanCandidate(p Params, m func(string) bool, file, display string, repoFilt
 	}
 	readInvocations.Add(1)
 	contentBytes, err := os.ReadFile(file)
+	if work := workaccount.From(ctx); work != nil {
+		work.ReadAttempt(len(contentBytes), err)
+	}
 	if err != nil {
 		return nil
 	}
@@ -467,10 +499,16 @@ func ListFilePathsContext(ctx context.Context, p Params, candidates []string) ([
 		ctx = context.Background()
 	}
 	files := candidates
+	if files == nil {
+		files = p.MetadataCandidates
+	}
 	var e error
 	if files == nil {
 		finish := beginCandidateDiscovery(ctx, "listing")
 		files, e = collectListingFilesConfiguredContext(ctx, p.Globs, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths, productionOnly: p.ProductionOnly})
+		if work := workaccount.From(ctx); work != nil {
+			work.Candidates(len(files))
+		}
 		if finish != nil {
 			finish(len(files), e)
 		}
@@ -481,6 +519,9 @@ func ListFilePathsContext(ctx context.Context, p Params, candidates []string) ([
 	out, err := listingDisplayPaths(ctx, p, files, candidates != nil)
 	if err != nil {
 		return nil, err
+	}
+	if work := workaccount.From(ctx); work != nil {
+		work.Selected(len(out))
 	}
 	sort.Strings(out)
 	return applyPathWindow(out, p), nil
@@ -553,9 +594,13 @@ func sortMatches(out []FileMatch, strategy string) {
 
 // analyzeMatchStructure asks parser for only the structural projections requested
 // by the caller. Result construction reuses the attached facts.
-func analyzeMatchStructure(fm *FileMatch, p Params) {
+func analyzeMatchStructure(fm *FileMatch, p Params, work *workaccount.Counters) {
 	if !p.SkipSegments {
-		fm.Segments, fm.StructureStatus = parser.BuildSegmentsWithStatus(fm.Content, fm.Language, fm.MatchLines)
+		var observe func(error)
+		if work != nil {
+			observe = work.ParseAttempt
+		}
+		fm.Segments, fm.StructureStatus = parser.BuildSegmentsWithStatusObserved(fm.Content, fm.Language, fm.MatchLines, observe)
 		fm.SegmentsReady = true
 	}
 	if p.AnnotateScopes {

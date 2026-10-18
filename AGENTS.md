@@ -25,7 +25,7 @@ Inspect source scope before architecture when exclusions or production/test comp
 
 - `grepple sources explain [PATH]`: config digest, classifications, exclusions, and explicit bypasses
 
-For initial location, run `grepple tree` to inspect top-level files and directories, then narrow to a likely subtree with `grepple tree PATH`. If an area tag is known, use repeatable `grepple tree --area NAME PATH` to show matching files and parent directories; `--kind` can narrow further. Verify metadata freshness and search source when tags are missing, stale, or incomplete. Follow tree leads with exact `--outline`/`--at` and focused graph queries rather than expanding the whole repository tree.
+For a new local session, run model-free `grepple overview` **first** to inspect checksum-current label vocabulary and coverage. Then run `grepple tree --depth 1` and expand a promising subtree. When a real label is known and current, use repeatable `grepple tree --purpose implementation --domain-area LABEL PATH` or local `grepple --purpose implementation --domain-area LABEL --files PATH`; OR within a category and AND categories on the same selected file. Missing/stale metadata never widens a filtered query: use unfiltered tree/search and `grepple verify` to inspect gaps. The former tree `--area` and file-classification `--kind` flags are gone (search `--outline --kind functions` is unrelated). Graph, architecture and grit are separate entrypoints, not scoped by these selectors. Follow tree leads with exact `--outline`/`--at` and focused graph queries rather than expanding the whole repository tree; do not run model-backed `grepple init` merely to orient.
 
 Architecture orientation is generated dynamically across supported languages:
 

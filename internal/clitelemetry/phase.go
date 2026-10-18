@@ -23,7 +23,7 @@ func StartPhase(ctx context.Context, name string) (context.Context, trace.Span) 
 		return ctx, noop
 	}
 	switch name {
-	case "cli.search.local", "cli.sources.discover", "cli.sources.resolve", "cli.navigation.execute", "cli.navigation.cache_lookup", "cli.navigation.build", "cli.navigation.query", "cli.render":
+	case "cli.search.local", "cli.search.scan", "cli.search.parse", "cli.sources.discover", "cli.sources.resolve", "cli.navigation.execute", "cli.navigation.cache_lookup", "cli.navigation.read", "cli.navigation.build", "cli.navigation.query", "cli.render":
 		return runtime.Start(ctx, name)
 	default:
 		return ctx, noop

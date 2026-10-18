@@ -9,12 +9,14 @@
 Run these from a repository root (the example paths below are in this checkout):
 
 ```sh
-grepple tree                             # Small top-level map
+grepple overview                         # First: bounded current-label vocabulary and coverage; no model
 grepple tree internal/render             # Expand only a likely directory
 grepple -F 'OutlineWithSelectors' internal/render  # Literal search
 grepple --outline internal/render/outline.go       # Declarations
 grepple --at internal/render/outline.go:58-69        # Read exact lines
 ```
+
+For metadata-filtered discovery, opt into **bounded** `grepple init --only-directory internal/render` (model-backed), check `grepple verify`, then run the model-free `grepple overview` to see actual labels before choosing `grepple tree --purpose Implementation internal/render` or `grepple --purpose Implementation -F 'OutlineWithSelectors' internal/render`. Missing, invalid, or stale annotations never expand a filtered result. [Schema, refresh, and limitations](docs/directory-metadata.md).
 
 `-F` searches literal text; without it, search patterns are regular expressions. Text files remain searchable even without a parser. Results are in deterministic path order, not relevance order. Narrow your path or use `--count-summary` before interpreting a short page as complete.
 
@@ -23,7 +25,7 @@ grepple --at internal/render/outline.go:58-69        # Read exact lines
 | Find matching lines | `grepple -F 'Name' --line-only PATH` |
 | List matching files / count matches | `grepple -F 'Name' --files-with-matches PATH` / `--count-summary` |
 | Find a declaration | `grepple --outline FILE` or `grepple graph resolve --symbol NAME PATH` |
-| Follow calls | `grepple graph callers --at FILE:LINE PATH` or `graph callees` |
+| Follow calls | `grepple graph callers --at FILE:LINE PATH` or `graph callees` (optional local [file metadata selectors](docs/file-type-support.md)) |
 | Map directory relations | `grepple architecture directory PATH` |
 | Find syntax shapes | `grepple grit --query-file checks.grit PATH` |
 | Learn by example | `grepple examples` or [worked examples](examples/README.md) |
@@ -75,7 +77,7 @@ Claude Code users: install [Node.js 18+](https://nodejs.org/) for plugin hooks, 
 /plugin install grepple --marketplace greppleai/grepple
 ```
 
-This adds the Grepple marketplace and eight source-owned skills (Claude Code 2.1.275+). On the next session start, a hook uses an existing working CLI or downloads a checksum-verified release for Linux/macOS (amd64/arm64) or Windows (amd64) into Claude's plugin data; it never replaces a user-managed binary. A grep guard redirects Bash `grep`/`rg`/`find` and built-in Grep/Glob to Grepple once the CLI supports it. Try `/grepple:grepple-local-grep-and-search`. [Installation, security, and compatibility details](docs/agent-setup.md#claude-code-plugin).
+This adds the Grepple marketplace and nine source-owned skills (Claude Code 2.1.275+), including `grepple-overview-first` to check local annotation coverage and vocabulary at session start. On the next session start, a hook uses an existing working CLI or downloads a checksum-verified release for Linux/macOS (amd64/arm64) or Windows (amd64) into Claude's plugin data; it never replaces a user-managed binary. A grep guard redirects Bash `grep`/`rg`/`find` and built-in Grep/Glob to Grepple once the CLI supports it. Try `/grepple:grepple-overview-first`. [Installation, security, and compatibility details](docs/agent-setup.md#claude-code-plugin).
 
 For Pi, OpenCode, Codex, or a binary-version-pinned Claude Code skill installation instead:
 

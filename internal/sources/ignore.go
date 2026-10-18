@@ -2,6 +2,7 @@ package sources
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/greppleai/grepple/internal/pathfilter"
 )
@@ -16,6 +17,20 @@ type ignoreConfig struct {
 func (c ignoreConfig) builtIn(candidate string) bool {
 	relative, inside := c.filter().Relative(candidate)
 	return inside && (pathfilter.Match(".grepple/**", relative) || pathfilter.Match(".worktrees/**", relative))
+}
+
+// IsRepositoryMetadataSnapshot recognizes Grepple's generated annotation file,
+// even through a symlink alias. Discovery calls this only for candidate files,
+// not every file in a recursive walk.
+func IsRepositoryMetadataSnapshot(path string) bool {
+	isSnapshot := func(name string) bool {
+		return filepath.Base(name) == "grepple.yaml" && filepath.Base(filepath.Dir(name)) == ".grepple"
+	}
+	if isSnapshot(path) {
+		return true
+	}
+	resolved, err := filepath.EvalSymlinks(path)
+	return err == nil && isSnapshot(resolved)
 }
 func (c ignoreConfig) filter() pathfilter.Config {
 	root := c.root

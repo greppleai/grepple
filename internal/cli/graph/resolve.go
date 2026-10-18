@@ -16,6 +16,7 @@ import (
 	"github.com/greppleai/grepple/internal/navigation"
 	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/wire"
+	"github.com/greppleai/grepple/internal/workaccount"
 )
 
 // NavigationResolveSchema identifies graph symbol-resolution responses.
@@ -23,17 +24,20 @@ const NavigationResolveSchema = "grepple-navigation-resolve-v1"
 const defaultTextOutputBytes = 16 * 1024
 
 type resolveArgs struct {
-	JSON           bool     `arg:"--json" help:"emit every matching declaration and continuation command as JSON"`
-	Symbol         string   `arg:"--symbol,required" placeholder:"NAME" help:"preview exact or terminal-name declaration matches"`
-	Languages      []string `arg:"--language,separate" placeholder:"ID" help:"retain one navigation language; repeatable"`
-	Visibilities   []string `arg:"--visibility,separate" placeholder:"LEVEL" help:"retain public, non-public, or unknown declarations; repeatable"`
-	MaxFiles       int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
-	MaxOutputBytes int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
-	Paths          []string `arg:"positional" placeholder:"PATH" help:"graph universe; defaults to the working directory"`
+	JSON            bool     `arg:"--json" help:"emit every matching declaration and continuation command as JSON"`
+	Symbol          string   `arg:"--symbol,required" placeholder:"NAME" help:"preview exact or terminal-name declaration matches"`
+	Purposes        []string `arg:"--purpose,separate" placeholder:"LABEL" help:"local current-file purpose; repeatable OR"`
+	DomainAreas     []string `arg:"--domain-area,separate" placeholder:"LABEL" help:"local current-file domain; repeatable OR, same-file AND"`
+	FunctionalAreas []string `arg:"--functional-area,separate" placeholder:"LABEL" help:"local current-file function; repeatable OR, same-file AND"`
+	Languages       []string `arg:"--language,separate" placeholder:"ID" help:"retain one navigation language; repeatable"`
+	Visibilities    []string `arg:"--visibility,separate" placeholder:"LEVEL" help:"retain public, non-public, or unknown declarations; repeatable"`
+	MaxFiles        int      `arg:"--max-files" placeholder:"N" help:"parse at most N discovered files (0 = unlimited)"`
+	MaxOutputBytes  int      `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
+	Paths           []string `arg:"positional" placeholder:"PATH" help:"graph universe; defaults to the working directory"`
 }
 
 func (resolveArgs) Description() string {
-	return "Preview every declaration matching a symbol without graph traversal. Human output is the default; --json emits every match."
+	return "Preview every declaration matching a symbol in a local graph. Repeatable purpose, domain-area and functional-area labels select checksum-current files only (same-file AND). Human output is the default; --json emits every selected match."
 }
 
 // ResolveOutput is the complete graph symbol-resolution response.
@@ -86,16 +90,24 @@ func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArg
 	if err := validateResolveArgs(*values); err != nil {
 		return err
 	}
+	selector, err := compileGraphMetadataSelector(values.Purposes, values.DomainAreas, values.FunctionalAreas)
+	if err != nil {
+		return err
+	}
 	filter, err := navigation.NewGraphOperations().NormalizeFilter(navigation.NavigationGraphFilter{Languages: values.Languages, Visibilities: values.Visibilities})
 	if err != nil {
 		return err
 	}
-	paths, err := resolveCLIPaths(application, values.Paths)
+	paths, err := resolveCLIPathsSelected(application, values.Paths, selector)
 	if err != nil {
 		return err
 	}
 	navCtx, phase := clitelemetry.StartPhase(application.Invocation(), "cli.navigation.execute")
-	defer func() { clitelemetry.EndPhase(phase, navCtx, resultErr) }()
+	var work *workaccount.Counters
+	if phase.IsRecording() {
+		navCtx, work = workaccount.With(navCtx)
+	}
+	defer func() { clitelemetry.SetWork(phase, work); clitelemetry.EndPhase(phase, navCtx, resultErr) }()
 	selection := daemon.ResolveSelection{Symbol: values.Symbol, Languages: filter.Languages, Visibilities: filter.Visibilities}
 	var projection daemon.ResolveProjection
 	if useDaemon {
@@ -106,17 +118,20 @@ func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArg
 		})
 	}
 	if projection.Schema == "" {
-		sources := analysis.ReadSources(paths)
+		sources := readGraphSources(navCtx, paths)
 		key := ""
 		if useDaemon {
 			key, _ = daemon.KeyResolve(paths, values.MaxFiles, sources, selection)
 		}
-		universe, err := analysis.NewUniverse(sources, values.MaxFiles)
+		buildCtx, buildPhase := clitelemetry.StartPhase(navCtx, "cli.navigation.build")
+		universe, err := analysis.NewUniverseContext(buildCtx, sources, values.MaxFiles)
 		if err != nil {
+			clitelemetry.EndPhase(buildPhase, buildCtx, err)
 			return err
 		}
 		defer universe.Close()
 		report, err := analysis.BuildGraph(universe, nil)
+		clitelemetry.EndPhase(buildPhase, buildCtx, err)
 		if err != nil {
 			return err
 		}
@@ -129,7 +144,7 @@ func executeResolveWithDaemon(application cliruntime.Context, values *ResolveArg
 			_ = daemon.StoreResolve(paths, values.MaxFiles, key, selection, projection)
 		}
 	}
-	matches := resolveMatches(projection.Declarations, values.Symbol, values.Paths)
+	matches := resolveMatches(projection.Declarations, values.Symbol, values.Paths, values.Purposes, values.DomainAreas, values.FunctionalAreas, application.Repository().AppendScopeFlags)
 	output := ResolveOutput{Schema: NavigationResolveSchema, Symbol: values.Symbol, Sources: projection.Sources, Matches: matches, Truncation: projection.Truncation}
 	output.Metadata = resolveMetadata(*values, Output{Sources: projection.Sources, Truncation: projection.Truncation}, len(matches), application.Repository().AppendScopeFlags)
 	output.Metadata.Scope.Languages = normalizedScope(filter.Languages, "")
@@ -162,7 +177,7 @@ func validateResolveArgs(values resolveArgs) error {
 	return nil
 }
 
-func resolveMatches(declarations []parser.NavigationDeclaration, symbol string, paths []string) []ResolveMatch {
+func resolveMatches(declarations []parser.NavigationDeclaration, symbol string, paths, purposes, domains, functional []string, scopeFlags func([]string) []string) []ResolveMatch {
 	matched := matchingDeclarations(declarations, symbol)
 	sort.Slice(matched, func(left, right int) bool {
 		if matched[left].Path != matched[right].Path {
@@ -174,10 +189,18 @@ func resolveMatches(declarations []parser.NavigationDeclaration, symbol string, 
 		return matched[left].ID < matched[right].ID
 	})
 	scope := resolveScope(paths)
+	flags := appendGraphMetadataFlags(nil, purposes, domains, functional)
+	if scopeFlags != nil {
+		flags = scopeFlags(flags)
+	}
+	flagSuffix := ""
+	if len(flags) != 0 {
+		flagSuffix = " " + strings.Join(flags, " ")
+	}
 	result := make([]ResolveMatch, 0, len(matched))
 	for _, declaration := range matched {
 		at := fmt.Sprintf("%s:%d", declaration.Path, declaration.Start)
-		prefix := " --at " + quoteArgument(at) + " --depth 2 " + scope
+		prefix := " --at " + quoteArgument(at) + " --depth 2" + flagSuffix + " " + scope
 		result = append(result, ResolveMatch{ID: declaration.ID, Name: declaration.Name, Kind: declaration.Kind, Language: declaration.Language, Path: declaration.Path, StartLine: declaration.Start, EndLine: declaration.End, Visibility: declaration.Visibility, At: at, CallersCommand: "grepple graph callers" + prefix, CalleesCommand: "grepple graph callees" + prefix})
 	}
 	return result
@@ -229,11 +252,13 @@ func resolveMetadata(values resolveArgs, graph Output, returned int, scopeFlags 
 		for _, visibility := range values.Visibilities {
 			parts = append(parts, "--visibility", quoteArgument(visibility))
 		}
+		parts = appendGraphMetadataFlags(parts, values.Purposes, values.DomainAreas, values.FunctionalAreas)
 		for _, path := range normalizedScope(values.Paths, ".") {
 			parts = append(parts, quoteArgument(path))
 		}
 		metadata.NextCommand = strings.Join(parts, " ")
 	}
+	metadata.Diagnostics = graphMetadataDiagnostics(metadata.Diagnostics, len(values.Purposes)+len(values.DomainAreas)+len(values.FunctionalAreas) != 0, returned == 0)
 	return metadata
 }
 
@@ -278,8 +303,17 @@ func writeResolveJSON(writer io.Writer, output ResolveOutput) error {
 func renderCompactResolve(destination io.Writer, output ResolveOutput, maxBytes int) error {
 	writer := cliruntime.NewBoundedOutput(destination, maxBytes)
 	write := func(value string) bool { return writer.WriteString(value) == nil }
-	if len(output.Matches) == 0 && !write("no matches for "+quoteArgument(output.Symbol)+"\n") {
-		return nil
+	if len(output.Matches) == 0 {
+		if !write("no matches for " + quoteArgument(output.Symbol) + "\n") {
+			return nil
+		}
+		if output.Metadata != nil {
+			for _, diagnostic := range output.Metadata.Diagnostics {
+				if diagnostic.Code == "metadata-no-matches" && !write("! "+diagnostic.Message+"\n") {
+					return nil
+				}
+			}
+		}
 	}
 	if output.Sources.Failed > 0 || output.Sources.Recovered > 0 {
 		if !write("! incomplete sources=" + compactSourceSummary(output.Sources) + "; inspect --json diagnostics\n") {

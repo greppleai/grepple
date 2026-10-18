@@ -113,14 +113,28 @@ type ReposResponse struct {
 	Repos []RepoListEntry `json:"repos"`
 }
 
+// TreeLabels is a bounded per-category view of verified local labels. Totals
+// include labels hidden beyond the first two examples in each category.
+type TreeLabels struct {
+	Purposes            []string `json:"purposes,omitempty"`
+	PurposeTotal        int      `json:"purposeTotal,omitempty"`
+	DomainAreas         []string `json:"domainAreas,omitempty"`
+	DomainAreaTotal     int      `json:"domainAreaTotal,omitempty"`
+	FunctionalAreas     []string `json:"functionalAreas,omitempty"`
+	FunctionalAreaTotal int      `json:"functionalAreaTotal,omitempty"`
+	Keywords            []string `json:"keywords,omitempty"`
+	KeywordTotal        int      `json:"keywordTotal,omitempty"`
+}
+
 // TreeEntry is one path in a repository tree listing.
 type TreeEntry struct {
-	Path           string   `json:"path"`
-	Dir            bool     `json:"dir"`
-	Description    string   `json:"description,omitempty"`
-	Areas          []string `json:"areas,omitempty"`
-	MetadataStatus string   `json:"metadataStatus,omitempty"`
-	MetadataIssues []string `json:"metadataIssues,omitempty"`
+	Path           string      `json:"path"`
+	Dir            bool        `json:"dir"`
+	Description    string      `json:"description,omitempty"`
+	Areas          []string    `json:"areas,omitempty"`
+	Labels         *TreeLabels `json:"labels,omitempty"`
+	MetadataStatus string      `json:"metadataStatus,omitempty"`
+	MetadataIssues []string    `json:"metadataIssues,omitempty"`
 }
 
 // TreeResponse is the tree endpoint payload.
@@ -129,6 +143,7 @@ type TreeResponse struct {
 	Path           string      `json:"path"`
 	Description    string      `json:"description,omitempty"`
 	Areas          []string    `json:"areas,omitempty"`
+	Labels         *TreeLabels `json:"labels,omitempty"`
 	MetadataStatus string      `json:"metadataStatus,omitempty"`
 	MetadataIssues []string    `json:"metadataIssues,omitempty"`
 	Depth          int         `json:"depth"`

@@ -2,6 +2,7 @@ package render
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -10,10 +11,12 @@ import (
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/parser"
 	"github.com/greppleai/grepple/internal/search"
+	"github.com/greppleai/grepple/internal/workaccount"
 )
 
 // OutlineOptions controls outline discovery and output.
 type OutlineOptions struct {
+	Context        context.Context
 	Params         search.Params
 	Depth          int
 	Kinds          OutlineKinds
@@ -27,7 +30,14 @@ type OutlineOptions struct {
 // Outlines loads and renders structural file outlines and reports whether human
 // output contained a file.
 func Outlines(options OutlineOptions) (bool, error) {
-	paths, err := search.ListFilePaths(options.Params, nil)
+	ctx := options.Context
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	if work := workaccount.From(ctx); work != nil {
+		work.ParsingApplicable()
+	}
+	paths, err := search.ListFilePathsContext(ctx, options.Params, nil)
 	if err != nil {
 		return false, err
 	}
@@ -42,7 +52,14 @@ func Outlines(options OutlineOptions) (bool, error) {
 	if maxBytes > 0 {
 		output = cliruntime.NewBoundedOutput(options.Output, maxBytes)
 	}
-	outlines, printed, err := outlineFiles(options.Depth, options.Kinds, paths, options.JSON, output)
+	// Human outlines stream to the writer and stop at its first truncation.
+	// This inclusive scan stage therefore includes formatting and writes; it
+	// does not claim isolated grammar-parser CPU time.
+	finishScan := search.BeginLocalPhase(ctx, "cli.search.scan")
+	outlines, printed, err := outlineFiles(ctx, options.Depth, options.Kinds, paths, options.JSON, output)
+	if finishScan != nil {
+		finishScan(err)
+	}
 	if err != nil && !errors.Is(err, cliruntime.ErrOutputTruncated) {
 		return false, err
 	}
@@ -52,11 +69,11 @@ func Outlines(options OutlineOptions) (bool, error) {
 	return printed, nil
 }
 
-func outlineFiles(depth int, kinds OutlineKinds, paths []string, jsonMode bool, output *cliruntime.Output) ([]parser.FileOutline, bool, error) {
+func outlineFiles(ctx context.Context, depth int, kinds OutlineKinds, paths []string, jsonMode bool, output *cliruntime.Output) ([]parser.FileOutline, bool, error) {
 	outlines := make([]parser.FileOutline, 0, len(paths))
 	printed := false
 	for _, path := range paths {
-		outline, data, ok := loadOutline(path, depth)
+		outline, data, ok := loadOutline(ctx, path, depth)
 		if !ok {
 			continue
 		}
@@ -82,10 +99,18 @@ func outlineFiles(depth int, kinds OutlineKinds, paths []string, jsonMode bool, 
 	return outlines, printed, nil
 }
 
-func loadOutline(path string, depth int) (parser.FileOutline, []byte, bool) {
+func loadOutline(ctx context.Context, path string, depth int) (parser.FileOutline, []byte, bool) {
 	data, err := os.ReadFile(path)
+	work := workaccount.From(ctx)
+	if work != nil {
+		work.ReadAttempt(len(data), err)
+	}
 	if err != nil || bytes.IndexByte(data, 0) >= 0 {
 		return parser.FileOutline{}, nil, false
 	}
-	return parser.OutlineFileDepth(path, string(data), depth), data, true
+	var observe func(error)
+	if work != nil {
+		observe = work.ParseAttempt
+	}
+	return parser.OutlineFileDepthObserved(path, string(data), depth, observe), data, true
 }

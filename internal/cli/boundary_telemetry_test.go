@@ -110,15 +110,11 @@ func assertSearchPhase(t *testing.T, spans []*spanpb.Span, command, mode string,
 		if len(span.Events) != 0 {
 			t.Fatalf("unexpected events: %s", span.Name)
 		}
-		for key := range spanAttributes(span) {
-			switch key {
-			case "cli.command.name", "cli.search.mode", "cli.phase.outcome", "cli.sources.mode", "cli.sources.count", "cli.results.count", "cli.render.format":
-			default:
-				t.Fatalf("unexpected attribute on %s: %s", span.Name, key)
-			}
-		}
+		// assertCLIPhaseContract above checks the exact span-specific attribute
+		// allowlist, including the finite command option keys and value types.
 	}
-	if counts["cli.invocation"] != 1 || counts["cli.output_spill"] != 1 || counts["cli.command"] != 1 || counts["cli.search.local"] != 1 || counts["cli.sources.discover"] > 1 || counts["cli.render"] > 1 || len(spans) != 4+counts["cli.sources.discover"]+counts["cli.render"] || len(spans) > 6 {
+	wantScan := (mode == "content" || mode == "count_summary" || mode == "outline") && (expectedDiscovery || expectedRender)
+	if counts["cli.invocation"] != 1 || counts["cli.output_spill"] != 1 || counts["cli.command"] != 1 || counts["cli.search.local"] != 1 || counts["cli.sources.discover"] > 1 || counts["cli.render"] > 1 || counts["cli.search.parse"] > 1 || counts["cli.search.scan"] > 1 || (counts["cli.search.scan"] == 1) != wantScan || len(spans) != 4+counts["cli.sources.discover"]+counts["cli.render"]+counts["cli.search.scan"]+counts["cli.search.parse"] || len(spans) > 8 {
 		t.Fatalf("unbounded/absent phases: %+v", counts)
 	}
 	format := "text"
@@ -136,6 +132,21 @@ func assertSearchPhase(t *testing.T, spans []*spanpb.Span, command, mode string,
 	}
 	if expectedDiscovery && !bytes.Equal(byName["cli.sources.discover"].ParentSpanId, byName["cli.search.local"].SpanId) {
 		t.Fatal("candidate collection is not under local search")
+	}
+	if counts["cli.search.scan"] == 1 && !bytes.Equal(byName["cli.search.scan"].ParentSpanId, byName["cli.search.local"].SpanId) || counts["cli.search.parse"] == 1 && !bytes.Equal(byName["cli.search.parse"].ParentSpanId, byName["cli.search.local"].SpanId) {
+		t.Fatal("scan/parse batch is not under local search")
+	}
+	local := byName["cli.search.local"]
+	for _, name := range []string{"cli.search.scan", "cli.search.parse"} {
+		if stage := byName[name]; stage != nil && (stage.StartTimeUnixNano < local.StartTimeUnixNano || stage.EndTimeUnixNano > local.EndTimeUnixNano) {
+			t.Fatalf("%s outside its operation wall-time boundary", name)
+		}
+	}
+	if counts["cli.search.scan"] == 1 && counts["cli.sources.discover"] == 1 && byName["cli.sources.discover"].EndTimeUnixNano > byName["cli.search.scan"].StartTimeUnixNano {
+		t.Fatal("initial discovery overlaps the subsequent scan")
+	}
+	if counts["cli.search.parse"] == 1 && byName["cli.search.scan"].EndTimeUnixNano > byName["cli.search.parse"].StartTimeUnixNano {
+		t.Fatal("structural parse started before the primary scan completed")
 	}
 }
 

@@ -42,6 +42,28 @@ func TestInspectExplainsIgnoresProductionAndExplicitBypass(t *testing.T) {
 		t.Fatalf("built-in=%+v err=%v", explicit, err)
 	}
 }
+func TestScopeSelectsUnrelatedGreppleYAMLButExcludesRepositorySnapshot(t *testing.T) {
+	root := t.TempDir()
+	writeScopeFile(t, root, "hooks/bin/grepple.yaml")
+	writeScopeFile(t, root, ".grepple/grepple.yaml")
+	decisions, err := Inspect([]string{root}, InspectionOptions{Root: root, IgnoreRoot: root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, decision := range decisions {
+		if decision.Path == "hooks/bin/grepple.yaml" {
+			found = true
+			assertDecision(t, decision, true, "selected")
+		}
+		if decision.Path == ".grepple/grepple.yaml" {
+			t.Fatalf("repository snapshot entered source selection: %+v", decision)
+		}
+	}
+	if !found {
+		t.Fatalf("ordinary YAML source was skipped: %+v", decisions)
+	}
+}
 
 func writeScopeFile(t *testing.T, root, relative string) {
 	t.Helper()
@@ -55,15 +77,16 @@ func writeScopeFile(t *testing.T, root, relative string) {
 }
 func writeScopeKinds(t *testing.T, root string, kinds map[string]Kind) {
 	t.Helper()
-	files := make([]directorymeta.File, 0, len(kinds))
+	files := make([]directorymeta.FileV1, 0, len(kinds))
 	for name, kind := range kinds {
 		digest, err := filedigest.SHA256Hex(filepath.Join(root, name))
 		if err != nil {
 			t.Fatal(err)
 		}
-		files = append(files, directorymeta.File{Path: name, Description: "Scope fixture.", Kind: string(kind), Checksum: digest})
+		purpose := map[Kind]string{Production: "Implementation", Test: "Testing"}[kind]
+		files = append(files, directorymeta.FileV1{Name: name, Description: "Scope fixture.", Purpose: purpose, Checksum: digest})
 	}
-	if err := directorymeta.Write(root, root, directorymeta.Metadata{Description: "Scope fixtures.", Responsibilities: []string{"Test source scope."}, Files: files}); err != nil {
+	if err := directorymeta.WriteDirectoryV1(root, root, directorymeta.DirectoryV1{Files: files}); err != nil {
 		t.Fatal(err)
 	}
 }

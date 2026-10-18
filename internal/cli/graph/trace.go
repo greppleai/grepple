@@ -3,8 +3,10 @@ package graph
 import (
 	"context"
 
+	"github.com/greppleai/grepple/internal/analysis"
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/clitelemetry"
+	"github.com/greppleai/grepple/internal/directorymeta"
 	"github.com/greppleai/grepple/internal/search"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -12,6 +14,11 @@ import (
 // resolveCLIPaths measures the complete local graph source-selection operation.
 // It does not precollect candidates or claim that source policy is glob time.
 func resolveCLIPaths(application cliruntime.Context, globs []string) (paths []string, err error) {
+	return resolveCLIPathsSelected(application, globs, directorymeta.SelectorV1{})
+}
+
+// resolveCLIPathsSelected measures the *selected* local graph source universe.
+func resolveCLIPathsSelected(application cliruntime.Context, globs []string, selector directorymeta.SelectorV1) (paths []string, err error) {
 	ctx, phase := clitelemetry.StartPhase(application.Invocation(), "cli.sources.resolve")
 	defer func() {
 		if err == nil && phase.IsRecording() {
@@ -19,7 +26,11 @@ func resolveCLIPaths(application cliruntime.Context, globs []string) (paths []st
 		}
 		clitelemetry.EndPhase(phase, ctx, err)
 	}()
-	return resolveInputPathsContext(ctx, globs, search.SourcePolicyConfigurer(application.Repository()))
+	paths, err = resolveInputPathsContext(ctx, globs, search.SourcePolicyConfigurer(application.Repository()))
+	if err != nil || !selector.Requested() {
+		return paths, err
+	}
+	return selectGraphMetadataPaths(paths, selector)
 }
 
 // lookupDaemon observes exactly one actual daemon lookup, not a snapshot open.
@@ -35,4 +46,14 @@ func lookupDaemon(ctx context.Context, lookup func() bool) {
 		phase.SetAttributes(attribute.String("cli.cache.kind", "daemon"), attribute.String("cli.cache.state", state))
 	}
 	clitelemetry.EndPhase(phase, lookupCtx, nil)
+}
+
+// readGraphSources times one actual source-read batch on the daemon fallback.
+// A stored snapshot still fences source identity by reading it; a daemon hit
+// does not pass this seam. Read failures are retained in the source objects.
+func readGraphSources(ctx context.Context, paths []string) []analysis.Source {
+	readCtx, phase := clitelemetry.StartPhase(ctx, "cli.navigation.read")
+	sources := analysis.ReadSourcesContext(readCtx, paths)
+	clitelemetry.EndPhase(phase, readCtx, nil)
+	return sources
 }
