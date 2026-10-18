@@ -198,6 +198,21 @@ func TestGlobalDaemonMultiRootParityInvalidationAndEviction(t *testing.T) {
 		}()
 	}
 	workers.Wait()
+	// The daemon fingerprints YAML bytes even if selected source bytes stay
+	// unchanged; metadata edits cannot return a cached architecture report.
+	if err := os.MkdirAll(".grepple", 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(".grepple", "grepple.yaml"), []byte("schema: v1\ndirectory: {}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, hit := Query(paths, 0); hit {
+		t.Fatal("metadata edit reused architecture report")
+	}
+	_ = daemonTestStore(t, paths)
+	if _, hit := Query(paths, 0); !hit {
+		t.Fatal("report not restored after metadata edit")
+	}
 	if err := os.WriteFile("main.go", []byte("package p\nfunc Changed() {}\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}

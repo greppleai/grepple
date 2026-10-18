@@ -58,6 +58,7 @@ type SearchPlanOptions struct {
 	// Mutable checkouts must leave this empty. It is not a wire-request option.
 	ImmutableNavigationRevision string
 	NoRelated                   bool
+	MetadataCandidates          []string
 	At                          string
 	// AtScope is local-only and requires At to contain a bare path (no :LINE).
 	// Use SearchAt; remote wire requests cannot verify scope selectors.
@@ -79,6 +80,9 @@ func cloneSearchParams(params search.Params) search.Params {
 	params.Repo = append([]string(nil), params.Repo...)
 	params.ExcludeRepo = append([]string(nil), params.ExcludeRepo...)
 	params.IgnorePaths = append([]string(nil), params.IgnorePaths...)
+	if params.MetadataCandidates != nil {
+		params.MetadataCandidates = append([]string{}, params.MetadataCandidates...)
+	}
 	if params.AtScope != nil {
 		selectorCopy := *params.AtScope
 		params.AtScope = &selectorCopy

@@ -2,12 +2,11 @@ package tree
 
 import (
 	"bytes"
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/greppleai/grepple/internal/cliruntime"
-	sourcedomain "github.com/greppleai/grepple/internal/sources"
+	"github.com/greppleai/grepple/internal/directorymeta"
 	"github.com/greppleai/grepple/internal/wire"
 )
 
@@ -15,7 +14,7 @@ func TestRunUsesLocalTreeByDefault(t *testing.T) {
 	var stdout bytes.Buffer
 	calledPath, calledDepth := "", 0
 	application := cliruntime.Environment{Output: &stdout}
-	command := &command{context: application, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (wire.TreeResponse, error) {
+	command := &command{context: application, local: func(path string, depth int, selector directorymeta.SelectorV1) (wire.TreeResponse, error) {
 		calledPath, calledDepth = path, depth
 		return wire.TreeResponse{Repo: ".", Path: path, Depth: depth, Entries: []wire.TreeEntry{{Path: "main.go"}}}, nil
 	}}
@@ -34,7 +33,7 @@ func TestRunUsesLocalTreeByDefault(t *testing.T) {
 func TestTreeDefaultsToOneLevelAndAllowsExplicitExpansion(t *testing.T) {
 	var stdout bytes.Buffer
 	calledDepth := 0
-	cmd := &command{context: cliruntime.Environment{Output: &stdout}, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (wire.TreeResponse, error) {
+	cmd := &command{context: cliruntime.Environment{Output: &stdout}, local: func(path string, depth int, selector directorymeta.SelectorV1) (wire.TreeResponse, error) {
 		calledDepth = depth
 		return wire.TreeResponse{Repo: ".", Depth: depth, Entries: []wire.TreeEntry{{Path: "pkg", Dir: true}}}, nil
 	}}
@@ -46,25 +45,40 @@ func TestTreeDefaultsToOneLevelAndAllowsExplicitExpansion(t *testing.T) {
 	}
 }
 
-func TestTreeAreaFlagsAreRepeatableAndLocalOnly(t *testing.T) {
+func TestTreeSelectorsRepeatAndRejectRemote(t *testing.T) {
 	var stdout bytes.Buffer
-	var selected []string
-	cmd := &command{context: cliruntime.Environment{Output: &stdout}, local: func(path string, depth int, kind sourcedomain.Kind, areas []string) (wire.TreeResponse, error) {
-		selected = append([]string(nil), areas...)
+	var selected directorymeta.SelectorV1
+	cmd := &command{context: cliruntime.Environment{Output: &stdout}, local: func(path string, depth int, selector directorymeta.SelectorV1) (wire.TreeResponse, error) {
+		selected = selector
 		return wire.TreeResponse{Repo: ".", Entries: []wire.TreeEntry{{Path: "pkg", Dir: true}}}, nil
 	}}
-	if err := cmd.Run([]string{"--area", "backend", "--area", "tests", "."}); err != nil || !reflect.DeepEqual(selected, []string{"backend", "tests"}) {
-		t.Fatalf("repeatable areas=%v err=%v", selected, err)
+	if err := cmd.Run([]string{"--purpose", "Testing", "--purpose", "Implementation", "--domain-area", "API", "--functional-area", "Review", "--keyword", "c++", "."}); err != nil {
+		t.Fatal(err)
 	}
-	for _, args := range [][]string{
-		{"--area", "Bad", "."},
-		{"--area", "", "."},
-		{"--area", "two--words", "."},
-		{"--area", "backend", "--repo", "owner/repo"},
-		{"--area", "backend", "owner/repo", "src"},
-	} {
-		if err := cmd.Run(args); err == nil || !strings.Contains(err.Error(), "--area") {
-			t.Fatalf("area args=%q err=%v", args, err)
+	if !selected.Requested() || !selected.Matches(directorymeta.FileStateV1{Status: directorymeta.StatusCurrent, File: directorymeta.FileV1{Purpose: "implementation", DomainAreas: []string{"api"}, FunctionalAreas: []string{"review"}, Keywords: []string{"c++"}}}) || selected.Matches(directorymeta.FileStateV1{Status: directorymeta.StatusCurrent, File: directorymeta.FileV1{Purpose: "Other", DomainAreas: []string{"api"}, FunctionalAreas: []string{"review"}, Keywords: []string{"c++"}}}) {
+		t.Fatal("repeated categories lost or cross-category AND ignored")
+	}
+	if err := cmd.Run([]string{"--keyword=c++", "."}); err != nil {
+		t.Fatal(err)
+	}
+	if !selected.Matches(directorymeta.FileStateV1{Status: directorymeta.StatusCurrent, File: directorymeta.FileV1{Keywords: []string{"c++"}}}) {
+		t.Fatal("equals syntax lost keyword punctuation")
+	}
+	for _, flag := range []string{"--purpose", "--domain-area", "--functional-area", "--keyword"} {
+		for _, args := range [][]string{{flag, "c++", "--repo", "owner/repo"}, {flag, "c++", "owner/repo", "src"}} {
+			if err := cmd.Run(args); err == nil || !strings.Contains(err.Error(), flag) {
+				t.Fatalf("args=%v err=%v", args, err)
+			}
+		}
+	}
+	for _, args := range [][]string{{"--purpose", "", "."}, {"--keyword", "\x00", "."}, {"--domain-area", strings.Repeat("a", 81), "."}} {
+		if err := cmd.Run(args); err == nil {
+			t.Fatalf("invalid args accepted: %q", args)
+		}
+	}
+	for _, flag := range []string{"--area", "--kind"} {
+		if err := cmd.Run([]string{flag, "legacy", "."}); err == nil {
+			t.Fatalf("obsolete tree flag %q accepted", flag)
 		}
 	}
 }

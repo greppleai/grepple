@@ -34,7 +34,7 @@ grepple setup --list
 
 ## Claude Code plugin
 
-The plugin provides eight skills and two hooks. It requires Node.js 18+ on Claude
+The plugin provides nine skills and two hooks. It requires Node.js 18+ on Claude
 Code's PATH (including native Claude Code installations) to run the hooks.
 In Claude Code 2.1.275 or later, one command in a Claude Code session registers
 this repository's marketplace and installs its `grepple` plugin:
@@ -87,7 +87,7 @@ use `grepple setup claude` instead of the plugin.
 Check `/plugin` and try `/grepple:grepple-local-grep-and-search`. Claude can
 also select skills automatically. The marketplace lives at
 `.claude-plugin/marketplace.json`; its source is `./.agents`, whose manifest is
-`.agents/.claude-plugin/plugin.json`. All eight canonical
+`.agents/.claude-plugin/plugin.json`. All nine canonical
 `.agents/skills/grepple-*/SKILL.md` files are discovered without duplicate skill
 copies. To test a local checkout without registering a marketplace, run
 `claude --plugin-dir /path/to/grepple/.agents`. Maintainers can run

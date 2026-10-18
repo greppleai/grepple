@@ -5,7 +5,7 @@ description: Use Grepple for local file/content search (grep, rg, find, fd, ack;
 
 # Local evidence retrieval with Grepple
 
-In an unfamiliar checkout, start with `grepple tree --depth 1`, then narrow the promising subtree.
+At the start of a new local session, run `grepple overview` to learn real labels and coverage without a model call (see `grepple-overview-first`). Then use `grepple tree --depth 1` and narrow a promising subtree; if metadata is missing/stale, use unfiltered tree/search instead of treating an empty filtered result as absence.
 
 - **Literal text:** use `-F`; default patterns are JavaScript regex.
 - **Matching lines:** use `--line-only`; default output shows enclosing bodies.
@@ -14,6 +14,8 @@ In an unfamiliar checkout, start with `grepple tree --depth 1`, then narrow the 
 ## Choose the smallest result
 | Question | Command |
 | --- | --- |
+| Find current annotated implementation files | `grepple --purpose implementation --files PATH` (local, exact label; compare against unfiltered files when coverage is incomplete) |
+| Narrow two categories on one current file | `grepple --domain-area source-parsing --functional-area language-adapters --files PATH` (replace with labels shown by `overview`) |
 | Measure breadth without bodies | `grepple -F 'Name' --count-summary SCOPE` |
 | List matching files | `grepple -F 'Name' --files-with-matches SCOPE` |
 | List paths by glob | `grepple --files 'src/**/*.go'` |
@@ -25,6 +27,8 @@ In an unfamiliar checkout, start with `grepple tree --depth 1`, then narrow the 
 | Retrieve a known literal range | `grepple --at path/to/file.go:START-END` |
 | Verify an annotated scope, then read clean source | `grepple --at path/to/file.go @KIND:START-END` (local only) |
 | Edit anchors | Eligible local source output uses native anchors; named compatibility providers come only from user settings |
+
+`--purpose`, `--domain-area`, `--functional-area`, and `--keyword` apply to local `tree` and every local search output (including `--files`, `--count-summary`, `--outline`, and `--at`) **before** scanning/paging; repeated values OR within a category and categories AND on the same checksum-current file. Labels match exactly after lowercasing and turning spaces into hyphens; they are not relevance ranking. These selectors reject remote/mixed, cursor, piped stdin, and explicit related navigation; `graph`, `grit`, and `architecture` do not inherit them. Run `grepple verify` if a filtered result is unexpectedly empty; metadata must never silently broaden the query.
 
 Line-only search may append `@if:3-5 @func:2-9` display hints; a human suffix can also occur in literal source and is **not** authoritative or edit-ready. `grepple --at PATH @KIND:START-END` (or `@KIND:LINE` when unambiguous) verifies the current parser-backed scope, or fails if stale, missing, or uncertain. For typed output use `--line-only --json-matches` (`text`, `nearest`, `scope`). `--files` lists paths, while `--files-with-matches` searches contents (`-l` lists paths). Results are in path order, not relevance order: an early page is not proof of completeness.
 

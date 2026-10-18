@@ -5,6 +5,8 @@ description: Use to orient in an unfamiliar local repository or answer directory
 
 # Architecture lookup with Grepple
 
+Start with `grepple overview` in a local checkout to see coverage and grounded labels; when it reports missing/stale metadata, use unfiltered tree and source rather than an empty filtered result. Narrow a likely subtree using `grepple tree --purpose implementation --domain-area LABEL --depth 2 PATH` (replace LABEL with an observed label). Repeat a category for OR; categories AND on one checksum-current file. These filters do **not** scope `architecture directory` or graph queries.
+
 ## Choose the question
 
 - **Owner unknown:** `grepple sources explain .`, then `grepple architecture directory --depth 2 --max-nodes 80 .`.

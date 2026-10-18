@@ -13,6 +13,29 @@ import (
 	"github.com/greppleai/grepple/internal/filedigest"
 )
 
+func TestArchitectureReclassifiesAfterV1YAMLEditWithoutSourceEdit(t *testing.T) {
+	root := t.TempDir()
+	writeArchitectureFixture(t, root, "main.go", "package main\nfunc Main() {}\n")
+	chdirForConfigTest(t, root)
+	before, err := Build([]string{"main.go"}, 0, Dependencies{})
+	if err != nil || len(before.SourceFiles) != 1 || before.SourceFiles[0].Classification != "production" {
+		t.Fatalf("before: %+v %v", before.SourceFiles, err)
+	}
+	metadata, err := directorymeta.ReadDocumentV1(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	entry := metadata.Directory["."]
+	entry.Files[0].Purpose = "Testing"
+	if err := directorymeta.WriteDirectoryV1(root, root, entry); err != nil {
+		t.Fatal(err)
+	}
+	after, err := Build([]string{"main.go"}, 0, Dependencies{})
+	if err != nil || len(after.SourceFiles) != 1 || after.SourceFiles[0].Classification != "test" {
+		t.Fatalf("after: %+v %v", after.SourceFiles, err)
+	}
+}
+
 func TestArchitectureDirectoryAcrossLanguages(t *testing.T) {
 	root := t.TempDir()
 	writeArchitectureFixture(t, root, ".grepple/grepple.json", `{"ignore":{"paths":["sandbox/**"]}}`)
@@ -192,7 +215,7 @@ func writeArchitectureFixture(t testing.TB, root, relative, content string) {
 	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(relative, ".grepple/") && filepath.Base(path) != directorymeta.FileName {
+	if !strings.HasPrefix(relative, ".grepple/") {
 		writeArchitectureFixtureMetadata(t, root, path)
 	}
 }
@@ -200,33 +223,38 @@ func writeArchitectureFixture(t testing.TB, root, relative, content string) {
 func writeArchitectureFixtureMetadata(t testing.TB, root, path string) {
 	t.Helper()
 	directory, name := filepath.Dir(path), filepath.Base(path)
-	metadata, err := directorymeta.Read(root, directory)
+	metadata, err := directorymeta.ReadDocumentV1(root)
 	if err != nil && !os.IsNotExist(err) {
 		t.Fatal(err)
 	}
 	if os.IsNotExist(err) {
-		metadata = directorymeta.Metadata{Description: "Architecture fixtures.", Responsibilities: []string{"Test architecture analysis."}}
+		metadata = directorymeta.DocumentV1{Schema: "v1", Directory: map[string]directorymeta.DirectoryV1{}}
 	}
+	key, err := directorymeta.DirectoryKey(root, directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	entry := metadata.Directory[key]
 	digest, err := filedigest.SHA256Hex(path)
 	if err != nil {
 		t.Fatal(err)
 	}
-	kind := "production"
+	purpose := "Implementation"
 	if strings.HasSuffix(name, "_test.go") || strings.Contains(name, ".test.") || strings.Contains(name, ".spec.") {
-		kind = "test"
+		purpose = "Testing"
 	}
-	entry := directorymeta.File{Path: name, Description: "Architecture fixture.", Kind: kind, Checksum: digest}
+	file := directorymeta.FileV1{Name: name, Description: "Architecture fixture.", Purpose: purpose, Checksum: digest}
 	updated := false
-	for index := range metadata.Files {
-		if metadata.Files[index].Path == name {
-			metadata.Files[index] = entry
+	for index := range entry.Files {
+		if entry.Files[index].Name == name {
+			entry.Files[index] = file
 			updated = true
 		}
 	}
 	if !updated {
-		metadata.Files = append(metadata.Files, entry)
+		entry.Files = append(entry.Files, file)
 	}
-	if err := directorymeta.Write(root, directory, metadata); err != nil {
+	if err := directorymeta.WriteDirectoryV1(root, directory, entry); err != nil {
 		t.Fatal(err)
 	}
 }

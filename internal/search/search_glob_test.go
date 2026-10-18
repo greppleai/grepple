@@ -303,21 +303,41 @@ func TestConfiguredIgnoresApplyToDiscoveryButNotExplicitFiles(t *testing.T) {
 func TestConfiguredIgnoresAlwaysExcludeGreppleOutputDiscovery(t *testing.T) {
 	root := t.TempDir()
 	writeTree(t, root, ".grepple/output/result.json")
+	writeTree(t, root, ".grepple/grepple.yaml")
+	writeTree(t, root, "hooks/bin/grepple.yaml")
 	writeTree(t, root, "main.go")
+	alias := filepath.Join(root, "snapshot-alias.yaml")
+	if err := os.Symlink(filepath.Join(root, ".grepple", "grepple.yaml"), alias); err != nil {
+		alias = ""
+	}
 	chdir(t, root)
 
 	files, err := collectCandidateFilesConfiguredContext(context.Background(), []string{"."}, "", sourceIgnoreConfig{root: root})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := rels(t, root, files); len(got) != 1 || got[0] != "main.go" {
+	if got := rels(t, root, files); len(got) != 2 || got[0] != "hooks/bin/grepple.yaml" || got[1] != "main.go" {
 		t.Fatalf("discovered files = %#v", got)
 	}
-	files, err = collectCandidateFilesConfiguredContext(context.Background(), []string{filepath.Join(root, ".grepple", "output", "result.json")}, "", sourceIgnoreConfig{root: root})
-	if err != nil {
-		t.Fatal(err)
+	paths := []string{".grepple/output/result.json", ".grepple/grepple.yaml", "hooks/bin/grepple.yaml"}
+	if alias != "" {
+		paths = append(paths, alias)
 	}
-	if len(files) != 0 {
-		t.Fatalf("explicit built-in files = %#v", files)
+	for _, path := range paths {
+		candidate := path
+		if !filepath.IsAbs(candidate) {
+			candidate = filepath.Join(root, candidate)
+		}
+		files, err = collectCandidateFilesConfiguredContext(context.Background(), []string{candidate}, "", sourceIgnoreConfig{root: root})
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := 0
+		if path == "hooks/bin/grepple.yaml" {
+			want = 1
+		}
+		if len(files) != want {
+			t.Fatalf("explicit %s files = %#v", path, files)
+		}
 	}
 }

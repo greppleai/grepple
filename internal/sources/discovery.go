@@ -170,7 +170,7 @@ func (c *candidateCollector) add(absolute string) {
 	if !withinRoot(absolute, c.root) {
 		return
 	}
-	if !containsGitDirectory(absolute) && !ignoredFromRootCached(absolute, c.cwd, c.ignoreCache) && !c.ignore.ignored(absolute) && !c.seen[absolute] {
+	if !containsGitDirectory(absolute) && !ignoredFromRootCached(absolute, c.cwd, c.ignoreCache) && !c.ignore.ignored(absolute) && !IsRepositoryMetadataSnapshot(absolute) && !c.seen[absolute] {
 		c.seen[absolute] = true
 		c.files = append(c.files, absolute)
 	}
@@ -179,7 +179,7 @@ func (c *candidateCollector) add(absolute string) {
 // addExplicit records a directly named file without applying ignore lists.
 // Root confinement and de-duplication still apply.
 func (c *candidateCollector) addExplicit(absolute string) {
-	if withinRoot(absolute, c.root) && !containsGitDirectory(absolute) && !c.ignore.builtIn(absolute) && !c.seen[absolute] {
+	if withinRoot(absolute, c.root) && !containsGitDirectory(absolute) && !c.ignore.builtIn(absolute) && !IsRepositoryMetadataSnapshot(absolute) && !c.seen[absolute] {
 		c.seen[absolute] = true
 		c.files = append(c.files, absolute)
 	}
@@ -444,6 +444,9 @@ func (w *candidateWalker) walk(path string, entry fs.DirEntry, walkErr error) er
 	}
 	if entry.IsDir() {
 		return w.walkDir(path, rel)
+	}
+	if entry.Type()&fs.ModeSymlink != 0 && IsRepositoryMetadataSnapshot(path) {
+		return nil
 	}
 	if !ignored(rel, w.ignorePatterns) && !w.ignore.ignored(path) {
 		w.files = append(w.files, path)

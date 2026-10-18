@@ -16,19 +16,10 @@ Repository configuration lives at `.grepple/grepple.json`; use [`examples/greppl
 - `--no-config-ignore` loads repository configuration, including server and spill settings, but disables `ignore.paths`.
 - `--no-repo-config` bypasses repository-owned behavior entirely. User authentication in `~/.grepple/config.json` remains active.
 - `--production-only` excludes non-production classifications during recursive discovery.
-- Explicit files retain precedence over configured ignores and `--production-only`; the command emits a bypass notice.
+- Explicit files retain precedence over configured ignores and `--production-only`; the command emits a bypass notice. The internal `.grepple/grepple.yaml` snapshot remains excluded from local search and file listings even when named explicitly (including a symlink alias), and `grepple --at` rejects direct reads. Use `grepple overview` or `grepple verify` instead. Other YAML files, such as `hooks/bin/grepple.yaml`, remain searchable. These rules do not modify repository configuration, metadata generation, or remote indexes.
 
 These are global flags and may appear with search, graph, GritQL, ask, or architecture commands. Artifact reruns and generated continuation commands retain the active scope flags.
 
 ## Classifications
 
-Classification comes from each file's current `.grepple/grepple.yaml` entry rather than path or filename conventions. `grepple init` asks the configured model to classify every authoritative file from source evidence using exactly:
-
-- `production`: application or library source used in normal operation;
-- `test`: test implementation or test-only support;
-- `fixture`: examples, samples, or fixture data/source;
-- `generated`: generated or build-produced source;
-- `vendor`: vendored third-party source;
-- `unknown`: evidence is insufficient or no trustworthy classification is available.
-
-A classification is trusted only when its path is a direct file entry, its kind is valid, and its recorded SHA-256 checksum matches current content. Missing metadata, omitted kinds, invalid kinds, and stale checksums classify the file as `unknown`; Grepple does not infer production status from a filename. Run `grepple init` after source changes to refresh stale or missing descriptions, checksums, and kinds (or `--only-directory PATH` to limit the refresh). Classification is source-scope metadata, not an ownership or deployment verdict. Use the complete universe unless the task explicitly asks about production code.
+A source-policy classification is derived from the `purpose` of a selected, checksum-current V1 file annotation, not from its filename or a persisted `kind` field. Explicit purposes **Implementation** (or Production), **Testing** (or Test), **Fixture**, **Generated**, and **Vendor** map to the source-policy classifications `production`, `test`, `fixture`, `generated`, and `vendor`. Documentation and other grounded custom purposes map to `unknown` for source-policy filters. Invalid, missing or stale metadata is also `unknown`; it never widens `--production-only`. Run `grepple init --only-directory PATH` to refresh selected annotations, or unfiltered `grepple init` **only when you explicitly intend to generate annotations for the whole checkout**; this can incur model costs. Classification is a source-policy hint, not an ownership or deployment verdict; use the complete universe unless the task explicitly asks about production code. Tree's old `--kind` filter was removed; search's `--outline --kind functions` is a separate parser shape selector.

@@ -100,7 +100,7 @@ export function readinessMessage({ cliSource, guardSource }) {
   else if (cliSource === 'PATH' && guardSource === 'plugin data') {
     guard = 'grep guard active via plugin data; the PATH CLI lacks guard support, so update it';
   }
-  return `Grepple: CLI ready (${cliSource}); ${guard}. For local repository discovery start with grepple tree --depth 1, then focused Grepple search (-F for literals; --line-only for matching lines).`;
+  return `Grepple: CLI ready (${cliSource}); ${guard}. For local repository discovery try grepple overview first (model-free; see coverage and real labels), then grepple tree --depth 1 and focused search. If overview is unavailable or metadata missing, use unfiltered tree/search; metadata selectors like --purpose work only on current local annotations.`;
 }
 
 export async function install(dataDir) {

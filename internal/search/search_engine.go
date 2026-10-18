@@ -195,6 +195,9 @@ func FilesContext(ctx context.Context, p Params, candidates []string) ([]FileMat
 	}
 	files := candidates
 	if files == nil {
+		files = p.MetadataCandidates
+	}
+	if files == nil {
 		finish := beginCandidateDiscovery(ctx, "content")
 		files, e = collectCandidateFilesConfiguredContext(ctx, p.Globs, p.Root, sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths, productionOnly: p.ProductionOnly})
 		if finish != nil {
@@ -467,6 +470,9 @@ func ListFilePathsContext(ctx context.Context, p Params, candidates []string) ([
 		ctx = context.Background()
 	}
 	files := candidates
+	if files == nil {
+		files = p.MetadataCandidates
+	}
 	var e error
 	if files == nil {
 		finish := beginCandidateDiscovery(ctx, "listing")

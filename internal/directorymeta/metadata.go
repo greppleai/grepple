@@ -1,37 +1,11 @@
-// Package directorymeta owns the repository's consolidated directory descriptions.
+// Package directorymeta owns the repository's file annotations and derived inventory.
 package directorymeta
 
 import (
 	"path/filepath"
 	"sort"
 	"strings"
-
-	"github.com/greppleai/grepple/internal/filedigest"
 )
-
-const FileName = "grepple.yaml"
-
-type File struct {
-	Path        string   `yaml:"path" json:"path"`
-	Description string   `yaml:"description" json:"description"`
-	Kind        string   `yaml:"kind" json:"kind"`
-	Checksum    string   `yaml:"checksum" json:"checksum"`
-	Areas       []string `yaml:"areas,omitempty" json:"areas,omitempty"`
-}
-
-type AreaProposal struct {
-	Path     string `yaml:"path" json:"path"`
-	Area     string `yaml:"area" json:"area"`
-	Action   string `yaml:"action" json:"action"`
-	Evidence string `yaml:"evidence" json:"evidence"`
-}
-
-type Metadata struct {
-	Description      string         `yaml:"description" json:"description"`
-	Responsibilities []string       `yaml:"responsibilities" json:"responsibilities"`
-	Files            []File         `yaml:"files" json:"files"`
-	AreaProposals    []AreaProposal `yaml:"-" json:"-"` // Review-only; never persisted in .grepple/grepple.yaml.
-}
 
 // Directories returns the root and every ancestor directory containing selected files.
 func Directories(root string, files []string) ([]string, error) {
@@ -69,28 +43,5 @@ func Directories(root string, files []string) ([]string, error) {
 		}
 		return result[i] < result[j]
 	})
-	return result, nil
-}
-
-func FilesForDirectory(root, directory string, paths []string) ([]File, error) {
-	result := []File{}
-	for _, path := range paths {
-		if filepath.Base(path) == FileName {
-			continue
-		}
-		absolute := path
-		if !filepath.IsAbs(absolute) {
-			absolute = filepath.Join(root, filepath.FromSlash(path))
-		}
-		if filepath.Clean(filepath.Dir(absolute)) != filepath.Clean(directory) {
-			continue
-		}
-		digest, err := filedigest.SHA256Hex(absolute)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, File{Path: filepath.Base(path), Checksum: digest})
-	}
-	sort.Slice(result, func(i, j int) bool { return result[i].Path < result[j].Path })
 	return result, nil
 }

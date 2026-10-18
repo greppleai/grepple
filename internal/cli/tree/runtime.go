@@ -3,14 +3,14 @@ package tree
 
 import (
 	"github.com/greppleai/grepple/internal/cliruntime"
-	sourcedomain "github.com/greppleai/grepple/internal/sources"
+	"github.com/greppleai/grepple/internal/directorymeta"
 	"github.com/greppleai/grepple/internal/wire"
 )
 
-type localTree func(path string, depth int, kind sourcedomain.Kind, areas []string) (wire.TreeResponse, error)
+type localTree func(path string, depth int, selector directorymeta.SelectorV1) (wire.TreeResponse, error)
 
 func newLocal(context cliruntime.Context) localTree {
-	return func(path string, depth int, kind sourcedomain.Kind, areas []string) (wire.TreeResponse, error) {
-		return buildLocal(path, depth, kind, areas, context.Repository())
+	return func(path string, depth int, selector directorymeta.SelectorV1) (wire.TreeResponse, error) {
+		return buildLocalSelected(path, depth, selector, context.Repository())
 	}
 }

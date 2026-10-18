@@ -52,8 +52,28 @@ func Execute(application cliruntime.Context, values *Args) error {
 }
 
 func executeSearch(application cliruntime.Context, options *Options, explicitServer string, remote bool) error {
+	if options.MetadataSelector.Requested() && (remote || explicitServer != "" || options.RemoteOnly || options.Cursor != "") {
+		return fmt.Errorf("local metadata search selectors cannot search a remote or cursor source")
+	}
 	if err := configureStdinSearch(application, options); err != nil {
 		return err
+	}
+	if options.MetadataSelector.Requested() {
+		if options.Stdin {
+			return fmt.Errorf("local metadata search selectors cannot search stdin; provide a selected file path")
+		}
+		if options.Params.Related || options.Params.FollowRelated != 0 {
+			return fmt.Errorf("local metadata selectors cannot combine with --related/--follow-related")
+		}
+		candidates, err := selectLocalMetadataCandidates(context.Background(), options)
+		if err != nil {
+			return err
+		}
+		options.Params.MetadataCandidates = candidates
+		if len(candidates) == 0 {
+			fmt.Fprintln(application.Stderr(), "no selected files match current local metadata; run grepple overview or grepple verify")
+			application.RequestExit(1)
+		}
 	}
 	if options.Outline {
 		format := "text"

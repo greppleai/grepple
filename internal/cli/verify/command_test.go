@@ -8,6 +8,7 @@ import (
 
 	"github.com/greppleai/grepple/internal/cliruntime"
 	"github.com/greppleai/grepple/internal/directorymeta"
+	"github.com/greppleai/grepple/internal/filedigest"
 )
 
 func TestBuildReportsMissingAndValidDirectoryMetadata(t *testing.T) {
@@ -28,14 +29,15 @@ func TestBuildReportsMissingAndValidDirectoryMetadata(t *testing.T) {
 		t.Fatalf("report=%+v", report)
 	}
 	for _, directory := range []string{root, filepath.Join(root, "pkg")} {
-		files, fileErr := directorymeta.FilesForDirectory(root, directory, []string{"pkg/file.go"})
-		if fileErr != nil {
-			t.Fatal(fileErr)
+		entry := directorymeta.DirectoryV1{Files: []directorymeta.FileV1{}}
+		if directory == filepath.Join(root, "pkg") {
+			checksum, hashErr := filedigest.SHA256Hex(filepath.Join(directory, "file.go"))
+			if hashErr != nil {
+				t.Fatal(hashErr)
+			}
+			entry.Files = append(entry.Files, directorymeta.FileV1{Name: "file.go", Checksum: checksum, Description: "Contains package code.", Purpose: "Implementation"})
 		}
-		for index := range files {
-			files[index].Description = "Contains package code."
-		}
-		if err := directorymeta.Write(root, directory, directorymeta.Metadata{Description: "Description.", Responsibilities: []string{"Own code."}, Files: files}); err != nil {
+		if err := directorymeta.WriteDirectoryV1(root, directory, entry); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -47,7 +49,7 @@ func TestBuildReportsMissingAndValidDirectoryMetadata(t *testing.T) {
 		t.Fatal(err)
 	}
 	report, err = Build(context, nil)
-	if err != nil || len(report.Stale) != 1 || report.Stale[0] != "pkg" {
+	if err != nil || len(report.Stale) != 1 || report.Stale[0] != "pkg" || len(report.Issues["pkg"]) == 0 {
 		t.Fatalf("stale report=%+v err=%v", report, err)
 	}
 }

@@ -15,6 +15,24 @@ func collectCandidateFiles(globs []string, root string) ([]string, error) {
 	return sourcedomain.Candidates(context.Background(), globs, sourcedomain.DiscoveryOptions{Root: root})
 }
 
+// DiscoverLocalCandidatesContext uses the same source policy and glob discovery
+// as the requested search mode, before metadata is evaluated or paging begins.
+func DiscoverLocalCandidatesContext(ctx context.Context, p Params, listing bool) ([]string, error) {
+	globs := p.Globs
+	if p.At != "" {
+		path, _, _, err := atReference(p)
+		if err != nil {
+			return nil, err
+		}
+		globs = []string{path}
+	}
+	ignore := sourceIgnoreConfig{root: p.IgnoreRoot, patterns: p.IgnorePaths, productionOnly: p.ProductionOnly}
+	if listing {
+		return collectListingFilesConfiguredContext(ctx, globs, p.Root, ignore)
+	}
+	return collectCandidateFilesConfiguredContext(ctx, globs, p.Root, ignore)
+}
+
 func collectCandidateFilesConfiguredContext(ctx context.Context, globs []string, root string, ignore sourceIgnoreConfig) ([]string, error) {
 	return sourcedomain.Candidates(ctx, globs, sourcedomain.DiscoveryOptions{Root: root, IgnoreRoot: ignore.root, IgnorePaths: ignore.patterns, ProductionOnly: ignore.productionOnly})
 }

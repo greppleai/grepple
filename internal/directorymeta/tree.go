@@ -12,51 +12,50 @@ func TreeSummary(root string, files []string, depth int) string {
 	if depth < 1 {
 		return ""
 	}
-	directories, err := Directories(root, files)
+	inventory, err := BuildInventoryV1(root, files)
 	if err != nil {
 		return ""
 	}
-	allowed := make(map[string]bool, len(directories))
-	for _, directory := range directories {
-		allowed[filepath.Clean(directory)] = true
+	allowed := make(map[string]bool, len(inventory.Directories))
+	for key := range inventory.Directories {
+		allowed[key] = true
 	}
 	var output strings.Builder
-	rootInspection := Inspect(root, root, files)
 	output.WriteString(".")
-	if rootInspection.Metadata.Description != "" {
-		output.WriteString(" — " + rootInspection.Metadata.Description)
-	}
-	output.WriteString(metadataStatusSuffix(rootInspection.Status))
+	appendSummaryLabels(&output, inventory, ".")
+	output.WriteString(metadataStatusSuffix(inventory.Directories["."].Status))
 	output.WriteByte('\n')
-	appendDirectorySummary(&output, root, root, "", depth, allowed, files)
+	appendDirectorySummary(&output, ".", "", depth, allowed, inventory)
 	return strings.TrimSpace(output.String())
 }
 
-func appendDirectorySummary(output *strings.Builder, root, directory, prefix string, depth int, allowed map[string]bool, files []string) {
+func appendDirectorySummary(output *strings.Builder, directory, prefix string, depth int, allowed map[string]bool, inventory InventoryV1) {
 	if depth == 0 {
 		return
 	}
 	children := make([]string, 0)
 	for candidate := range allowed {
-		if candidate != filepath.Clean(directory) && filepath.Dir(candidate) == filepath.Clean(directory) {
+		if candidate != directory && filepath.ToSlash(filepath.Dir(candidate)) == directory {
 			children = append(children, candidate)
 		}
 	}
 	sort.Strings(children)
 	for index, child := range children {
-		last := index == len(children)-1
 		branch, next := "├── ", prefix+"│   "
-		if last {
+		if index == len(children)-1 {
 			branch, next = "└── ", prefix+"    "
 		}
-		inspection := Inspect(root, child, files)
 		fmt.Fprintf(output, "%s%s%s/", prefix, branch, filepath.Base(child))
-		if inspection.Metadata.Description != "" {
-			output.WriteString(" — " + inspection.Metadata.Description)
-		}
-		output.WriteString(metadataStatusSuffix(inspection.Status))
+		appendSummaryLabels(output, inventory, child)
+		output.WriteString(metadataStatusSuffix(inventory.Directories[child].Status))
 		output.WriteByte('\n')
-		appendDirectorySummary(output, root, child, next, depth-1, allowed, files)
+		appendDirectorySummary(output, child, next, depth-1, allowed, inventory)
+	}
+}
+
+func appendSummaryLabels(output *strings.Builder, inventory InventoryV1, directory string) {
+	if purposes := inventory.Labels[directory].Purposes; len(purposes) > 0 {
+		output.WriteString(" — purposes: " + strings.Join(purposes, ", "))
 	}
 }
 

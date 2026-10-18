@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/greppleai/grepple/internal/directorymeta"
 	"github.com/greppleai/grepple/internal/parser"
 )
 
@@ -83,9 +82,6 @@ func (i *scopeInspector) walk(path string, entry os.DirEntry, walkErr error) err
 		if entry.IsDir() {
 			return filepath.SkipDir
 		}
-		return nil
-	}
-	if entry.Name() == directorymeta.FileName {
 		return nil
 	}
 	if entry.IsDir() {

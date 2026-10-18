@@ -10,6 +10,7 @@ import (
 
 	"github.com/greppleai/grepple/internal/linerange"
 	structure "github.com/greppleai/grepple/internal/parser"
+	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
 // At retrieves local structural context by legacy PATH:LINE[-END] or a typed,
@@ -28,6 +29,22 @@ func At(params Params) (*FileMatch, error) {
 	}
 	if !withinRoot(absolute, params.Root) {
 		return nil, fmt.Errorf("--at path %q is outside the search root", path)
+	}
+	if sourcedomain.IsRepositoryMetadataSnapshot(absolute) {
+		return nil, fmt.Errorf("--at path %q is Grepple's internal metadata snapshot; use grepple overview or grepple verify instead", path)
+	}
+	if params.MetadataCandidates != nil {
+		permitted := false
+		for _, candidate := range params.MetadataCandidates {
+			candidateAbsolute, candidateErr := filepath.Abs(candidate)
+			if candidateErr == nil && candidateAbsolute == absolute {
+				permitted = true
+				break
+			}
+		}
+		if !permitted {
+			return nil, fmt.Errorf("--at path %q does not match current local metadata selectors (run grepple overview or grepple verify)", path)
+		}
 	}
 	contentBytes, err := os.ReadFile(absolute)
 	if err != nil {
@@ -93,6 +110,9 @@ func AtFromDocument(params Params, document *structure.Document, analysis *Navig
 	}
 	if !withinRoot(absolute, params.Root) {
 		return nil, fmt.Errorf("--at path %q is outside the search root", path)
+	}
+	if sourcedomain.IsRepositoryMetadataSnapshot(absolute) {
+		return nil, fmt.Errorf("--at path %q is Grepple's internal metadata snapshot; use grepple overview or grepple verify instead", path)
 	}
 	if document == nil {
 		return nil, fmt.Errorf("--at path %q has no parsed document", path)

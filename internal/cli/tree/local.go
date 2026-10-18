@@ -1,7 +1,6 @@
 package tree
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -12,82 +11,6 @@ import (
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 	"github.com/greppleai/grepple/internal/wire"
 )
-
-func buildLocal(path string, depth int, kind sourcedomain.Kind, selectedAreas []string, repository cliruntime.Repository) (wire.TreeResponse, error) {
-
-	if path == "" {
-		path = "."
-	}
-	info, files, err := localSourcePaths(path, repository)
-	if err != nil {
-		return wire.TreeResponse{}, err
-	}
-	working := "."
-	if repository != nil {
-		working = repository.WorkingDirectory()
-	}
-	working, err = filepath.Abs(working)
-	if err != nil {
-		return wire.TreeResponse{}, err
-	}
-	absolute, err := filepath.Abs(path)
-	if err != nil {
-		return wire.TreeResponse{}, err
-	}
-	base := absolute
-	metadataFiles := files
-	if !info.IsDir() {
-		base = filepath.Dir(absolute)
-		_, metadataFiles, err = localSourcePaths(base, repository)
-		if err != nil {
-			return wire.TreeResponse{}, err
-		}
-	}
-	inspection := directorymeta.Inspect(working, base, metadataFiles)
-	if kind != "" {
-		if repository != nil {
-			policy, err := repository.ScopeOptions()
-			if err != nil {
-				return wire.TreeResponse{}, err
-			}
-			if policy.ProductionOnly && kind != sourcedomain.Production {
-				return wire.TreeResponse{}, fmt.Errorf("--kind %s cannot be combined with --production-only", kind)
-			}
-		}
-		classifier := sourcedomain.NewClassifier(working)
-		selected := files[:0:0]
-		for _, file := range files {
-			if classifier.Classify(file) == kind {
-				selected = append(selected, file)
-			}
-		}
-		files = selected
-	}
-	areaReferences, err := directorymeta.AreaIndex(working, files)
-	if err != nil {
-		return wire.TreeResponse{}, err
-	}
-	if len(selectedAreas) > 0 {
-		files, areaReferences = filterLocalAreas(files, areaReferences, working, selectedAreas)
-	}
-	areas := localAreaMembership(areaReferences, base, working)
-	result := localEntries(files, metadataFiles, base, working, depth, areas)
-	display, err := filepath.Rel(working, absolute)
-	if err != nil {
-		return wire.TreeResponse{}, fmt.Errorf("display local tree path: %w", err)
-	}
-	response := wire.TreeResponse{
-		Repo:           ".",
-		Path:           filepath.ToSlash(display),
-		Areas:          areas["."],
-		Depth:          depth,
-		Entries:        result,
-		Description:    inspection.Metadata.Description,
-		MetadataStatus: inspection.Status,
-		MetadataIssues: append([]string(nil), inspection.Issues...),
-	}
-	return response, nil
-}
 
 func localSourcePaths(path string, repository cliruntime.Repository) (os.FileInfo, []string, error) {
 	info, err := os.Stat(path)
@@ -105,49 +28,46 @@ func localSourcePaths(path string, repository cliruntime.Repository) (os.FileInf
 	return info, files, err
 }
 
-// filterLocalAreas keeps current files matching any requested tag. Other tags
-// on those same files remain visible to explain the areas each result touches.
-func filterLocalAreas(files []string, references []directorymeta.AreaReference, working string, requested []string) ([]string, []directorymeta.AreaReference) {
-	wanted := make(map[string]bool, len(requested))
-	for _, area := range requested {
-		wanted[area] = true
+// metadataFileKey returns a slash-separated path relative to the repository.
+func metadataFileKey(path, working string) string {
+	absolute := path
+	if !filepath.IsAbs(path) {
+		absolute = filepath.Join(working, filepath.FromSlash(path))
 	}
-	matched := map[string]bool{}
-	for _, reference := range references {
-		if reference.Status == directorymeta.StatusCurrent && wanted[reference.Area] {
-			matched[reference.Path] = true
-		}
+	relative, err := filepath.Rel(working, absolute)
+	if err != nil {
+		return ""
 	}
-	selected := make([]string, 0, len(files))
-	for _, file := range files {
-		absolute := file
-		if !filepath.IsAbs(absolute) {
-			absolute = filepath.Join(working, filepath.FromSlash(file))
-		}
-		relative, err := filepath.Rel(working, absolute)
-		if err == nil && matched[filepath.ToSlash(relative)] {
-			selected = append(selected, file)
-		}
-	}
-	visible := make([]directorymeta.AreaReference, 0, len(references))
-	for _, reference := range references {
-		if matched[reference.Path] {
-			visible = append(visible, reference)
-		}
-	}
-	return selected, visible
+	return filepath.ToSlash(relative)
 }
 
-func localEntries(files, metadataFiles []string, base, working string, depth int, areas map[string][]string) []wire.TreeEntry {
+func localEntriesV1(files []string, base, working string, depth int, inventory directorymeta.InventoryV1) []wire.TreeEntry {
 	entries := map[string]bool{}
-	metadataCache := map[string]directorymeta.Inspection{}
 	for _, file := range files {
 		appendLocalPath(entries, file, base, working, depth)
 	}
 	result := make([]wire.TreeEntry, 0, len(entries))
 	for entryPath, directory := range entries {
-		entry := wire.TreeEntry{Path: entryPath, Dir: directory, Areas: areas[entryPath]}
-		entry.Description, entry.MetadataStatus, entry.MetadataIssues = localEntryMetadata(base, working, entryPath, directory, metadataFiles, metadataCache)
+		entry := wire.TreeEntry{Path: entryPath, Dir: directory}
+		if directory {
+			key, err := directorymeta.DirectoryKey(working, filepath.Join(base, filepath.FromSlash(entryPath)))
+			if err == nil {
+				inspection := inventory.Directories[key]
+				entry.MetadataStatus = inspection.Status
+				entry.MetadataIssues = append([]string(nil), inspection.Issues...)
+			}
+		} else {
+			key := metadataFileKey(filepath.Join(base, filepath.FromSlash(entryPath)), working)
+			state, exists := inventory.Files[key]
+			if !exists {
+				entry.MetadataStatus = directorymeta.StatusMissing
+				entry.MetadataIssues = []string{"file entry is missing from .grepple/grepple.yaml"}
+			} else {
+				entry.Description = state.File.Description
+				entry.MetadataStatus = state.Status
+				entry.MetadataIssues = append([]string(nil), state.Issues...)
+			}
+		}
 		result = append(result, entry)
 	}
 	sort.Slice(result, func(i, j int) bool {
@@ -157,64 +77,6 @@ func localEntries(files, metadataFiles []string, base, working string, depth int
 		return result[i].Dir && !result[j].Dir
 	})
 	return result
-}
-
-// localAreaMembership rolls fresh selected-file tags up to every ancestor,
-// including directories hidden by a shallow tree depth. Stale tags stay review
-// leads in metadata, never authoritative area labels in tree output.
-func localAreaMembership(references []directorymeta.AreaReference, base, working string) map[string][]string {
-	sets := map[string]map[string]bool{}
-	for _, reference := range references {
-		if reference.Status != directorymeta.StatusCurrent || !directorymeta.ValidArea(reference.Area) {
-			continue
-		}
-		path := filepath.Join(working, filepath.FromSlash(reference.Path))
-		relative, err := filepath.Rel(base, path)
-		if err != nil || relative == "." || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-			continue
-		}
-		parts := strings.Split(filepath.ToSlash(relative), "/")
-		for index := 0; index <= len(parts); index++ {
-			entry := "."
-			if index > 0 {
-				entry = strings.Join(parts[:index], "/")
-			}
-			if sets[entry] == nil {
-				sets[entry] = map[string]bool{}
-			}
-			sets[entry][reference.Area] = true
-		}
-	}
-	areas := make(map[string][]string, len(sets))
-	for path, values := range sets {
-		for area := range values {
-			areas[path] = append(areas[path], area)
-		}
-		sort.Strings(areas[path])
-	}
-	return areas
-}
-
-func localEntryMetadata(base, working, entryPath string, directory bool, files []string, cache map[string]directorymeta.Inspection) (string, string, []string) {
-	metadataDirectory := filepath.Join(base, filepath.FromSlash(entryPath))
-	if !directory {
-		metadataDirectory = filepath.Dir(metadataDirectory)
-	}
-	metadataDirectory = filepath.Clean(metadataDirectory)
-	inspection, found := cache[metadataDirectory]
-	if !found {
-		inspection = directorymeta.Inspect(working, metadataDirectory, files)
-		cache[metadataDirectory] = inspection
-	}
-	if directory {
-		return inspection.Metadata.Description, inspection.Status, append([]string(nil), inspection.Issues...)
-	}
-	name := filepath.Base(filepath.FromSlash(entryPath))
-	state, exists := inspection.Files[name]
-	if !exists {
-		return "", directorymeta.StatusMissing, []string{"file entry is missing from .grepple/grepple.yaml"}
-	}
-	return state.Description, state.Status, append([]string(nil), state.Issues...)
 }
 
 func appendLocalPath(entries map[string]bool, file, base, working string, depth int) {

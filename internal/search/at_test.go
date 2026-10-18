@@ -13,6 +13,41 @@ import (
 	"github.com/greppleai/grepple/internal/parser"
 )
 
+func TestAtRejectsRepositoryMetadataSnapshotButAllowsOtherYAML(t *testing.T) {
+	root := t.TempDir()
+	snapshot := filepath.Join(root, ".grepple", "grepple.yaml")
+	if err := os.MkdirAll(filepath.Dir(snapshot), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(snapshot, []byte("schema: v1\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	for _, at := range []string{filepath.Join(".grepple", "grepple.yaml") + ":1", snapshot + ":1"} {
+		if result, err := At(Params{Root: root, At: at}); err == nil || !strings.Contains(err.Error(), "grepple overview or grepple verify") || result != nil {
+			t.Fatalf("--at %q: result=%+v err=%v", at, result, err)
+		}
+	}
+	alias := filepath.Join(root, "snapshot.yaml")
+	if err := os.Symlink(snapshot, alias); err == nil {
+		if result, err := At(Params{Root: root, At: alias + ":1"}); err == nil || result != nil {
+			t.Fatalf("symlink --at: result=%+v err=%v", result, err)
+		}
+	}
+	if result, err := AtFromDocument(Params{Root: root, At: snapshot + ":1"}, nil, nil); err == nil || result != nil || !strings.Contains(err.Error(), "internal metadata snapshot") {
+		t.Fatalf("document --at: result=%+v err=%v", result, err)
+	}
+	ordinary := filepath.Join(root, "hooks", "bin", "grepple.yaml")
+	if err := os.MkdirAll(filepath.Dir(ordinary), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(ordinary, []byte("name: fixture\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if result, err := At(Params{Root: root, At: ordinary + ":1"}); err != nil || result == nil {
+		t.Fatalf("ordinary YAML --at: result=%+v err=%v", result, err)
+	}
+}
+
 func TestAtReturnsExactDocumentedGoCallable(t *testing.T) {
 	directory := t.TempDir()
 	path := writeGoFixture(t, directory, "helper.go", `package related

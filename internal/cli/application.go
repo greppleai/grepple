@@ -16,6 +16,7 @@ import (
 	initcommand "github.com/greppleai/grepple/internal/cli/init"
 	languagescommand "github.com/greppleai/grepple/internal/cli/languages"
 	metricscommand "github.com/greppleai/grepple/internal/cli/metrics"
+	overviewcommand "github.com/greppleai/grepple/internal/cli/overview"
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
 	reposcommand "github.com/greppleai/grepple/internal/cli/repos"
 	rulescommand "github.com/greppleai/grepple/internal/cli/rules"
@@ -57,6 +58,7 @@ type Arguments struct {
 	Sources      *sourcescommand.Args        `arg:"subcommand:sources" help:"explain source selection"`
 	Init         *initcommand.Args           `arg:"subcommand:init" help:"generate directory metadata"`
 	Verify       *verifycommand.Args         `arg:"subcommand:verify" help:"verify directory metadata"`
+	Overview     *overviewcommand.Args       `arg:"subcommand:overview" help:"summarize current local metadata vocabulary and coverage"`
 	Languages    *languagescommand.Args      `arg:"subcommand:languages" help:"show language capabilities"`
 	Metrics      *metricscommand.Args        `arg:"subcommand:metrics" help:"analyze explicit agent utility journals"`
 	Rules        *rulescommand.Args          `arg:"subcommand:rules" help:"manage saved remote rules"`
@@ -119,6 +121,8 @@ func (values *Arguments) traceCommandName() string {
 		return "init"
 	case values.Verify != nil:
 		return "verify"
+	case values.Overview != nil:
+		return "overview"
 	case values.Languages != nil:
 		return "languages"
 	case values.Metrics != nil:
@@ -179,6 +183,8 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 		return initcommand.Execute(context, values.Init)
 	case values.Verify != nil:
 		return verifycommand.Execute(context, values.Verify)
+	case values.Overview != nil:
+		return overviewcommand.Execute(context, values.Overview)
 	case values.Languages != nil:
 		return languagescommand.Execute(context, values.Languages)
 	case values.Metrics != nil:

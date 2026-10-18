@@ -3,6 +3,7 @@ package search
 import (
 	"github.com/greppleai/grepple/internal/anchor"
 	"github.com/greppleai/grepple/internal/apiclient"
+	"github.com/greppleai/grepple/internal/directorymeta"
 	rendercommand "github.com/greppleai/grepple/internal/render"
 	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/wire"
@@ -10,6 +11,7 @@ import (
 
 type Options struct {
 	Params           search.Params
+	MetadataSelector directorymeta.SelectorV1
 	RemoteOnly       bool
 	Cursor           string
 	CursorPage       *apiclient.SearchPage

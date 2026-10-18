@@ -87,7 +87,7 @@ test('startup reports active, inactive, and plugin-private fallback without repl
     await writeFile(pathCLI, stubCLI(true));
     const active = await install(root);
     assert.deepEqual(active, { cliSource: 'PATH', guardSource: 'PATH' });
-    assert.match(readinessMessage(active), /grep guard active.*grepple tree --depth 1/);
+    assert.match(readinessMessage(active), /grep guard active.*grepple overview first.*grepple tree --depth 1.*--purpose/);
     const session = spawnSync(process.execPath, [startup, root], { encoding: 'utf8', env: { ...process.env, CLAUDE_PLUGIN_DATA: root } });
     assert.equal(session.status, 0);
     assert.equal(session.stdout.trim().split('\n').length, 1);

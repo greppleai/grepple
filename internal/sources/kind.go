@@ -9,7 +9,8 @@ import (
 	"github.com/greppleai/grepple/internal/filedigest"
 )
 
-// Kind is a language-neutral repository source classification supplied by .grepple/grepple.yaml.
+// Kind is a source-policy classification derived from a checksum-current V1
+// file purpose. It is not a persisted metadata field.
 type Kind string
 
 const (
@@ -21,7 +22,7 @@ const (
 	Vendor     Kind = "vendor"
 )
 
-// Kinds returns the classifications accepted in directory metadata.
+// Kinds returns the classifications accepted by source-policy filters.
 func Kinds() []Kind { return []Kind{Production, Test, Fixture, Generated, Vendor, Unknown} }
 
 // ParseKind normalizes one metadata classification. Missing classification is unknown.
@@ -38,14 +39,14 @@ func ParseKind(value string) (Kind, bool) {
 	return Unknown, false
 }
 
-// Classifier caches directory manifests for one source-selection operation.
+// Classifier holds one validated metadata snapshot for a selection operation.
+// Invalid or old YAML produces no trusted classifications.
 type Classifier struct {
-	root        string
-	directories map[string]map[string]directorymeta.File
-	kinds       map[string]Kind
+	root     string
+	document directorymeta.DocumentV1
+	kinds    map[string]Kind
 }
 
-// NewClassifier constructs an invocation-local metadata classifier.
 func NewClassifier(root string) *Classifier {
 	if root == "" {
 		root = "."
@@ -53,11 +54,13 @@ func NewClassifier(root string) *Classifier {
 	if absolute, err := filepath.Abs(root); err == nil {
 		root = absolute
 	}
-	return &Classifier{root: filepath.Clean(root), directories: map[string]map[string]directorymeta.File{}, kinds: map[string]Kind{}}
+	root = filepath.Clean(root)
+	document, _ := directorymeta.ReadDocumentV1(root)
+	return &Classifier{root: root, document: document, kinds: map[string]Kind{}}
 }
 
-// Classify returns a fresh metadata classification, or unknown when metadata is
-// missing, stale, invalid, or does not classify the file.
+// Classify is fail-closed: only a file present in a valid V1 directory map
+// whose checksum matches current content can confer a source-policy kind.
 func (classifier *Classifier) Classify(path string) Kind {
 	if classifier == nil {
 		return Unknown
@@ -71,44 +74,39 @@ func (classifier *Classifier) Classify(path string) Kind {
 		return kind
 	}
 	kind := Unknown
-	entry, ok := classifier.entries(filepath.Dir(absolute))[filepath.Base(absolute)]
-	if ok {
-		if parsed, valid := ParseKind(entry.Kind); valid && parsed != Unknown && strings.TrimSpace(entry.Checksum) != "" {
-			if digest, err := filedigest.SHA256Hex(absolute); err == nil && strings.EqualFold(strings.TrimSpace(entry.Checksum), digest) {
-				kind = parsed
+	key, err := directorymeta.DirectoryKey(classifier.root, filepath.Dir(absolute))
+	if err == nil {
+		for _, entry := range classifier.document.Directory[key].Files {
+			if entry.Name != filepath.Base(absolute) {
+				continue
 			}
+			if digest, err := filedigest.SHA256Hex(absolute); err == nil && digest == entry.Checksum {
+				kind = kindForPurpose(entry.Purpose)
+			}
+			break
 		}
 	}
 	classifier.kinds[absolute] = kind
 	return kind
 }
 
-func (classifier *Classifier) entries(directory string) map[string]directorymeta.File {
-	if entries, ok := classifier.directories[directory]; ok {
-		return entries
+// Only these explicit purposes map to pre-existing --kind / --production-only
+// policy. Documentation and custom purposes are unknown, not production.
+func kindForPurpose(value string) Kind {
+	switch directorymeta.LabelKey(value) {
+	case "implementation", "production":
+		return Production
+	case "testing", "test":
+		return Test
+	case "fixture":
+		return Fixture
+	case "generated":
+		return Generated
+	case "vendor":
+		return Vendor
+	default:
+		return Unknown
 	}
-	entries := map[string]directorymeta.File{}
-	duplicates := map[string]bool{}
-	metadata, err := directorymeta.Read(classifier.root, directory)
-	if err == nil {
-		for _, file := range metadata.Files {
-			name := filepath.ToSlash(filepath.Clean(filepath.FromSlash(file.Path)))
-			if name == "" || name == "." || strings.Contains(name, "/") {
-				continue
-			}
-			if duplicates[name] {
-				continue
-			}
-			if _, duplicate := entries[name]; duplicate {
-				delete(entries, name)
-				duplicates[name] = true
-				continue
-			}
-			entries[name] = file
-		}
-	}
-	classifier.directories[directory] = entries
-	return entries
 }
 
 // Classify is a convenience for one-off metadata classification.
