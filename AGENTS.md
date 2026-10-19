@@ -39,3 +39,7 @@ Do not infer package semantics from directory ownership. Use `--production-only`
 ## Validation
 
 Format Go code with `gofmt` and run `make test` before finishing.
+
+## Commits
+
+When asked to commit or propose a commit message, load the repository-local [semantic-commits skill](.pi/skills/semantic-commits/SKILL.md) and use Conventional Commit subjects. This is an agent-only project skill: keep it under `.pi/skills`, not the distributable Grepple CLI or `.agents/skills` plugin bundle. Do not commit or push without explicit authorization.
