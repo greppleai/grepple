@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.8](https://github.com/greppleai/grepple/compare/v0.0.7...v0.0.8) (2026-10-19)
+
+
+### Features
+
+* **memory:** add local repository memories and path scopes ([f446a98](https://github.com/greppleai/grepple/commit/f446a989645c7db05f28f82bd677a180664bea47))
+* **pi:** add grepple guard extension ([48a521e](https://github.com/greppleai/grepple/commit/48a521ee01c5e364b06ad6804a73da66a1d37b54))
+
 ## [0.0.7](https://github.com/greppleai/grepple/compare/v0.0.6...v0.0.7) (2026-10-16)
 
 
