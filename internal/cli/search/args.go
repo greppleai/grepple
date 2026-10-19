@@ -116,6 +116,7 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 	if metadataSelector.Requested() && !values.Related && values.FollowRelated == 0 {
 		values.NoRelated = true
 	}
+	explicitRelated := values.Related || values.FollowRelated > 0
 	if err := configureRelatedDefaults(values); err != nil {
 		return nil, "", false, err
 	}
@@ -163,6 +164,7 @@ func optionsFromArgs(application cliruntime.Context, values *Args, usage interfa
 		Params:           params,
 		MetadataSelector: metadataSelector,
 		RemoteOnly:       values.RemoteOnly || values.Cursor != "",
+		RelatedExplicit:  explicitRelated,
 		Cursor:           values.Cursor,
 		LineOnly:         values.LineOnly,
 		OnlyMatching:     values.OnlyMatching,

@@ -11,7 +11,7 @@ func TestExamplesCoverTaskOrientedWorkflows(t *testing.T) {
 	if err := runExamples(nil, &output); err != nil {
 		t.Fatal(err)
 	}
-	for _, expected := range []string{"orient —", "tree --depth 1", "--outline", "metadata —", "init --only-directory", "grepple overview", "--purpose Implementation", "retrieve —", "--files-with-matches", "--at", "scope —", "@function:8-12", "@object:13-16", "edit —", "--line-only", "grepple write", "impact —", "graph resolve", "audit —", "grit --limit 0 --json"} {
+	for _, expected := range []string{"orient —", "tree --depth 1", "--outline", "metadata —", "init --only-directory", "grepple overview", "--purpose Implementation", "memory —", "memory store", "memory recall", "memory update", "memory delete", "retrieve —", "--files-with-matches", "--at", "scope —", "@function:8-12", "@object:13-16", "edit —", "--line-only", "grepple write", "impact —", "graph resolve", "audit —", "grit --limit 0 --json"} {
 		if !strings.Contains(output.String(), expected) {
 			t.Fatalf("examples output missing %q:\n%s", expected, output.String())
 		}
@@ -31,7 +31,7 @@ func TestExamplesSelectOneTaskAndRejectUnknownTask(t *testing.T) {
 	if !strings.Contains(output.String(), "graph callers") || strings.Contains(output.String(), "make schema-generate") {
 		t.Fatalf("filtered examples output:\n%s", output.String())
 	}
-	if err := runExamples([]string{"missing"}, &output); err == nil || !strings.Contains(err.Error(), "orient, metadata, retrieve, edit") {
+	if err := runExamples([]string{"missing"}, &output); err == nil || !strings.Contains(err.Error(), taskExampleNames()) {
 		t.Fatalf("unknown task error = %v", err)
 	}
 }
@@ -41,7 +41,7 @@ func TestExamplesHelpListsTasks(t *testing.T) {
 	if err := runExamples([]string{"--help"}, &output); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(output.String(), "Usage: grepple examples [TASK]") || !strings.Contains(output.String(), "orient, metadata, retrieve, edit, scope, impact, audit") {
+	if !strings.Contains(output.String(), "Usage: grepple examples [TASK]") || !strings.Contains(output.String(), taskExampleNames()) {
 		t.Fatalf("examples help:\n%s", output.String())
 	}
 }

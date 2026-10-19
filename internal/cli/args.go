@@ -115,6 +115,8 @@ func parseApplicationArgs(args []string) (*Arguments, bool, error) {
 				fmt.Fprintln(os.Stdout, values.Search.Description())
 			} else if values.Metrics != nil {
 				fmt.Fprintln(os.Stdout, values.Metrics.Description())
+			} else if values.Memory != nil {
+				fmt.Fprintln(os.Stdout, values.Memory.Description())
 			}
 			parser.WriteHelp(os.Stdout)
 			return values, true, nil
@@ -174,7 +176,7 @@ func insertApplicationArgument(args []string, index int, value string) []string 
 }
 
 func explicitApplicationCommand(args []string) (string, []string) {
-	commands := map[string]bool{"setup": true, "search": true, "write": true, "grit": true, "hook": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "area": true, "start": true, "init": true, "verify": true, "overview": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
+	commands := map[string]bool{"setup": true, "search": true, "write": true, "grit": true, "hook": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "area": true, "start": true, "init": true, "verify": true, "overview": true, "languages": true, "memory": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
 	for index := 0; index < len(args); index++ {
 		value := args[index]
 		if value == "--artifact-dir" || value == "--spill-threshold-bytes" {
@@ -193,7 +195,7 @@ func explicitApplicationCommand(args []string) (string, []string) {
 }
 
 func hasExplicitApplicationCommand(args []string) bool {
-	commands := map[string]bool{"setup": true, "search": true, "write": true, "grit": true, "hook": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "area": true, "start": true, "init": true, "verify": true, "overview": true, "languages": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
+	commands := map[string]bool{"setup": true, "search": true, "write": true, "grit": true, "hook": true, "graph": true, "anchors": true, "boundaries": true, "examples": true, "artifacts": true, "context": true, "extract": true, "architecture": true, "sources": true, "area": true, "start": true, "init": true, "verify": true, "overview": true, "languages": true, "memory": true, "metrics": true, "rules": true, "repos": true, "get": true, "tree": true, "refs": true, "ask": true, "ai-provider": true, "login": true, "logout": true, "version": true}
 	for index := 0; index < len(args); index++ {
 		value := args[index]
 		if value == "--help" || value == "-h" || value == "--version" {

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	cliruntime "github.com/greppleai/grepple/internal/cliruntime"
+	"github.com/greppleai/grepple/internal/memory"
 	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/wire"
 )
@@ -35,6 +36,7 @@ type Options struct {
 	Stdin            bool
 	Anchors          AnchorLookup
 	Metadata         *wire.ResultMetadata
+	Memories         *memory.Discovery
 }
 
 type resultRenderer interface {
@@ -62,9 +64,17 @@ func newBoundedOutputWriter(writer io.Writer, maxBytes int) *outputWriter {
 func (output *outputWriter) writeString(value string) error { return output.output.WriteString(value) }
 func (output *outputWriter) writeJSON(value any) error      { return output.output.WriteJSON(value) }
 func (output *outputWriter) written() int                   { return output.output.Written() }
+func (output *outputWriter) canAppend(size int) bool        { return output.output.CanAppend(size) }
 
 // Render formats results and returns the emitted byte count.
 func Render(options Options, results []search.FileResult, destination io.Writer) (int, error) {
+	written, _, err := renderWithMemory(options, results, destination)
+	return written, err
+}
+
+// renderWithMemory writes a footer through the SAME bounded output pipeline as
+// source results. Its flag signals only a footer suppressed by the byte cap.
+func renderWithMemory(options Options, results []search.FileResult, destination io.Writer) (int, bool, error) {
 	maxBytes := 0
 	if options.JSON == "off" {
 		maxBytes = options.MaxOutputBytes
@@ -73,9 +83,23 @@ func Render(options Options, results []search.FileResult, destination io.Writer)
 	renderer := newResultRenderer(options, output)
 	err := renderer.Render(results)
 	if err == cliruntime.ErrOutputTruncated {
-		err = nil
+		return output.written(), false, nil
 	}
-	return output.written(), err
+	if err != nil {
+		return output.written(), false, err
+	}
+	if options.JSON == "off" && options.Memories != nil {
+		footer := memoryFooter(*options.Memories)
+		if footer != "" {
+			if !output.canAppend(len(footer)) {
+				return output.written(), true, nil
+			}
+			if err = output.writeString(footer); err != nil {
+				return output.written(), false, err
+			}
+		}
+	}
+	return output.written(), false, nil
 }
 
 func newResultRenderer(options Options, output *outputWriter) resultRenderer {
@@ -85,7 +109,7 @@ func newResultRenderer(options Options, output *outputWriter) resultRenderer {
 	case options.Count:
 		return countRenderer{output: output, json: options.JSON != "off"}
 	case options.JSON != "off":
-		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.Metadata, annotateScopes: options.Params.AnnotateScopes}
+		return jsonResultRenderer{output: output, matchesOnly: options.JSON == "matches" || options.LineOnly, metadata: options.Metadata, annotateScopes: options.Params.AnnotateScopes, memories: options.Memories}
 	case options.Params.BeforeContext > 0 || options.Params.AfterContext > 0:
 		return contextRenderer{output: output, anchors: options.Anchors}
 	case options.OnlyMatching:

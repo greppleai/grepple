@@ -15,6 +15,7 @@ import (
 	hookcommand "github.com/greppleai/grepple/internal/cli/hook"
 	initcommand "github.com/greppleai/grepple/internal/cli/init"
 	languagescommand "github.com/greppleai/grepple/internal/cli/languages"
+	memorycommand "github.com/greppleai/grepple/internal/cli/memory"
 	metricscommand "github.com/greppleai/grepple/internal/cli/metrics"
 	overviewcommand "github.com/greppleai/grepple/internal/cli/overview"
 	refscommand "github.com/greppleai/grepple/internal/cli/refs"
@@ -60,6 +61,7 @@ type Arguments struct {
 	Verify       *verifycommand.Args         `arg:"subcommand:verify" help:"verify directory metadata"`
 	Overview     *overviewcommand.Args       `arg:"subcommand:overview" help:"summarize current local metadata vocabulary and coverage"`
 	Languages    *languagescommand.Args      `arg:"subcommand:languages" help:"show language capabilities"`
+	Memory       *memorycommand.Args         `arg:"subcommand:memory" help:"manage repository-local memories"`
 	Metrics      *metricscommand.Args        `arg:"subcommand:metrics" help:"analyze explicit agent utility journals"`
 	Rules        *rulescommand.Args          `arg:"subcommand:rules" help:"manage saved remote rules"`
 	Repos        *reposcommand.Args          `arg:"subcommand:repos" help:"list indexed repositories"`
@@ -125,6 +127,19 @@ func (values *Arguments) traceCommandName() string {
 		return "overview"
 	case values.Languages != nil:
 		return "languages"
+	case values.Memory != nil:
+		switch {
+		case values.Memory.Store != nil:
+			return "memory.store"
+		case values.Memory.Recall != nil:
+			return "memory.recall"
+		case values.Memory.Update != nil:
+			return "memory.update"
+		case values.Memory.Delete != nil:
+			return "memory.delete"
+		default:
+			return "memory"
+		}
 	case values.Metrics != nil:
 		return "metrics"
 	case values.Rules != nil:
@@ -189,6 +204,8 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 		return languagescommand.Execute(context, values.Languages)
 	case values.Metrics != nil:
 		return metricscommand.Execute(context, values.Metrics)
+	case values.Memory != nil:
+		return memorycommand.Execute(context, values.Memory)
 	case values.Rules != nil:
 		return rulescommand.Execute(context, values.Rules)
 	case values.Repos != nil:

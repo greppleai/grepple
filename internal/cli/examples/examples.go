@@ -27,6 +27,14 @@ var taskExamples = []taskExample{
 		"grepple tree --purpose Implementation --depth 2 internal/parser",
 		"grepple --purpose Implementation --line-only -F 'Parse' internal/parser",
 	}},
+	{Name: "memory", Description: "Save and review an explicit repository-local note; scopes are selected-path hints, not edit policy", Commands: []string{
+		"grepple --outline internal/parser/analyze.go",
+		"grepple memory store parser-note --description 'Review this parser' --body-file ./notes.md --scope internal/parser/ --scope 'internal/parser/**/*.go' --line-range internal/parser/analyze.go:100-300",
+		"grepple --line-only -F 'Parse' internal/parser/analyze.go",
+		"grepple memory recall parser-note",
+		"grepple memory update parser-note --description 'Reviewed' --body-file ./revised.md --scope internal/parser/ --scope 'internal/parser/**/*.go' --line-range internal/parser/analyze.go:100-300",
+		"grepple memory delete parser-note",
+	}},
 	{Name: "retrieve", Description: "Find content-matching files, then retrieve an exact declaration range", Commands: []string{
 		"grepple -F 'BuildNavigationGraph' --files-with-matches ./parser",
 		"grepple --line-only --enclosing -F 'BuildNavigationGraph' ./parser",

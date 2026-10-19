@@ -63,12 +63,26 @@ type SearchResponse struct {
 	Results                 []FileResult                       `json:"results"`
 	Metadata                *ResultMetadata                    `json:"metadata,omitempty"`
 	SourceAnalysis          *SourceAnalysis                    `json:"sourceAnalysis,omitempty"`
+	Memories                []MemoryReference                  `json:"memories,omitempty"`
+	MemoryStatus            *MemoryStatus                      `json:"memoryStatus,omitempty"`
 	RepoCounts              []RepoCount                        `json:"repoCounts,omitempty"`
 	ShardErrors             []string                           `json:"shardErrors,omitempty"`
 	Truncated               bool                               `json:"truncated,omitempty"`
 	ScopeAnnotationsVersion int                                `json:"scopeAnnotationsVersion,omitempty"`
 	NavigationSelections    []searchdomain.NavigationSelection `json:"navigationSelections,omitempty"`
 	DiscoveryComplete       bool                               `json:"discoveryComplete,omitempty"`
+}
+
+// MemoryReference deliberately excludes attachments, labels and body text.
+type MemoryReference struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// MemoryStatus reports qualified omitted entries; incomplete scans have no exact total.
+type MemoryStatus struct {
+	Complete bool `json:"complete"`
+	Omitted  int  `json:"omitted"`
 }
 
 // SourceAnalysis summarizes structural parsing for returned search results.
