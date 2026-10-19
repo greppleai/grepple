@@ -24,7 +24,7 @@ func TestRunHelpAndValidation(t *testing.T) {
 	if !strings.Contains(output.String(), "Usage: grepple examples [TASK]") {
 		t.Fatalf("help=%q", output.String())
 	}
-	if err := runExamples([]string{"missing"}, &output); err == nil || !strings.Contains(err.Error(), "orient, metadata, retrieve, edit") {
+	if err := runExamples([]string{"missing"}, &output); err == nil || !strings.Contains(err.Error(), taskExampleNames()) {
 		t.Fatalf("unknown task error=%v", err)
 	}
 	if err := runExamples([]string{"orient", "retrieve"}, &output); err == nil {

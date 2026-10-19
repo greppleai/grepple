@@ -32,6 +32,17 @@ grepple setup --agent claude --project
 grepple setup --list
 ```
 
+## Pi grep guard extension
+
+This checkout ships an opt-in [Earendil Works Pi](https://github.com/earendil-works/pi) extension at `extensions/pi-grepple/`; it is deliberately outside `.pi/` and is not auto-discovered. `grepple setup pi` installs skills only and does not install or enable extensions. Build a development CLI, then test it explicitly:
+
+```sh
+make build
+pi --extension extensions/pi-grepple/index.ts
+```
+
+The extension blocks Pi `bash` calls that invoke `find`, `grep`, `rg`, `fd`, and related local-search programs, with the same shell-aware classifier and `# grep-guard:allow` exception as the Claude plugin. It permits Pi `read` only for requested paths named exactly `AGENTS.md` or `SKILL.md`, blocks all Pi `write` calls, and leaves `edit` and other non-requested tools alone. To auto-load it for a project, copy the directory to that project's `.pi/extensions/` and reload Pi. See the extension [README](../extensions/pi-grepple/README.md) for its machine protocol, bounds, remote-backend behavior, and removal instructions.
+
 ## Claude Code plugin
 
 The plugin provides nine skills and two hooks. It requires Node.js 18+ on Claude

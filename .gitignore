@@ -3,6 +3,7 @@ bin/
 .grepple/cache/
 .grepple/output/
 .env
+.grepple/memories/.lock
 github-app.pem
 dist/
 grepple-linux-*

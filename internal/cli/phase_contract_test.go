@@ -27,7 +27,7 @@ var cliPhaseAttributes = map[string][]string{
 
 var cliHTTPNames = []string{"cli.http.search", "cli.http.navigation", "cli.http.grit", "cli.http.analysis", "cli.http.raw", "cli.http.tree", "cli.http.repos", "cli.http.rules"}
 var cliHTTPAttributes = []string{"http.request.method", "http.response.status_class", "grepple.outcome"}
-var cliCommandCategories = []string{"search", "version", "write", "grit", "hook", "graph", "graph.resolve", "graph.callers", "graph.callees", "ask", "anchors", "examples", "artifacts", "architecture", "sources", "init", "verify", "overview", "languages", "metrics", "rules", "repos", "get", "tree", "refs", "ai-provider", "login", "logout"}
+var cliCommandCategories = []string{"search", "version", "write", "grit", "hook", "graph", "graph.resolve", "graph.callers", "graph.callees", "ask", "anchors", "examples", "artifacts", "architecture", "sources", "init", "verify", "overview", "languages", "memory", "memory.store", "memory.recall", "memory.update", "memory.delete", "metrics", "rules", "repos", "get", "tree", "refs", "ai-provider", "login", "logout"}
 
 var cliAttributeValues = map[string][]string{
 	"cli.command.name":           cliCommandCategories,

@@ -16,13 +16,23 @@ import (
 func main() {
 	// Convert a downstream pipe closing into EPIPE so the CLI can return cleanly.
 	signal.Ignore(syscall.SIGPIPE)
-	if len(os.Args) == 2 && os.Args[1] == "claude-grep-guard" {
-		// Hook input is untrusted; malformed or oversized payloads fail open.
-		input, err := io.ReadAll(io.LimitReader(os.Stdin, 1<<20))
-		if err == nil {
-			_, _ = os.Stdout.Write(grepguard.HandleClaudeHook(input))
+	if len(os.Args) == 2 {
+		switch os.Args[1] {
+		case "claude-grep-guard":
+			// Hook input is untrusted; malformed or oversized payloads fail open.
+			input, err := io.ReadAll(io.LimitReader(os.Stdin, 1<<20))
+			if err == nil {
+				_, _ = os.Stdout.Write(grepguard.HandleClaudeHook(input))
+			}
+			return
+		case "grep-guard":
+			// Extension input is untrusted; malformed or oversized payloads fail open.
+			input, err := io.ReadAll(io.LimitReader(os.Stdin, 1<<20))
+			if err == nil {
+				_, _ = os.Stdout.Write(grepguard.HandleCommandGuard(input))
+			}
+			return
 		}
-		return
 	}
 	if err := cli.Run(os.Args[1:]); err != nil {
 		if code, ok := cli.ExitCode(err); ok {

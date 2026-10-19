@@ -145,7 +145,8 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 	}
 	options.AnchorLines = anchorLines
 	// Group the selected page by repo/path for readable output.
-	renderOptions := rendercommand.Options{Params: options.Params, LineOnly: options.LineOnly, OnlyMatching: options.OnlyMatching, JSON: options.JSON, Count: options.Count, FilesWithMatches: options.FilesWithMatches, MaxOutputBytes: options.MaxOutputBytes, Stdin: options.Stdin, Anchors: rendercommand.AnchorLookup(options.AnchorLines), Metadata: options.ResultMetadata}
+	memories := selectedMemoryReferences(application, options, explicitServer, remote, results)
+	renderOptions := rendercommand.Options{Params: options.Params, LineOnly: options.LineOnly, OnlyMatching: options.OnlyMatching, JSON: options.JSON, Count: options.Count, FilesWithMatches: options.FilesWithMatches, MaxOutputBytes: options.MaxOutputBytes, Stdin: options.Stdin, Anchors: rendercommand.AnchorLookup(options.AnchorLines), Metadata: options.ResultMetadata, Memories: memories}
 	format := "text"
 	if options.JSON != "off" {
 		format = "json"

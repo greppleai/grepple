@@ -39,6 +39,12 @@ func NewBoundedOutput(writer io.Writer, maxBytes int) *Output {
 // Written returns the number of bytes written, including a truncation marker.
 func (output *Output) Written() int { return output.written }
 
+// CanAppend reports whether additional bytes fit without triggering a bounded
+// output truncation marker or replacing already emitted result lines.
+func (output *Output) CanAppend(size int) bool {
+	return size >= 0 && (output.maxBytes <= 0 || output.written+size <= output.maxBytes-len(boundedOutputMarker(output.maxBytes)))
+}
+
 // WriteString writes value, truncating at a complete line when bounded.
 func (output *Output) WriteString(value string) error {
 	if output.maxBytes <= 0 {

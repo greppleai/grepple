@@ -43,5 +43,6 @@ cd examples
 6. [JSON output & paging](./06-json-and-paging.md)
 7. [Advanced language fixtures and regression tests](./07-advanced-language-fixtures.md)
 8. [Verified scope navigation for TypeScript, TSX, JSON, YAML and Markdown](./08-verified-scope-navigation.md)
+9. [Repository-local memories](./09-repository-memories.md)
 
 > Line numbers, timestamps, paths, and native hashline anchors in the samples come from the fixtures. If you edit a fixture, re-run the commands to refresh their output blocks and selector ranges.

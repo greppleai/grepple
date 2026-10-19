@@ -17,6 +17,7 @@ type Options struct {
 	CursorPage       *apiclient.SearchPage
 	MixedRemote      bool
 	RemoteServer     string
+	RelatedExplicit  bool
 	LineOnly         bool
 	OnlyMatching     bool
 	JSON             string

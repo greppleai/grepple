@@ -17,7 +17,10 @@ type SearchOptions struct {
 // Search renders results and reports line-range warnings.
 func Search(options SearchOptions, results []search.FileResult) error {
 	warnLineRangeResults(results, options.ErrorOutput)
-	_, err := Render(options.Options, results, options.Output)
+	_, omitted, err := renderWithMemory(options.Options, results, options.Output)
+	if omitted && options.ErrorOutput != nil {
+		fmt.Fprintln(options.ErrorOutput, "warning: memory references omitted by --max-output-bytes")
+	}
 	return err
 }
 

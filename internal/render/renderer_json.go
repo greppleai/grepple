@@ -1,6 +1,7 @@
 package render
 
 import (
+	"github.com/greppleai/grepple/internal/memory"
 	"github.com/greppleai/grepple/internal/resultanalysis"
 	"github.com/greppleai/grepple/internal/search"
 	"github.com/greppleai/grepple/internal/wire"
@@ -11,6 +12,7 @@ type jsonResultRenderer struct {
 	matchesOnly    bool
 	metadata       *wire.ResultMetadata
 	annotateScopes bool
+	memories       *memory.Discovery
 }
 
 func (renderer jsonResultRenderer) Render(results []search.FileResult) error {
@@ -20,10 +22,33 @@ func (renderer jsonResultRenderer) Render(results []search.FileResult) error {
 		if ranges := resultLineRanges(results); len(ranges) > 0 {
 			response["lineRanges"] = ranges
 		}
+		addMemoryJSON(response, renderer.memories)
 		return renderer.output.writeJSON(response)
 	}
-	return renderer.output.writeJSON(wire.SearchResponse{Results: results, Metadata: renderer.metadata, SourceAnalysis: searchSourceAnalysis(results)})
+	response := wire.SearchResponse{Results: results, Metadata: renderer.metadata, SourceAnalysis: searchSourceAnalysis(results)}
+	if renderer.memories != nil {
+		response.MemoryStatus = &wire.MemoryStatus{Complete: renderer.memories.Complete, Omitted: renderer.memories.Omitted}
+		for _, ref := range renderer.memories.References {
+			response.Memories = append(response.Memories, wire.MemoryReference{Name: ref.Name, Description: safeMemoryDescription(ref.Description, 120)})
+		}
+	}
+	return renderer.output.writeJSON(response)
 }
+func addMemoryJSON(response map[string]any, found *memory.Discovery) {
+	if found == nil {
+		return
+	}
+	response["memoryStatus"] = wire.MemoryStatus{Complete: found.Complete, Omitted: found.Omitted}
+	if len(found.References) == 0 {
+		return
+	}
+	refs := make([]wire.MemoryReference, 0, len(found.References))
+	for _, ref := range found.References {
+		refs = append(refs, wire.MemoryReference{Name: ref.Name, Description: safeMemoryDescription(ref.Description, 120)})
+	}
+	response["memories"] = refs
+}
+
 func searchSourceAnalysis(results []search.FileResult) *wire.SourceAnalysis {
 	return resultanalysis.Sources(results)
 }
