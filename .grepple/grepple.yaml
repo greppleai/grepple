@@ -4,7 +4,7 @@ directory:
         files:
             - name: .dockerignore
               checksum: e33b9a1a4839b9b9f67407461f6fc347633ae1b447df52354a757f0efa58bc4c
-              description: Excludes build outputs, local configuration and selected development files from Docker build context.
+              description: Excludes build artifacts, Git data, local secrets and selected development files from the Docker build context.
               purpose: implementation
               functionalAreas:
                 - docker-build-context
@@ -12,8 +12,8 @@ directory:
                 - docker
                 - exclusions
             - name: .gitignore
-              checksum: 5601a9e6dc457ba614d0c43cc008708558ae292b298825133c3a13504f06b662
-              description: Excludes generated binaries, Grepple indexes and output, local configuration and distribution artifacts from Git.
+              checksum: a2277842907b61ccde32bf38e332d541a910d8a3dbd4026b3fc62698c67cfb5b
+              description: Excludes generated binaries, Grepple indexes and output, local secrets and distribution artifacts from Git.
               purpose: implementation
               functionalAreas:
                 - repository-hygiene
@@ -23,7 +23,7 @@ directory:
             - name: .go-version
               checksum: a8844fbc8c3eb51c26ed00aec4cd5a5a9d647f849c6ead07bcc83ed24c4a7718
               description: Specifies Go version 1.27.1.
-              purpose: implementation
+              purpose: configuration
               domainAreas:
                 - go-toolchain
               functionalAreas:
@@ -33,8 +33,8 @@ directory:
                 - go
             - name: .goreleaser.yaml
               checksum: 26ba1b4ddac6675457977b4b3d7464edfc27b3f919da15b481fe53b8292d8cc7
-              description: Configures GoReleaser builds for the grepple CLI and greppled daemon across Linux, macOS and Windows targets.
-              purpose: implementation
+              description: Configures GoReleaser builds for the grepple CLI and greppled daemon on Linux, macOS and Windows targets.
+              purpose: configuration
               domainAreas:
                 - release
               functionalAreas:
@@ -46,7 +46,7 @@ directory:
             - name: .release-please-manifest.json
               checksum: a70d075ae288997273b703c5fc8ecc2f6d0a66a6b70feb4e04ab96e759efed80
               description: Records the current Release Please version for the root package.
-              purpose: implementation
+              purpose: configuration
               domainAreas:
                 - release
               functionalAreas:
@@ -55,8 +55,8 @@ directory:
                 - release-please
                 - version
             - name: AGENTS.md
-              checksum: 688039222ed1ebbfa4975d9912f3ede6a18a5f30656915a7c4632f8fbf82c40b
-              description: Documents project package boundaries, architecture discovery guidance and validation instructions for coding agents.
+              checksum: 3ce32df80e3750825eed450d57191bdf4a5a831c24b18f2ee9fc4bdafe6b5639
+              description: Documents package boundaries, architecture constraints, discovery commands, validation and commit guidance for coding agents.
               purpose: documentation
               domainAreas:
                 - project-architecture
@@ -82,7 +82,7 @@ directory:
                 - grepple
             - name: Makefile
               checksum: 00ca713c0e26f2c657637079086903168aad83b0d13094d5af8d6c35f9d82228
-              description: Defines build, test, lint, release-check, schema, Docker-smoke, install and cleanup targets for the project and hooks.
+              description: Defines build, test, lint, schema, Docker-smoke, install and cleanup targets for the project and hooks.
               purpose: implementation
               domainAreas:
                 - development-workflow
@@ -97,7 +97,7 @@ directory:
                 - make
             - name: README.md
               checksum: 02813a9a0d6488d50b5dcab2b352d6cc4212dbc917f0b6c1edd54e9cd309f983
-              description: Introduces Grepple's local code-search CLI and documents common workflows, installation, agent integrations and advanced features.
+              description: Introduces Grepple's local code-search CLI and describes search, source inspection, installation and coding-agent workflows.
               purpose: documentation
               domainAreas:
                 - code-search
@@ -123,7 +123,7 @@ directory:
                 - production
             - name: architecture-production.txt
               checksum: 471346c82661c4c65bb3c53503057f6b5034d69ffcdda9bf9453a75e7ff3e3ee
-              description: Text listing of production package relations, including imports, resolved calls and type references.
+              description: Lists production package relations, including imports, resolved calls and type references.
               purpose: documentation
               domainAreas:
                 - project-architecture
@@ -134,7 +134,7 @@ directory:
                 - production
             - name: architecture.mmd
               checksum: 725aa7542996cbbd7bb073d2072b04bbe936006a6cce214c131d9d6d7197e457
-              description: Mermaid flowchart of package dependencies across API, CLI, hooks, scripts and internal components.
+              description: Mermaid flowchart of package dependencies across the API, commands, hooks, scripts and internal components.
               purpose: documentation
               domainAreas:
                 - project-architecture
@@ -145,8 +145,8 @@ directory:
                 - packages
             - name: go.mod
               checksum: d25ed5a9f8a2ef65b21ab00a6e8a160628f74d76df263605e8677f5e348379c4
-              description: Declares the Grepple Go module, Go toolchain version and direct and indirect dependencies, including Tree-sitter grammars.
-              purpose: implementation
+              description: Declares the Go module, toolchain versions and project dependencies, including Tree-sitter grammars.
+              purpose: configuration
               domainAreas:
                 - go-module
               functionalAreas:
@@ -156,8 +156,8 @@ directory:
                 - tree-sitter
             - name: go.sum
               checksum: bb49b180e123cd4e5cd9978c9b254b7fb66a064b62f63df0b3003f7888d8b713
-              description: Stores checksums for Go module and go.mod dependencies used by the project.
-              purpose: implementation
+              description: Records checksums for Go module and go.mod dependencies.
+              purpose: configuration
               domainAreas:
                 - go-module
               functionalAreas:
@@ -167,7 +167,7 @@ directory:
                 - go
             - name: install.sh
               checksum: c59016fcef6037887f322ed3e9e0184e9f5fd8e01e395beb4a749f9299f66fd9
-              description: Downloads the latest Linux or macOS CLI release, verifies its SHA-256 checksum and installs it to a selected bin directory.
+              description: Downloads the latest Linux or macOS CLI release, verifies its SHA-256 checksum and safely installs the executable.
               purpose: implementation
               domainAreas:
                 - installation
@@ -181,8 +181,8 @@ directory:
                 - shell
             - name: release-please-config.json
               checksum: 0dcce64cdcc88cb9e92abe5ff0bddf47b59eaf447217646e4ec29de71b3a3818
-              description: Configures Release Please for the Go package, version tagging and changelog path.
-              purpose: implementation
+              description: Configures Release Please for the Go package, version tags and changelog path.
+              purpose: configuration
               domainAreas:
                 - release
               functionalAreas:
@@ -194,7 +194,7 @@ directory:
             - name: revive.toml
               checksum: 448ce82f48e47e43e625ade1c99991725b72cc9b4e4002759240cdc8763dc6a7
               description: Pins enabled Revive Go lint rules and error severity for manual linting and the Pi Stop hook.
-              purpose: implementation
+              purpose: configuration
               domainAreas:
                 - code-quality
               functionalAreas:
@@ -564,6 +564,22 @@ directory:
                 - jsonl
                 - session-trace
                 - token-usage
+    .pi/skills:
+        files: []
+    .pi/skills/semantic-commits:
+        files:
+            - name: SKILL.md
+              checksum: 396b4cc3229d160737277b9d848197ebea289318c19ce684fa8c6d6ed224be6e
+              description: Instructs local coding agents to write scoped Conventional Commits while preserving unrelated changes and avoiding unauthorized pushes.
+              purpose: documentation
+              domainAreas:
+                - agent-workflows
+              functionalAreas:
+                - commit-guidance
+              keywords:
+                - conventional-commits
+                - git
+                - semantic-commits
     api:
         files:
             - name: analysis.go
@@ -1065,18 +1081,18 @@ directory:
     cmd/grepple:
         files:
             - name: main.go
-              checksum: aeb74e37a4037a23631ecf9993536c5a6c58f84d4eb4fb99cd8229ac2615176a
-              description: Entry point for the Grepple CLI; dispatches the Claude grep guard hook or runs the CLI, handling exit codes and broken pipes.
+              checksum: ee6b8bbbb77d2fa0c0c644f5dc350b381b77fd4d0c18b1d7ffa9f945205af5b2
+              description: Entry point for the Grepple CLI; dispatches Claude and command grep-guard hooks or runs the CLI, handling exit codes and broken pipes.
               purpose: implementation
               domainAreas:
-                - claude-hooks
                 - cli
+                - grep-guard
               functionalAreas:
                 - command-dispatch
                 - error-handling
               keywords:
+                - claude-hook
                 - epipe
-                - grep-guard
                 - sigpipe
     cmd/greppled:
         files:
@@ -1105,8 +1121,8 @@ directory:
                 - changelog
                 - versions
             - name: README.md
-              checksum: c5e67be1af4404c30965dae7b36adf61fdab351b6f07a37fc094cfa7a5315005
-              description: Indexes documentation guides and engineering records, and directs users to command help for current flags.
+              checksum: 11996b3930b31180ba28209cda3aa384aa886206e24fa19cdc801612e6e2436b
+              description: Organizes user guides and engineering records, and directs readers to command help for current flags.
               purpose: documentation
               domainAreas:
                 - documentation
@@ -1116,7 +1132,7 @@ directory:
                 - engineering-records
                 - guides
             - name: agent-setup.md
-              checksum: da76a01fab4425905b4773458696ab922c0fa074d640903ec874974d6c8e9c63
+              checksum: caf41e70969e192204dbdfa256301480d57ca1204040ae6a6c5ef44ac33207f6
               description: Documents installing version-pinned Grepple skills and the Claude Code plugin, including validation and ownership safeguards.
               purpose: documentation
               domainAreas:
@@ -1182,7 +1198,7 @@ directory:
                 - profiling
             - name: ask.md
               checksum: 077b5da58462b67b849022ff95d8144e1bede5420a3a6bcbbbb9ed74ec0f35c1
-              description: Explains the read-only research command, provider configuration, local and indexed-repository selection, and evidence requirements.
+              description: Explains the read-only research command, provider configuration, repository selection, and evidence requirements.
               purpose: documentation
               domainAreas:
                 - ai-research
@@ -1268,7 +1284,7 @@ directory:
                 - signoz
             - name: cli-tracing-design.md
               checksum: 23a099ac69e33f42e41c077455f9fe25af5200c9b24d6a124f3e1a54684a067d
-              description: Records the CLI tracing design and trust boundary, including implemented lifecycle, HTTP coverage, and restricted backend ingress.
+              description: Records the CLI tracing design and trust boundary, including lifecycle, HTTP coverage, and restricted backend ingress.
               purpose: documentation
               domainAreas:
                 - observability
@@ -1320,7 +1336,7 @@ directory:
                 - type-references
             - name: directory-metadata.md
               checksum: 47cef158495ba429f76ac7370e7ae52ab4752c3290860b50667a8f06caec82f3
-              description: Specifies repository file annotation format and how current metadata supports verification, overview, tree filtering, and search.
+              description: Specifies repository file annotation format and how metadata supports verification, overview, tree filtering, and search.
               purpose: documentation
               domainAreas:
                 - repository-metadata
@@ -1551,6 +1567,32 @@ directory:
                 - cgo
                 - checksums
                 - goreleaser
+            - name: repository-memories.md
+              checksum: 06aa16902c6978cdb903495eccd92d863411016bea0cea74cbf0dcfbe08e2cf4
+              description: Documents the implemented local-only Markdown memory format, explicit store, recall, update, and delete commands, and relevance rules for selected search results.
+              purpose: documentation
+              domainAreas:
+                - repository-metadata
+              functionalAreas:
+                - local-memory-management
+                - search-relevance
+              keywords:
+                - attachments
+                - privacy
+                - scopes
+            - name: repository-memory-path-scopes.md
+              checksum: f1399d8a3eb5f1c4fb9065a041e7385567586886ee1174bf2adb153554ec9e60
+              description: Proposes bounded repository-relative path scopes for local memories, including canonical syntax, matching evidence, ranking, and tests.
+              purpose: documentation
+              domainAreas:
+                - repository-metadata
+              functionalAreas:
+                - memory-discovery
+                - path-scope-matching
+              keywords:
+                - glob
+                - local-memories
+                - proposed-v1
             - name: result-metadata.md
               checksum: c8ac2a488c84e5cf8f39f625d7c0448d3b96b0f7a88b849a07d5694b767c4e0d
               description: Specifies the bounded-execution JSON metadata envelope and how scope, completeness, limits, omissions, and continuations are interpreted.
@@ -1745,9 +1787,24 @@ directory:
                 - tsx
                 - typescript
                 - yaml
+            - name: 09-repository-memories.md
+              checksum: a0eff77de16ace31ba8f528bc7815a1e6dfe3d48e8b2304af52d9df10f16a2e4
+              description: Guides storing, recalling, updating, and deleting repository-local memories with scoped source attachments, and explains matching and search-response limits.
+              purpose: documentation
+              domainAreas:
+                - repository-memories
+              functionalAreas:
+                - attachment-scoping
+                - memory-management
+                - search-integration
+              keywords:
+                - --line-range
+                - --scope
+                - checksums
+                - local-only
             - name: README.md
-              checksum: 6da2ce2cedf15c81a6701edece009e41b92d5f47273fbb32a6811b44f0f72a88
-              description: Introduces the runnable examples, setup steps, fixture types, and linked feature guides.
+              checksum: 1f6f86a472048cf3b9c37367441259cd0f9b1062210d7b23d96853fb125229d6
+              description: Introduces runnable examples, setup steps, fixture types, and linked guides for search, outlines, navigation, and repository memories.
               purpose: documentation
               domainAreas:
                 - examples
@@ -2111,6 +2168,70 @@ directory:
                 - section
                 - title
                 - typescript
+    extensions:
+        files: []
+    extensions/pi-grepple:
+        files:
+            - name: README.md
+              checksum: 46a26745fca952ad02d77a54996b77d2a033990b46b392b7c8e4f6be78c390ea
+              description: Documents installing and activating the Pi extension, its Grepple CLI resolution and protocol, and its tool-call guard policies.
+              purpose: documentation
+              domainAreas:
+                - grepple
+                - pi-extension
+              functionalAreas:
+                - command-guarding
+                - installation
+                - tool-access-policy
+              keywords:
+                - bash
+                - grep-guard
+                - read
+                - write
+            - name: guard.mjs
+              checksum: 96709cfcce7f4f622a88b80adfa31745c74816591c26a607b680bc8d3848294a
+              description: Implements Grepple CLI guard invocation and response validation, plus policies for Pi bash, read, and write tool calls.
+              purpose: implementation
+              domainAreas:
+                - grepple
+                - pi-extension
+              functionalAreas:
+                - cli-integration
+                - command-guarding
+                - tool-access-policy
+              keywords:
+                - fail-open
+                - grep-guard
+                - response-validation
+                - timeout
+            - name: guard.test.mjs
+              checksum: aa98b3ecc2cffd007a9798672c51fb91eb9c028da0e50f6c6947c0d2abd7290b
+              description: Tests guard protocol validation, CLI invocation outcomes, and Pi tool-call policies using temporary stub executables.
+              purpose: testing
+              domainAreas:
+                - grepple
+                - pi-extension
+              functionalAreas:
+                - command-guarding
+                - tool-access-policy
+              keywords:
+                - fail-open
+                - protocol
+                - regression-tests
+                - stub-cli
+            - name: index.ts
+              checksum: 4bdc5b746fcfc28dc4209e5ed22ed913e8b65e2a6e904a69420cb53ac1a40544
+              description: Registers the guard handler for Pi tool-call events and exports the handler factory.
+              purpose: implementation
+              domainAreas:
+                - grepple
+                - pi-extension
+              functionalAreas:
+                - command-guarding
+                - tool-call-integration
+              keywords:
+                - extension-api
+                - tool-call
     hooks:
         files:
             - name: Makefile
@@ -2168,7 +2289,7 @@ directory:
         files:
             - name: grepple.yaml
               checksum: a04b31d881a3f22c2ef064c5a59c413ea773b1c88475616dc33ddf71815f1f4b
-              description: Grepple metadata describing the Pi hook executable and its event-processing responsibilities.
+              description: Metadata describes the compiled Pi hook executable and its event processing, callback and query handling, and process and cgroup metadata responsibilities.
               purpose: documentation
               domainAreas:
                 - pi-integration
@@ -2179,15 +2300,17 @@ directory:
                 - cgroups
                 - queries
             - name: pi-hook
-              checksum: c1b070d6deaa5e5b06c19bd0a3fa7945e20c53f874fcd10f9937f2c39a7483ad
-              description: Compiled ELF executable identified by the accompanying metadata as the Pi hook runtime.
+              checksum: 21379d4d91af3e1ce0f72deb1f1f332660ee6af2b52c534aacee757c0e99e13c
+              description: Compiled ELF executable for the Pi hook runtime, with symbols for parser, query, and log callbacks and text encoding readers.
               purpose: implementation
               domainAreas:
                 - pi-integration
               functionalAreas:
                 - hook-event-processing
               keywords:
+                - callbacks
                 - elf
+                - encoding
                 - runtime
     hooks/cmd:
         files: []
@@ -3597,7 +3720,7 @@ directory:
         files:
             - name: agent_workflow_benchmark_test.go
               checksum: 781901877b38edec8db1933eae0400ee424e4ff4317c576ebec9fa184055b021
-              description: Benchmarks local agent workflows and artifact delivery, checking expected results while reporting retrieval, token, call, and artifact-read metrics.
+              description: Benchmarks local agent workflows and artifact delivery, checking expected results while measuring retrieval, token, call, and artifact-read metrics.
               purpose: testing
               domainAreas:
                 - agent-workflows
@@ -3612,8 +3735,8 @@ directory:
                 - output-spill
                 - search
             - name: application.go
-              checksum: fb5cbbf72e584c30abc824f611c1d9c85217d4a99560c42145edb09a1eeddb3f
-              description: Defines the top-level command argument tree, maps global repository and output options, and dispatches parsed commands to their implementations.
+              checksum: f92d488ab40a60931a30a84f6c0c614939992bdff18c5ede4df92958197dee24
+              description: Defines the top-level CLI argument tree, global repository and output options, command trace categories, and dispatch to command implementations.
               purpose: implementation
               domainAreas:
                 - cli
@@ -3643,7 +3766,7 @@ directory:
                 - setup
             - name: architecture_test_helpers_test.go
               checksum: 93e91aab5576e5643fa828898d0ca6eff2708aaa64d91655e0199cba9ffb1176
-              description: Provides test helpers that build directory architecture reports and responsibility projections through the architecture command package.
+              description: Provides helpers to build directory architecture reports and responsibility projections through the architecture command package.
               purpose: testing
               domainAreas:
                 - architecture
@@ -3654,8 +3777,8 @@ directory:
                 - directory-architecture
                 - responsibilities
             - name: args.go
-              checksum: b4ef07f77ec7c926a6ccff193aa8868eb07c393bdf2fbc6d7702acccffe720c8
-              description: Parses and normalizes CLI arguments, validates command availability, loads invocation settings, starts telemetry and output-spill handling, then executes the selected command.
+              checksum: f5334843aa3ce41ae733969dca14c263e77c5f9f8ada39cc0648aa24edde7c78
+              description: Normalizes and parses CLI arguments, validates command availability, loads settings, starts invocation telemetry and output finalization, then executes the selected command.
               purpose: implementation
               domainAreas:
                 - cli
@@ -3696,7 +3819,7 @@ directory:
                 - version
             - name: boundary_telemetry_test.go
               checksum: 7d870ab74583f04e2f892b2ddd374bb31ffd601b4220df9ed4a586d153ca33a4
-              description: Exercises search telemetry phases and verifies bounded spans, safe attributes, private-input exclusion, and disabled or unsampled behavior.
+              description: Exercises search telemetry phases and checks span bounds, safe attributes, private-input exclusion, and disabled or unsampled behavior.
               purpose: testing
               domainAreas:
                 - search
@@ -3712,7 +3835,7 @@ directory:
                 - sampling
             - name: command_trace.go
               checksum: f5408dd5057a00cb1b40f629ae0990c83ff31d803532da69ed7be747c96abcd1
-              description: Records finite typed command modes and selected option attributes on CLI invocation traces without exporting argument values.
+              description: Records finite command modes and selected option attributes on CLI invocation traces without exporting argument values.
               purpose: implementation
               domainAreas:
                 - telemetry
@@ -3723,7 +3846,7 @@ directory:
                 - privacy
             - name: command_trace_test.go
               checksum: 5b2f16882df7e285d58dfaacc97c83d42835350ef651198a51079ba95d9f0b7c
-              description: Tests parsed CLI telemetry options, offline OTLP capture, output parity, error paths, and private-input exclusion.
+              description: Tests parsed CLI telemetry options, offline OTLP capture, output parity, error paths, and exclusion of private inputs.
               purpose: testing
               domainAreas:
                 - telemetry
@@ -3758,7 +3881,7 @@ directory:
                 - search
             - name: exit.go
               checksum: 612a8f1c13c30265f0a22574830e90f526e0ad6429571bcd9c65ad724a1edf3c
-              description: Exposes the requested command exit status from an error through the CLI runtime.
+              description: Exposes a command's requested exit status from an error through the CLI runtime.
               purpose: implementation
               domainAreas:
                 - cli
@@ -3784,7 +3907,7 @@ directory:
                 - resolve
             - name: graph_test_helpers_test.go
               checksum: 6c6d7668423cee597aa2a81ebf565cb9f625dfdd3337b92e497f3be8836d9253
-              description: Provides test helpers for building navigation graph output, continuation commands, and graph source fixtures.
+              description: Provides test helpers for graph output, continuation commands, and graph source fixtures.
               purpose: testing
               domainAreas:
                 - navigation-graph
@@ -3796,7 +3919,7 @@ directory:
                 - source-fixture
             - name: import_policy_test.go
               checksum: 675a881cf128dc45c8ac5ca0b315f841dc43c79c2f1d91d0115c86525fda0a74
-              description: Enforces package import boundaries for CLI adapters, reusable engines, the runtime protocol, and transport-decoupled domain packages.
+              description: Enforces package import boundaries for CLI adapters, reusable engines, runtime protocol, and transport-decoupled domain packages.
               purpose: testing
               domainAreas:
                 - architecture
@@ -3808,7 +3931,7 @@ directory:
                 - package-boundaries
             - name: main_test.go
               checksum: 34b6989d74e43e76a3d792f865c8bce8a77923add14d55665d402717f7825b32
-              description: Creates an isolated settings file for the CLI test process and removes its temporary directory after tests finish.
+              description: Sets up an isolated settings file for the CLI test process and cleans up its temporary directory afterward.
               purpose: testing
               domainAreas:
                 - cli
@@ -3817,6 +3940,51 @@ directory:
               keywords:
                 - settings
                 - testmain
+            - name: memory_command_test.go
+              checksum: 5fa6621970e1acf6f39667d26bda156492dae5f52733d61e1cc13930378ca10c
+              description: Tests memory CLI store, recall, update, and delete commands, including scopes, stdin bodies, invalid arguments, and help.
+              purpose: testing
+              domainAreas:
+                - repository-memory
+              functionalAreas:
+                - command-integration
+                - memory-crud
+              keywords:
+                - body-file
+                - scopes
+                - stdin
+            - name: memory_search_spill_test.go
+              checksum: a96c2d9d41fe9119a598a8ec09702bf28c60a6cd8b1dff6ddeb7757bda16e694
+              description: Checks memory recall footers in search output and spilled artifacts, and verifies private memory data is excluded from telemetry.
+              purpose: testing
+              domainAreas:
+                - output-artifacts
+                - repository-memory
+                - telemetry
+              functionalAreas:
+                - artifact-spill
+                - privacy-checks
+                - search-integration
+              keywords:
+                - footer
+                - search
+                - spill
+            - name: memory_workflow_integration_test.go
+              checksum: e674bf5a72c59f94cf8ac969d9d5fe16985ef269f065425318a0d4c90a66fc77
+              description: Exercises end-to-end memory CRUD and search references, including scoped matching, stale-source refresh, fail-closed unsafe entries, and JSON status.
+              purpose: testing
+              domainAreas:
+                - repository-memory
+                - search
+              functionalAreas:
+                - memory-lifecycle
+                - scoped-search
+                - stale-entry-validation
+              keywords:
+                - checksum
+                - json
+                - symlink
+                - workflow
             - name: metrics_command_test.go
               checksum: 449e1ca3bdc4a26aa7743e9f7eca6da8dd796ac18a54405eeb9ca04552fbd65f
               description: Verifies metrics report dispatch, JSON output, help text, and rejection of remote selection.
@@ -3833,7 +4001,7 @@ directory:
                 - report
             - name: navigation_telemetry_test.go
               checksum: 6554e90df00b98f3521db080649085b8bb784adb14a8079a4d64ea543875f209
-              description: Tests bounded graph navigation telemetry across cold and warm runs, daemon cache hits and misses, and error cases while checking for private-input leakage.
+              description: Tests bounded graph navigation telemetry across cold and warm runs, daemon cache hits and misses, and errors while checking for private-input leakage.
               purpose: testing
               domainAreas:
                 - navigation-graph
@@ -3849,7 +4017,7 @@ directory:
                 - opentelemetry
             - name: output_capture_test.go
               checksum: 728436758432850ca14756c4f2e16e0a1230913a3fe57482f46721003fb705ce
-              description: Supplies test helpers to capture standard output or error and to change into a temporary working directory.
+              description: Supplies test helpers to capture standard output or error and change into a temporary working directory.
               purpose: testing
               domainAreas:
                 - cli
@@ -3862,7 +4030,7 @@ directory:
                 - temporary-directory
             - name: output_finalize_telemetry_test.go
               checksum: aea427bbe881beb4f055a7ef8c01cb8c6be5f4dcb06b96bb7d8b5fc2ba8e80f7
-              description: Checks telemetry behavior during artifact output finalization and ensures preparation failures do not fabricate command or finalization spans.
+              description: Checks telemetry during artifact output finalization and ensures preparation failures do not create command or finalization spans.
               purpose: testing
               domainAreas:
                 - output-artifacts
@@ -3888,7 +4056,7 @@ directory:
                 - spill-options
             - name: output_spill_test.go
               checksum: 9a24af975b0e4e5b31be678446c46a52cfe2518a64e85d2d416fd68a0936d9b8
-              description: Tests output spill thresholds, artifact descriptors and content-addressed files, option parsing, and replay command preservation.
+              description: Tests spill thresholds, artifact descriptors and content-addressed files, option parsing, and replay command preservation.
               purpose: testing
               domainAreas:
                 - output-artifacts
@@ -3902,7 +4070,7 @@ directory:
                 - sha-256
             - name: overview_command_test.go
               checksum: db1e1fc19a8179bf4ca960a1e232cec048d686109ee3abf409415f80c1c4962e
-              description: Tests overview parsing, text and JSON dispatch, help output, and enforcement of its local-only boundary.
+              description: Tests overview parsing, text and JSON dispatch, help output, and its local-only boundary.
               purpose: testing
               domainAreas:
                 - repository-overview
@@ -3915,8 +4083,8 @@ directory:
                 - local-only
                 - overview
             - name: phase_contract_test.go
-              checksum: bd2827653fb27848f90930e4d9dabc0d99838470ea3c7e8aa7808807f275fc09
-              description: Defines allowed CLI telemetry spans, attributes, and values, and verifies trace-tree structure and command-to-output-finalization ordering.
+              checksum: f8ce1b6c5a70f372b81d1f319083aaa27108c741b2afe1607bfedfe736007f13
+              description: Defines allowed CLI telemetry spans, attributes, and values, and verifies trace-tree structure and command-to-finalization ordering.
               purpose: testing
               domainAreas:
                 - telemetry
@@ -3929,7 +4097,7 @@ directory:
                 - span-cardinality
             - name: process_defaults.go
               checksum: 99ff92f11ceedb55b3d57ff468efc467e5b1d6e5706aae5ed5fc5b8e9eaba230
-              description: Sets a default navigation cache directory from the working directory only when the corresponding environment variable is unset.
+              description: Sets a default navigation cache directory from the working directory only when its environment variable is unset.
               purpose: implementation
               domainAreas:
                 - navigation-cache
@@ -3940,7 +4108,7 @@ directory:
                 - environment-variable
             - name: process_defaults_test.go
               checksum: 764f2a9ec92d0aa09924cf7ba1ac0ea9786104e1b085828c5d5f58667c8c1ee9
-              description: Verifies that the navigation cache default is applied when unset and that explicit empty or non-empty environment overrides are preserved.
+              description: Verifies the navigation cache default is applied when unset and explicit environment overrides are preserved.
               purpose: testing
               domainAreas:
                 - navigation-cache
@@ -3982,7 +4150,7 @@ directory:
                 - search
             - name: repository_options_test.go
               checksum: 9fa03aaa25289e87d6ac83eaa4d2fcacc23f77188565e4879942f8ddb3036f14
-              description: Verifies that repository-scope options are preserved in graph continuation commands.
+              description: Verifies repository-scope options are preserved in graph continuation commands.
               purpose: testing
               domainAreas:
                 - navigation-graph
@@ -4004,12 +4172,14 @@ directory:
                 - ignore-filtering
                 - production-filtering
               keywords:
+                - grepple-json
                 - grepple.json
+                - ignore-paths
                 - ignore.paths
                 - sources
             - name: scope_annotation_spill_test.go
               checksum: 89d2ebeb4be76f208f1eccc01e74fab7ba11d784e35593986d8af438fdb8b35b
-              description: Checks that spilling annotated search output preserves complete decorated rows and their default replay behavior.
+              description: Checks that spilling annotated search output preserves complete decorated rows and default replay behavior.
               purpose: testing
               domainAreas:
                 - output-artifacts
@@ -4023,7 +4193,7 @@ directory:
                 - spill
             - name: setup_integration_test.go
               checksum: 3b0351b91db156a8156527315f8db4d31cf1c3852246ec3486dfb0a42549f1b9
-              description: Tests setup command parsing and help for supported agents, plus dispatch of the setup list operation.
+              description: Tests setup command parsing and help for supported agents, and dispatch of the setup list operation.
               purpose: testing
               domainAreas:
                 - agent-setup
@@ -4038,7 +4208,7 @@ directory:
                 - pi
             - name: shared_projection_parity_test.go
               checksum: 224280e2e41d527ee1033e6e9a1f2b27ca30b64f311555ccbe5fb7e182965f98
-              description: Verifies that graph JSON, compact graph output, and related-search output agree on shared navigation facts.
+              description: Verifies graph JSON, compact graph output, and related-search output agree on shared navigation facts.
               purpose: testing
               domainAreas:
                 - navigation-graph
@@ -4051,7 +4221,7 @@ directory:
                 - related-results
             - name: telemetry_test.go
               checksum: 96826388b201683af7af71e2203900ec1e7ee200060df80aaa1c3103ddb99df1
-              description: Tests telemetry export on successful and failed invocations, non-blocking behavior during collector outages, and shared trace context for backend requests.
+              description: Tests telemetry export on successful and failed invocations, non-blocking collector outages, and shared trace context for backend requests.
               purpose: testing
               domainAreas:
                 - telemetry
@@ -4065,19 +4235,19 @@ directory:
                 - traceparent
             - name: trace_matrix_test.go
               checksum: ef2b224c1b4530a85c9f911fedb1f6eba20868af4cadc13f7f48ec31086b7027
-              description: Exercises bounded offline CLI traces and stdout parity across local search, outline, tree, empty and high-file-count modes and benchmarks disabled-path invocation cost.
+              description: Exercises bounded offline CLI traces and stdout parity across search, outline, tree, and file-count modes, and benchmarks disabled-path invocation cost.
               purpose: testing
               domainAreas:
                 - telemetry
               functionalAreas:
-                - phase-cardinality
                 - output-accounting
+                - phase-cardinality
               keywords:
                 - benchmark
                 - privacy
             - name: work_telemetry_test.go
               checksum: 08f7a41c4126a606f185659554bb9b2b01ea6f36e4c39899f236b88bd3f43839
-              description: Captures offline CLI traces across search, outline and graph modes and checks observed file, byte and parser counts against disabled-output parity.
+              description: Captures offline CLI traces across search, outline, and graph modes and checks observed file, byte, and parser counts against output parity.
               purpose: testing
               domainAreas:
                 - telemetry
@@ -4704,8 +4874,8 @@ directory:
     internal/cli/examples:
         files:
             - name: examples.go
-              checksum: 445f684abdcb50896f4cf1d67f245af447f06b6a5fe2c2aac979ff534e3212b0
-              description: Implements the `grepple examples` command, listing copyable workflows or selecting one by task name.
+              checksum: 2aa1f45ada92be38b4c23f6a4dd62879b350e0cd68f621e2233acd13f3683d7d
+              description: Implements `grepple examples`, displaying copyable task-oriented workflows or selecting one workflow by task name.
               purpose: implementation
               domainAreas:
                 - cli-examples
@@ -4722,13 +4892,12 @@ directory:
                 - audit
                 - edit
                 - impact
-                - metadata
                 - orient
                 - retrieve
                 - scope
             - name: examples_test.go
-              checksum: 1e1a5332dd39b91e691d15acf625e3613d9e2776623caa0cdf5d67665e7cd1c2
-              description: Tests task selection, help and argument validation, plus uniqueness and completeness of example workflows.
+              checksum: fcb9a92ceeeb78215523c3e4256435a6377a3b6bff94a83f2a9459da12a3c901
+              description: Tests workflow selection, help and argument validation, and uniqueness and completeness of example tasks and commands.
               purpose: testing
               domainAreas:
                 - cli-examples
@@ -4740,13 +4909,13 @@ directory:
                 - examples
                 - tasks
             - name: integration_test.go
-              checksum: 927b83eb86b0e7397d90666fe0dc4ead02dc0d7b1a0043feb66414795f639bc6
-              description: Checks that the command output covers the expected workflows and excludes removed commands.
+              checksum: 7dfba1396da38f490f2aa74d0519f5439a61677e6f41a7a6cf1a576e7ef80ed5
+              description: Checks that command output covers expected workflows, omits removed commands, and supports task selection and help.
               purpose: testing
               domainAreas:
                 - cli-examples
               functionalAreas:
-                - help
+                - help-and-validation
                 - task-selection
                 - workflow-coverage
               keywords:
@@ -4755,9 +4924,10 @@ directory:
                 - workflows
             - name: scope_examples_test.go
               checksum: b55c3e65bcaa16ad9d45b0b1643d4e05857cccb8ae10e898cddc61790dd06cc6
-              description: Verifies the documented scope selectors against fixture content and parser-resolved ranges.
+              description: Validates example scope selectors against fixture contents and parser-verified ranges across TypeScript, TSX, JSON, YAML, and Markdown.
               purpose: testing
               domainAreas:
+                - cli-examples
                 - parser
                 - scope-selectors
               functionalAreas:
@@ -4767,11 +4937,12 @@ directory:
                 - json
                 - markdown
                 - scope
+                - tsx
                 - typescript
                 - yaml
             - name: test_helpers_test.go
               checksum: 5ae1d7cdb83d816988e5e6c7999c1220c38da98cb71879e03bff7e4885a93fbc
-              description: Provides a helper that runs the examples command with a supplied argument list and output writer.
+              description: Provides a helper that runs the examples command with supplied arguments and an output writer.
               purpose: testing
               domainAreas:
                 - cli-examples
@@ -4779,6 +4950,7 @@ directory:
                 - command-execution
                 - test-setup
               keywords:
+                - output
                 - test-helper
     internal/cli/get:
         files:
@@ -4991,8 +5163,8 @@ directory:
               functionalAreas:
                 - metadata-filtering
               keywords:
-                - graph-selection
                 - checksum-current
+                - graph-selection
             - name: metadata_e2e_test.go
               checksum: e98f6052b4bdf733d7dfe3515fa81596591ec5202d43eb15f7ab4a6f42ed8a99
               description: Exercises filtered graph source scope through stored snapshots, live daemon hits, cancellation, and remote refusal.
@@ -5003,8 +5175,8 @@ directory:
                 - integration-testing
               keywords:
                 - daemon
-                - metadata
                 - graph
+                - metadata
             - name: metadata_test.go
               checksum: 2a53e6200441c100795eb63472b727ae5dc42c22a37d733888a819572b0e5b81
               description: Verifies graph metadata selector combinations, scope, freshness, replay commands, and filtered result diagnostics.
@@ -5864,6 +6036,24 @@ directory:
                 - test-output-capture
               keywords:
                 - stdout
+    internal/cli/memory:
+        files:
+            - name: command.go
+              checksum: 63254263ee174242d2cdbc6d5fe8deb155e261a78757362f04874c69e9cac000
+              description: Implements repository-local memory commands for storing, recalling, updating, and deleting entries, including metadata and verified source attachments.
+              purpose: implementation
+              domainAreas:
+                - repository-memory
+              functionalAreas:
+                - memory-management
+                - source-attachments
+              keywords:
+                - delete
+                - metadata
+                - recall
+                - store
+                - update
+                - validation
     internal/cli/metrics:
         files:
             - name: metrics.go
@@ -6152,8 +6342,8 @@ directory:
               functionalAreas:
                 - remote-api-access
             - name: args.go
-              checksum: b54389df21155e9ee7d6c21f18fd4b48c69a2e9e7d5653269f0edabe58d338e5
-              description: Defines search CLI flags, converts parsed arguments into options, and validates search mode combinations.
+              checksum: 772ae1935a6ae5a75092e4c5ef27769bc781cf901600520ae6a3c5e9841595cf
+              description: Defines search flags and defaults, maps parsed values to search options, and validates search modes and flag combinations.
               purpose: implementation
               domainAreas:
                 - search-cli
@@ -6162,6 +6352,7 @@ directory:
                 - option-validation
               keywords:
                 - flags
+                - metadata-selectors
             - name: args_integration_test.go
               checksum: 719aa18bca7e25a0fa1be7de51647d049cd95cd0eb4720214316164bc451d71f
               description: Tests search argument parsing, defaults, aliases, validation, related navigation, anchors, and legacy at-location options.
@@ -6273,12 +6464,14 @@ directory:
               functionalAreas:
                 - cursor-pagination
             - name: execution.go
-              checksum: c408af5973c02abfd6d990fb4b46648f22d96c9d5c7f01adb7737e51e591cfd4
-              description: Coordinates local and remote search, result paging, rendering, stdin input, and count workflows.
+              checksum: 0ed5e198df160b687adafbbfba39d3931950827848832faf800874d5b8aecb32
+              description: Coordinates local and remote search, result windowing, rendering, stdin and count workflows, and attaches eligible local memory references to selected results.
               purpose: implementation
               domainAreas:
                 - search
+                - search-memory
               functionalAreas:
+                - memory-discovery
                 - result-rendering
                 - search-execution
             - name: files_with_matches_test.go
@@ -6307,6 +6500,25 @@ directory:
               functionalAreas:
                 - focused-reads
                 - line-ranges
+            - name: memory.go
+              checksum: f90f0857ec767523850d5d4f7a692487c3a2d577e8cec934216818609e8f586c
+              description: Discovers memory references from selected local search results while excluding remote, unsupported-mode, and out-of-root results.
+              purpose: implementation
+              domainAreas:
+                - search-memory
+              functionalAreas:
+                - memory-discovery
+                - result-filtering
+            - name: memory_integration_test.go
+              checksum: eda41b49151dbe6953d2ad0bc813659ae9de88ebd068f815ae75856213f6192c
+              description: Tests memory references in text and JSON search output, page-window behavior, suppression rules, invalid entries, and isolation from remote results.
+              purpose: testing
+              domainAreas:
+                - search-memory
+              functionalAreas:
+                - memory-discovery
+                - output-rendering
+                - remote-isolation
             - name: metadata.go
               checksum: 0393e5cb5cb51ac1e57cba322507f5e7b2d9585becd5ad3f66f30049e899533e
               description: Builds result scope and paging metadata, diagnostics, and commands for continuing searches.
@@ -6382,8 +6594,8 @@ directory:
               functionalAreas:
                 - remote-resolution
             - name: options.go
-              checksum: d291fcf73d81d69285e6b409049fe0d2d2b670c5f0d8c97aa5ba971c1ee8d5e4
-              description: Defines the resolved options passed between search parsing, execution, and rendering.
+              checksum: c802de20cdc6256283b12385b432fb35d2fb1f6c2454db887f1d41933bfb810c
+              description: Defines the resolved options passed between search parsing, execution, and rendering, including memory-independent search and output settings.
               purpose: implementation
               domainAreas:
                 - search
@@ -6892,7 +7104,7 @@ directory:
                 - commandfunc
             - name: command_test.go
               checksum: 8a177176e8fc4035dc3209c846c4b18db5030db92218c9993e2d10ae74978f6d
-              description: Tests that CommandFunc forwards arguments and returns the function's error.
+              description: Tests that CommandFunc forwards arguments and returns the wrapped function's error.
               purpose: testing
               domainAreas:
                 - cli-runtime
@@ -6903,7 +7115,7 @@ directory:
                 - commandfunc
             - name: config_snapshot_test.go
               checksum: 3019999d99e66f96c33da613f0171fd7f21f3573eaca274fed5e000792020e27
-              description: Verifies that a context retains its loaded server, ask preferences, and repository scope configuration after config files change.
+              description: Verifies that configuration and repository scope values remain unchanged after their backing files are edited during an invocation.
               purpose: testing
               domainAreas:
                 - cli-runtime
@@ -6915,7 +7127,7 @@ directory:
                 - snapshot
             - name: context.go
               checksum: ed5638dbc63aaebc457124b1b9145e5803e68aab5dc27ac3cd4f5c4e9bc6e0dc
-              description: Defines command-facing context, configuration, and repository interfaces, plus an Environment implementation with defaults for streams, API client, and invocation scope.
+              description: Defines command-facing context, configuration, and repository interfaces, with an Environment implementation providing defaults for streams, API client, and invocation scope.
               purpose: implementation
               domainAreas:
                 - cli-runtime
@@ -6927,7 +7139,7 @@ directory:
                 - repository
             - name: context_factory.go
               checksum: 01cdb6914e66c163b2e63a229e741a4d9219026ba93c9f4759be9cd190433973
-              description: Builds the production command context, supplying standard streams when absent and wiring configuration and repository services.
+              description: Builds the production command context, filling absent streams with standard streams and wiring configuration and repository services.
               purpose: implementation
               domainAreas:
                 - cli-runtime
@@ -6938,7 +7150,7 @@ directory:
                 - newcontext
             - name: environment.go
               checksum: f8e6b6f4846706844c5c693f10eac9dbe124b8e05087511931eab53ac978aca0
-              description: Implements invocation-scoped configuration and repository services, including server settings, source scope options, cache paths, and repository config lookup.
+              description: Implements invocation configuration and repository services, including server settings, source scope options, cache paths, and repository config lookup.
               purpose: implementation
               domainAreas:
                 - cli-runtime
@@ -6952,7 +7164,7 @@ directory:
                 - working-directory
             - name: environment_test.go
               checksum: 4d0e503561b7e34f4f9e983eb71bafe136b71096b5531cb6da2c9ad01a9b9deb
-              description: Tests repository config discovery and validation, user-owned authentication settings, ignore behavior, and the current config location.
+              description: Tests repository config discovery and validation, user-owned authentication settings, ignore behavior, index patterns, and config file location.
               purpose: testing
               domainAreas:
                 - configuration
@@ -6966,7 +7178,7 @@ directory:
                 - index-patterns
             - name: exit.go
               checksum: 31de6ef6bb21c310a1eacb8b52d160f3740b3b4bfae1db68859cff912004117c
-              description: Records requested positive exit statuses and provides an error type and helper for carrying intentional command exit codes.
+              description: Records positive requested exit statuses and provides an error type and helper for carrying intentional command exit codes.
               purpose: implementation
               domainAreas:
                 - cli-runtime
@@ -6988,7 +7200,7 @@ directory:
                 - exitcode
             - name: git.go
               checksum: 74b327f668b4d6e43365ea29d86ae9f5798dad846c77a237186e9f7cb993b901
-              description: Finds a Git root and derives an owner/repository identity from its origin remote or another available remote.
+              description: Finds the Git root and derives an owner/repository identity from its origin remote or another available remote.
               purpose: implementation
               domainAreas:
                 - git
@@ -7000,7 +7212,7 @@ directory:
                 - worktree
             - name: git_test.go
               checksum: cec24bdc0fec63118145660be158f6ff06943c00a7e9128bb7bcd31b58c9606b
-              description: Tests repository identity discovery from nested paths and remotes, including worktree Git files and paths outside repositories.
+              description: Tests repository identity discovery from nested paths and remotes, worktree Git files, and paths outside repositories.
               purpose: testing
               domainAreas:
                 - git
@@ -7013,7 +7225,7 @@ directory:
                 - upstream
             - name: invocation.go
               checksum: 5f585ac8c31c4ad2a9cee61c60cabde66dba9fe3513eb87b7d0ccd5c0a32f0c8
-              description: Removes repository-wide flags from arguments, respects the argument terminator, rejects flag values, and can recreate the active flags.
+              description: Extracts repository-wide flags from arguments, preserves arguments after the terminator, rejects flag values, and can recreate active flags.
               purpose: implementation
               domainAreas:
                 - cli-runtime
@@ -7037,8 +7249,8 @@ directory:
                 - --
                 - argument-parsing
             - name: output.go
-              checksum: c9a8f8a58b5629138626236fe2691a2d32fb3c197bc88a7a763231d14e055a4e
-              description: Writes command strings or indented HTML-unescaped JSON, with optional byte-bounded line truncation and a stable broken-pipe error.
+              checksum: e7ec61b41a889050c92fb7e064558abf723471011adbb8bb2170d12e4a5c1446
+              description: Writes command strings or indented HTML-unescaped JSON, optionally bounding output bytes and truncating at a complete line; wraps broken-pipe errors.
               purpose: implementation
               domainAreas:
                 - cli-runtime
@@ -7050,7 +7262,7 @@ directory:
                 - truncation
             - name: output_test.go
               checksum: 4be7c28b101b4a4bcfadb7870aea8d8fc4fa9998f6962afa0b5b8593ea0151af
-              description: Tests bounded output truncation and JSON output without HTML escaping.
+              description: Tests bounded output truncation at complete lines and JSON output without HTML escaping.
               purpose: testing
               domainAreas:
                 - cli-runtime
@@ -7061,7 +7273,7 @@ directory:
                 - truncation
             - name: repository_config.go
               checksum: da9c6ee60bb3fd10f74da34034712bc0b84b4b9281ff18abc10cd592875c746f
-              description: Aliases repository-owned config types and loads the repository portion and its path from the shared config loader.
+              description: Aliases repository-owned config types and loads the repository config and its path through the shared config loader.
               purpose: implementation
               domainAreas:
                 - configuration
@@ -8604,7 +8816,7 @@ directory:
         files:
             - name: claude.go
               checksum: 6d5c6be09f0235df0a53457a67eaa646e9a065835131292a5bba784e2e8c130e
-              description: 'Routes Claude hook payloads: denies built-in Grep and Glob tools, delegates Bash and legacy empty-tool payloads to the shared hook, and otherwise returns no response.'
+              description: Routes Claude hook payloads by denying built-in Grep and Glob tools, delegating Bash and empty-tool payloads to the shared shell guard, and ignoring other tools or malformed input.
               purpose: implementation
               domainAreas:
                 - claude-hooks
@@ -8619,7 +8831,7 @@ directory:
                 - pretooluse
             - name: claude_test.go
               checksum: dec26384bb62b402d2fdf0cd8014a1f3032fb96df686dbaa3a76081dee48b6cb
-              description: Tests Claude hook decisions for built-in search tools, Bash commands, the allow marker, irrelevant tools, and malformed input.
+              description: Tests Claude hook decisions for built-in search tools, Bash commands, the allow marker, unrelated tools, malformed input, and structured denial feedback.
               purpose: testing
               domainAreas:
                 - claude-hooks
@@ -8632,9 +8844,38 @@ directory:
                 - glob
                 - grep
                 - grep-guard:allow
+            - name: command.go
+              checksum: 7aa14a3249e0e4a3d68068ee8693bde641f4f9e06771001b5d4c94809e604894
+              description: Parses a JSON shell-command request, classifies blocked invocations, and returns a host-neutral JSON response; invalid input fails open without a response.
+              purpose: implementation
+              domainAreas:
+                - local-search
+                - shell-command-guard
+              functionalAreas:
+                - command-classification
+                - fail-open-handling
+                - json-response-generation
+              keywords:
+                - grep-guard:allow
+                - json
+                - shell-commands
+            - name: command_test.go
+              checksum: 3b2eac1c72f929cff68c5fff1f0e4c9ae1ff8b9023ac45942bf9f56a948f1e27
+              description: Tests command-guard JSON responses for blocked and allowed commands, the allow-marker bypass, remediation feedback, and invalid-input fail-open behavior.
+              purpose: testing
+              domainAreas:
+                - local-search
+                - shell-command-guard
+              functionalAreas:
+                - command-classification-testing
+                - fail-open-validation
+              keywords:
+                - grep-guard:allow
+                - json
+                - shell-commands
             - name: grep_guard.go
               checksum: ddbd26e7f72653d436f40e4ec26ff3dc8ae298535a014d616de2a21df913f2ce
-              description: Parses shell commands to detect blocked search and file-finding invocations, including wrapped and interpreted commands, and emits structured hook denials with Grepple guidance.
+              description: Parses shell syntax to detect blocked search and file-finding commands, including wrappers and interpreted scripts, and generates Grepple guidance in structured hook denials.
               purpose: implementation
               domainAreas:
                 - local-search
@@ -9904,6 +10145,110 @@ directory:
               keywords:
                 - eof
                 - line-counting
+    internal/memory:
+        files:
+            - name: discovery.go
+              checksum: 1efaf2574206af56d335a8bb2fe011662e0614f1ed090259bcdad39d38b1e617
+              description: Discovers and ranks memory references from selected source matches using verified attachments, scopes, and labels.
+              purpose: implementation
+              domainAreas:
+                - repository-memory
+              functionalAreas:
+                - memory-discovery
+                - search
+              keywords:
+                - bounded-scan
+                - checksums
+                - matched-lines
+                - metadata
+                - scopes
+            - name: discovery_test.go
+              checksum: aafdc2201f9489e3c8452ada3ced7cb4967d7ac9a86f80132e6c1b22933b6138
+              description: Tests discovery ranking, selected-path evidence, scope matching, stale attachments, metadata, and resource limits.
+              purpose: testing
+              domainAreas:
+                - repository-memory
+              functionalAreas:
+                - memory-discovery
+                - search
+              keywords:
+                - bounds
+                - checksums
+                - matched-lines
+                - metadata
+                - scopes
+            - name: memory.go
+              checksum: 2d51fa17581ecfd4b765f81290486dc5301a2d403b7218b20cb72dc7b687bd40
+              description: Defines memory headers and attachments, validates and encodes Markdown memories, reads confined source files, and verifies attachment checksums and selectors.
+              purpose: implementation
+              domainAreas:
+                - repository-memory
+              functionalAreas:
+                - attachment-verification
+                - memory-validation
+              keywords:
+                - checksums
+                - frontmatter
+                - selectors
+                - source-files
+                - yaml
+            - name: memory_test.go
+              checksum: 31ea5dbdfb883acb69962d7936016aa3eb3e4bd894fdca84e1215a39b0e9b3b4
+              description: Tests memory creation, recall, update, deletion, validation, attachment staleness, and concurrent storage behavior.
+              purpose: testing
+              domainAreas:
+                - repository-memory
+              functionalAreas:
+                - memory-storage
+                - memory-validation
+              keywords:
+                - attachments
+                - checksums
+                - concurrency
+                - crud
+                - symlinks
+            - name: scope.go
+              checksum: 68b5a7617ce2a770d84440a0e3bb995a83cb3bedb8013d51304ec9f262dfebd7
+              description: Validates and canonicalizes memory scopes, checks safe directory prefixes for storage, and matches scopes against selected repository paths.
+              purpose: implementation
+              domainAreas:
+                - repository-memory
+              functionalAreas:
+                - path-matching
+                - scope-validation
+              keywords:
+                - directory-scopes
+                - glob-matching
+                - path-safety
+            - name: scope_test.go
+              checksum: 4a75452846ea8145b38c8bbad98544b5e4183876a287ff894124254348e0c76b
+              description: Tests scope canonicalization, directory and glob matching, safe-prefix checks, and scope-only memory headers.
+              purpose: testing
+              domainAreas:
+                - repository-memory
+              functionalAreas:
+                - path-matching
+                - scope-validation
+              keywords:
+                - canonicalization
+                - directory-scopes
+                - glob-matching
+                - symlinks
+            - name: storage.go
+              checksum: ed757f3dfb6ede73f21d3cc7265b8eec059a17ecfe128d6a0c99085f8f79b99c
+              description: Provides confined memory-file storage, header-only reads and explicit recall, locked atomic save and update, deletion, and attachment status checks.
+              purpose: implementation
+              domainAreas:
+                - repository-memory
+              functionalAreas:
+                - memory-recall
+                - memory-storage
+              keywords:
+                - atomic-updates
+                - body-recall
+                - header-only
+                - locking
+                - symlink-safety
     internal/metrics:
         files:
             - name: analyze.go
@@ -12513,7 +12858,7 @@ directory:
         files:
             - name: anchors_test.go
               checksum: e2694005649b88bf2c6e888191d4f7aa1439f60e74d9c1145482fbda00b88073
-              description: Verifies that segment rendering prefixes source lines with their configured editable anchors.
+              description: Verifies that segment output prefixes source lines with configured editable anchors.
               purpose: testing
               domainAreas:
                 - search-results
@@ -12524,14 +12869,38 @@ directory:
                 - segments
             - name: main_test.go
               checksum: 2f8e05c33f6331fced42fa7c9f1787877ecfd1fa622bc127a5bd0ea23b9b1480
-              description: Unsets the PI_SESSION_ID environment variable before running the render package tests.
+              description: Unsets PI_SESSION_ID before running the render package tests.
               purpose: testing
               keywords:
                 - environment
                 - test-setup
+            - name: memory.go
+              checksum: 020f6d2907fba0d05024cfd79d29c4847fd335a67496bc7862b00bee37e18d8a
+              description: Sanitizes memory descriptions and builds a byte-bounded footer that reports discovered, omitted, or incomplete memory references.
+              purpose: implementation
+              domainAreas:
+                - memory-recall
+              functionalAreas:
+                - footer-formatting
+                - output-sanitization
+              keywords:
+                - byte-limit
+                - descriptions
+            - name: memory_test.go
+              checksum: bcf438dd96e0dea0c8588bdf87aed0daa8282dc93924aeb9953dd7325b8b21ed
+              description: Tests footer size and description sanitization, plus ensuring a suppressed footer does not truncate rendered search results.
+              purpose: testing
+              domainAreas:
+                - memory-recall
+              functionalAreas:
+                - footer-formatting
+                - output-sanitization
+              keywords:
+                - byte-limit
+                - truncation
             - name: outline.go
               checksum: f40f39ce1990719c86be57904b300b7bf6293e9e48d6960ebe7f56e6d62ebc32
-              description: Formats parsed file outlines as indented trees, optionally choosing raw content when smaller or adding verified scope selectors.
+              description: Formats parsed outlines as indented trees, chooses raw content when smaller, and adds selectors only for verified scopes.
               purpose: implementation
               domainAreas:
                 - source-outlines
@@ -12543,7 +12912,7 @@ directory:
                 - parser
             - name: outline_filter.go
               checksum: ae0beaa85ab7738ca64fb6c222e4696fbcecb16c8d3c56a41ec1402f8d2a296a
-              description: Parses outline kind filters and retains selected types, functions, or variables while lifting matching nested declarations.
+              description: Parses outline kind filters and retains requested type, function, or variable declarations while lifting matching descendants.
               purpose: implementation
               domainAreas:
                 - source-outlines
@@ -12567,7 +12936,7 @@ directory:
                 - variables
             - name: outline_selectors_test.go
               checksum: 4dd126c98c77cb72b3d88665a8e9af9f89dfd9a3ea084c590a913d8b358de4f5
-              description: Tests that outline selectors are included only for verified scopes and are not misattributed to nested declarations.
+              description: Tests that outline selectors appear only for verified scopes and are not assigned to nested declarations incorrectly.
               purpose: testing
               domainAreas:
                 - source-outlines
@@ -12578,7 +12947,7 @@ directory:
                 - verification
             - name: outline_test.go
               checksum: f1251b98ab9a05f1085303f7790289b4280af3693f53f0a6fc436480e1e1bb20
-              description: Tests whether human outline output falls back to file content when that representation is smaller and ensures a trailing newline.
+              description: Tests raw-content fallback when it is smaller than an outline and verifies trailing newline behavior.
               purpose: testing
               domainAreas:
                 - source-outlines
@@ -12601,21 +12970,22 @@ directory:
                 - json
                 - output-limits
             - name: render.go
-              checksum: a20a23532c107c299ffb50af866d1ba23efec553f613faf1d108d28fff5a2448
-              description: Defines search rendering options and anchor lookup, applies output limits, and selects a renderer for each result mode.
+              checksum: 7e7bf28de611689fe6d686e517d3e369d4b3ac6c2104ec7072053cbc04c70930
+              description: Defines search rendering options and anchor lookup, applies output limits, adds memory footers, and selects a renderer for each result mode.
               purpose: implementation
               domainAreas:
+                - memory-recall
                 - search-results
               functionalAreas:
                 - output-selection
                 - rendering
               keywords:
                 - anchors
-                - counts
                 - json
+                - output-limits
             - name: render_test.go
               checksum: 3958a803eacb3a1f65c1e83bf7dad14dc0fa672ff59c2187fd41b5c0149c0b4c
-              description: Tests renderer selection and output behavior for lines, segments, related navigation, scope annotations, JSON, and bounded output.
+              description: Tests renderer selection and output behavior for lines, segments, navigation, scope annotations, JSON, and bounded output.
               purpose: testing
               domainAreas:
                 - search-results
@@ -12628,7 +12998,7 @@ directory:
                 - scope-annotations
             - name: renderer_context.go
               checksum: d70cbb7d1672757621aa4cc00d5ffdf168b4e15706f6a673d211e17abe744a62
-              description: Renders matching context lines with match separators, optional gap markers, and anchor-prefixed rows.
+              description: Renders matching context lines with match separators, gap markers, and optional anchor-prefixed rows.
               purpose: implementation
               domainAreas:
                 - search-results
@@ -12661,10 +13031,11 @@ directory:
                 - json
                 - paths
             - name: renderer_json.go
-              checksum: b7aee76c4a4e24c55bcb6dd6e16ac09fad94cf339714adac2fe9fbac66fa28c3
-              description: Produces full search responses or flattened match JSON, including metadata, line ranges, and source analysis.
+              checksum: 2330687e5d408c55ffb74ee67fa1efa94b75de98900f04849b10b04b1ee8c134
+              description: Produces full search responses or flattened match JSON, including metadata, source analysis, ranges, and sanitized memory references.
               purpose: implementation
               domainAreas:
+                - memory-recall
                 - search-results
               functionalAreas:
                 - json-output
@@ -12674,7 +13045,7 @@ directory:
                 - source-analysis
             - name: renderer_matches.go
               checksum: 316654cc4446e0834a77eda4e57755929de31f6b4b6e86b040a500cdda3741a6
-              description: Renders line-oriented matches, anchored match rows, or only the matching text using the configured query.
+              description: Renders line-oriented matches, anchored match rows, or matching text extracted with the configured query.
               purpose: implementation
               domainAreas:
                 - search-results
@@ -12697,7 +13068,7 @@ directory:
                 - type-definitions
             - name: renderer_related_types_test.go
               checksum: 50e6e102679bc5115d444b1f39899b981f1414392f4a19cb0a601b6b5def7921
-              description: Tests deduplication of related type definitions from the same artifact and source range.
+              description: Tests deduplication of related type definitions sharing an artifact and source range.
               purpose: testing
               domainAreas:
                 - code-navigation
@@ -12720,7 +13091,7 @@ directory:
                 - totals
             - name: renderer_scope_annotations.go
               checksum: 4a0b80d42484d94354536364ccd6234071a9da2fcb83a495fe923aebdd3ba281
-              description: Validates scope ranges, sanitizes optional annotations, and decorates human match text while rejecting embedded line breaks.
+              description: Validates scope ranges, filters unrequested annotations, and decorates human match text while rejecting embedded line breaks.
               purpose: implementation
               domainAreas:
                 - search-results
@@ -12732,7 +13103,7 @@ directory:
                 - scope-ranges
             - name: renderer_scope_annotations_remote_test.go
               checksum: 1b9884488491770d224bfe9fcc0bffd7d076a9341702855dc7b1fc09f464bbaa
-              description: Verifies that annotated human output rejects remote match text containing embedded line breaks before writing any output.
+              description: Verifies annotated human output rejects remote match text containing embedded line breaks before writing output.
               purpose: testing
               domainAreas:
                 - search-results
@@ -12757,7 +13128,7 @@ directory:
                 - validation
             - name: renderer_segments.go
               checksum: 68e6cbdd1900ffacf4bd0585cb1cdb4861673f7e933420d1c02da033b7f17a3a
-              description: Renders source segments and related code-navigation points, including omissions, provenance, and optional verified selectors.
+              description: Renders source segments and related navigation points, including omissions, provenance, and optional verified selectors.
               purpose: implementation
               domainAreas:
                 - code-navigation
@@ -12771,16 +13142,18 @@ directory:
                 - segments
                 - types
             - name: search.go
-              checksum: 088337ca87ab2a6942ea2178ce825c1e46e9dd27b5320e1bc5efba04b963dbc3
-              description: Renders search results and emits deduplicated warnings for results with line-range warnings.
+              checksum: 9bb609edb90e09f13bcabb851c25ef5e0da005db4e3f5ef316a65a8928191fe3
+              description: Renders search results and emits deduplicated line-range warnings, including a warning when the output limit suppresses memory references.
               purpose: implementation
               domainAreas:
+                - memory-recall
                 - search-results
               functionalAreas:
                 - search-output
                 - warnings
               keywords:
                 - line-ranges
+                - output-limits
             - name: tree.go
               checksum: c66cabd87c4ca9be2041b9220b7cceb5860b4f00774b50d5fe5558fe0e610ae9
               description: Converts flat tree entries into a sorted, directory-first hierarchy and renders repository metadata as text or JSON.
@@ -13370,6 +13743,16 @@ directory:
                 - navigation-metrics
               keywords:
                 - statistics
+            - name: parse_once_test.go
+              checksum: 9a0c226b4cd2780bd819fcdeb7429e978e2642527ff8e9156c88480847d54f9b
+              description: Tests that source parsing is performed once where expected.
+              purpose: testing
+              domainAreas:
+                - code-search
+              functionalAreas:
+                - parsing-efficiency
+              keywords:
+                - parsing
             - name: phase_observer.go
               checksum: 74f55dfcb3cbc4b4ec0072f19ce6c5f3f3a4a5d4e28c85b7e4585f46163ddf40
               description: Attaches bounded whole-operation phase observation to a search request context without importing CLI telemetry into source packages.
@@ -13382,16 +13765,6 @@ directory:
               keywords:
                 - observer
                 - scans
-            - name: parse_once_test.go
-              checksum: 9a0c226b4cd2780bd819fcdeb7429e978e2642527ff8e9156c88480847d54f9b
-              description: Tests that source parsing is performed once where expected.
-              purpose: testing
-              domainAreas:
-                - code-search
-              functionalAreas:
-                - parsing-efficiency
-              keywords:
-                - parsing
             - name: ranking_test.go
               checksum: bb622d6fe9f349cfcfd7d211e9619a2cb7824b69711c07276edf4c359d99d8e7
               description: Tests ranking of search results.
@@ -13947,7 +14320,7 @@ directory:
         files:
             - name: analysis.go
               checksum: dba305fbfce1a4dd2e829c5a0abc90aaf1ca16ee55360e1f1088fd07c2b552d9
-              description: Defines requests and responses for graph, architecture, boundaries, and responsibilities repository analyses.
+              description: Defines requests and responses for graph, architecture, boundary, and responsibility analyses of an indexed repository.
               purpose: implementation
               domainAreas:
                 - repository-analysis
@@ -13960,7 +14333,7 @@ directory:
                 - graph
             - name: grit.go
               checksum: 248754932497319fb40ab1b9c055d19b6938b4da921a0fece2824855f3029bb8
-              description: Defines wire contracts, limits, findings, diagnostics, and response metadata for native structural search.
+              description: Defines wire contracts and limits for native structural search, including findings, bindings, diagnostics, truncations, and execution statistics.
               purpose: implementation
               domainAreas:
                 - structural-search
@@ -13975,7 +14348,7 @@ directory:
                 - truncation
             - name: index_config.go
               checksum: e5e91d42016a58fea44fb292d1854a68417859d83364cab5629567d9eb55263b
-              description: Validates repository index targets and branch or tag glob patterns.
+              description: Validates repository index configuration, checking repository identifiers and branch or tag glob patterns.
               purpose: implementation
               domainAreas:
                 - repository-indexing
@@ -13984,11 +14357,12 @@ directory:
               keywords:
                 - branches
                 - globs
+                - repositories
                 - repository
                 - tags
             - name: language.go
               checksum: 0676fc7d937b52be7b869e7f4c26f8b4f1658d6716a05c560aabd1f469c62f23
-              description: Defines language feature support levels and navigation-fact capabilities.
+              description: Defines language feature support levels and capabilities for navigation facts such as declarations, calls, imports, and entrypoints.
               purpose: implementation
               domainAreas:
                 - language-support
@@ -13999,8 +14373,8 @@ directory:
                 - feature-support
                 - navigation-facts
             - name: model.go
-              checksum: 12a03bde1a60d16ccaf631d9ec3429a81e5ce65e3b7fe23ec658e65d6e6b52ad
-              description: Defines shared wire contracts and aliases for search, navigation, repository listings, trees, and rules.
+              checksum: 97f841c2667f85df41bcea976bfc446e703438c508783e19342c1dfccc993e03
+              description: Defines shared transport models and aliases for search, navigation, repository listings and trees, and rules.
               purpose: implementation
               domainAreas:
                 - navigation
@@ -14016,7 +14390,7 @@ directory:
                 - search-response
             - name: result_metadata.go
               checksum: a19687c81dfaea279e1efe9130d558e328868d91962f8d461ab30eb8596d3c92
-              description: Defines a shared envelope for result scope, paging, limits, omissions, and diagnostics.
+              description: Defines a shared result envelope for scope, pagination, limits, omissions, and diagnostics.
               purpose: implementation
               domainAreas:
                 - result-reporting
