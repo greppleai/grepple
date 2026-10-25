@@ -9,8 +9,8 @@ Start with `grepple overview` in a local checkout to see coverage and grounded l
 
 ## Choose the question
 
-- **Owner unknown:** `grepple sources explain .`, then `grepple architecture directory --depth 2 --max-nodes 80 .`.
-- **Symbol known:** `grepple --outline PATH`; follow a verified token with `grepple --at PATH @KIND:START-END`. For ambiguous callables, use `grepple graph resolve --symbol NAME SCOPE`.
+- **Owner unknown:** After `overview` and the top-level tree, use an observed domain-area or functional-area label with `grepple tree --domain-area LABEL --depth 2 PATH` to find a likely owner. Then run `grepple sources explain PATH` and `grepple architecture directory --depth 2 --max-nodes 80 PATH` on that physical scope. Metadata selectors do not apply to architecture; widen when coverage is incomplete or the owner is unclear.
+- **Symbol known:** `grepple --outline PATH`; copy its emitted native token (Go `@func`, TypeScript `@function`/`@method`) and read with `grepple --at PATH @KIND:START-END` for a current, parser-verified local span. For ambiguous callables, use `grepple graph resolve --symbol NAME SCOPE` to find candidates, then inspect their local outlines; graph line ranges are not verified scope tokens.
 - **Why directories relate:** `grepple architecture directory --relations SCOPE` for a compact map; use `grepple architecture directory --json SCOPE` for source-linked relation evidence, then inspect cited ranges with `grepple --at PATH:START-END`.
 
 For rows without a token or for relation evidence, verify literal `PATH:START-END` with `grepple --at PATH:START-END`. Report the owning directory, declaration kind/range, evidence confidence, and inspected source universe. Directory names indicate physical ownership, not package or runtime semantics.

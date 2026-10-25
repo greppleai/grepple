@@ -5,14 +5,14 @@ description: Use when editing, creating, or deleting local source and documentat
 
 # Edit and write files with Grepple
 
-Use `grepple write` for local repository changes. Retrieve source with Grepple first; do not rewrite an existing file just to avoid obtaining edit anchors. For an unfamiliar area, start with a bounded `grepple tree`, then focused search or `--outline`. Use `grepple-change-impact-analysis` before changing behavior, signatures, or ownership.
+Use `grepple write` for local repository changes. Retrieve source with Grepple first; do not rewrite an existing file just to avoid obtaining edit anchors. For an unfamiliar area, start with a bounded `grepple tree`; if local metadata is current, use an observed domain-area or functional-area label to narrow that tree and any broad discovery search before `--outline`. When the target file is known, prefer its emitted `@KIND:START-END` token and a verified local `--at` for declaration anchors; use a literal `--at PATH:START-END` when no verified token applies or only a small portion is needed. Adding a metadata label to an exact known-file read is redundant. Use `grepple-change-impact-analysis` before changing behavior, signatures, or ownership.
 
 ## 1. Retrieve fresh edit anchors
 
 ```sh
-grepple --line-only -F 'targetName' path/to/package
-grepple --line-only --at path/to/file.go:40-65
-grepple --line-only --at path/to/file.go @func:40-65 # only if current parser verifies kind and bounds
+grepple --outline path/to/file.go # copy the current @func:START-END token for a Go function
+grepple --line-only --at path/to/file.go @func:40-65 # only when the outline emitted these exact bounds
+grepple --line-only --at path/to/file.go:40-65 # literal fallback: no parser verification
 ```
 
 Eligible local output contains native `hashline-v1` rows:
@@ -28,7 +28,7 @@ Pq2│42│}
 - Replacement ranges are **inclusive**. Replacing this whole function requires both its opening line and closing brace; replacing only its body uses the body's anchors.
 - All changes to one file in a transaction refer to the **same original snapshot**. Ranges must not overlap. Do not adjust later ranges for earlier replacements in that transaction.
 - After a write, formatter, generator, or any other mutation, retrieve fresh anchors before another edit; do not reuse stale hashes.
-- Annotated `--line-only` **search** rows may append display-only `@KIND:START-END` after source. They are not edit-ready even with hashes; literal source can itself end with that text. Use local `grepple --line-only --at PATH @KIND:START-END` to re-verify current syntax and obtain clean source, or `--at PATH:START-END` for literal legacy bounds. Reject stale, missing or ambiguous selectors; do not parse a human suffix as authority. Typed JSON separates `text` from `nearest` and `scope`.
+- Annotated `--line-only` **search** rows may append display-only `@KIND:START-END` after source. They are not edit-ready even when they display hashes: literal source can also end with that text. Copy the **native token** from `--outline` (Go `@func`, TypeScript `@function`/`@method`) or an annotated hit, then pass it separately to `grepple --line-only --at PATH @KIND:START-END` to verify current syntax and obtain clean source. Do not guess a token from graph or remote ranges. If a verified selector is missing, stale, ambiguous, or inappropriate for the small region needed, use `--at PATH:START-END` for a literal read and assess its bounds yourself. Typed JSON separates `text` from `nearest` and `scope`.
 - Focused `--at` and eligible local source reads return the complete selected source on every call, subject to explicit output, spill, and paging limits. A truncated or spilled output is not a complete inline source read.
 
 ## 2. Write literal, quoted-heredoc transactions

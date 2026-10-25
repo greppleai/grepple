@@ -348,7 +348,7 @@ directory:
     .agents/skills/grepple-architecture-lookup-discovery:
         files:
             - name: SKILL.md
-              checksum: 22466329a3154765157c86bffa72d4236787107df389c9d2b2af2d6edbd75584
+              checksum: 7f1722e7d35232b4ceeebeec0a7b41ec1b0798eabc43019f5341d49a8af93f0f
               description: Guides repository architecture lookups with Grepple, including directory ownership, symbol locations, and source-linked directory relations.
               purpose: documentation
               domainAreas:
@@ -364,7 +364,7 @@ directory:
     .agents/skills/grepple-change-impact-analysis:
         files:
             - name: SKILL.md
-              checksum: 841e2bc10ad63e67165b1620ce2781607a11ade7f6d40157dd20c1092f05eebd
+              checksum: 2b7307bcecc63d0c1b9d162bb0531067a57efd43b14bdaad894bab0caa6fa266
               description: Documents how to use Grepple to resolve declarations, trace callers and callees, assess evidence and completeness, and record findings before editing.
               purpose: documentation
               domainAreas:
@@ -381,7 +381,7 @@ directory:
     .agents/skills/grepple-local-grep-and-search:
         files:
             - name: SKILL.md
-              checksum: e5f11c229e4a7e615b89e81fe815220ad42d05104e0c662d55907ccb452393e6
+              checksum: 289aa0b1749f5c96f1cc3e49105fe39cad03c5034bd74fb5087964c11304b93f
               description: Provides workflows and command examples for local Grepple search, retrieving verified source ranges, checking search completeness, and preparing edit-ready source.
               purpose: documentation
               domainAreas:
@@ -401,7 +401,7 @@ directory:
     .agents/skills/grepple-overview-first:
         files:
             - name: SKILL.md
-              checksum: ed5247b7fc3bba24254b5d4af9da413194c85e937773f7eb7fcf222e8df2db0a
+              checksum: 35ca04c8b5b01a85bd8fc32bd73ed2379520977b7dcd74ab093eb46b5b0d19af
               description: Starts local checkout discovery with a model-free metadata overview, verified labels and coverage-aware tree and search guidance.
               purpose: documentation
               domainAreas:
@@ -451,7 +451,7 @@ directory:
     .agents/skills/grepple-write:
         files:
             - name: SKILL.md
-              checksum: 33de667bb9a4903963c0f805cc367c44fb1365699c959712f5485ea754d9ec5d
+              checksum: f4705cf7a98228d6146061db7ca2087d8bea3e23663f3ad17bcf95f128e0ddf9
               description: Instructions for using `grepple write` to edit, create, and delete local files with fresh hashline anchors and quoted-heredoc transactions.
               purpose: documentation
               domainAreas:
@@ -2796,7 +2796,7 @@ directory:
                 - release-tags
                 - sha-256
             - name: catalog.json
-              checksum: c91c92ba072e31f316df517bf19538c40cdf8fc965da7cfb9d978d45a1e2c171
+              checksum: 990fe613188417158a31f30499cff99c96158872609e723cd42e818690638317
               description: Schema 1 catalog of active Grepple skills and their file checksums, with legacy skill names and accepted historical checksums.
               purpose: documentation
               domainAreas:
