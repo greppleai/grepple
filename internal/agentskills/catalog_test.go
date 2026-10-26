@@ -38,7 +38,7 @@ func TestCatalogMatchesRepositoryAndAllSkillDirectories(t *testing.T) {
 		}
 	}
 	documentation := string(bundle.files["grepple-write"]["SKILL.md"])
-	for _, alternative := range []string{"grepple write edit", "content_lines", "request.json", "references/write.md"} {
+	for _, alternative := range []string{"content_lines", "request.json", "references/write.md"} {
 		if strings.Contains(documentation, alternative) {
 			t.Errorf("write skill documents an alternative to heredoc transactions: %s", alternative)
 		}

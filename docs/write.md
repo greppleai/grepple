@@ -39,71 +39,29 @@ Ranges are inclusive and always refer to the original file snapshot. `content_li
 
 ## Literal multi-file transactions
 
-For multi-edit and multi-file work, `grepple write` also auto-detects a line-oriented `::grepple` envelope. Literal bodies are not JSON-escaped or interpreted by the shell:
+For multi-edit and multi-file work, `grepple write` accepts a line-oriented literal envelope. Each operation is a single directive; its body is literal text and is not JSON-escaped or interpreted by the shell:
 
 ```sh
 grepple write --root . <<'GREPPLE_WRITE_ab12'
-::grepple file internal/foo.go
-::grepple replace a83 def
+::grepple replace internal/foo.go a83 def
 func foo() {
     return "anything ' ` $ here"
 }
-::grepple end
-
-::grepple replace 81b
-::grepple end
-
-::grepple file internal/new.go
-::grepple create
+::grepple replace internal/foo.go 81b
+::grepple create internal/new.go
 package internal
 
-::grepple end
-
-::grepple file internal/old.go
-::grepple delete 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+::grepple delete internal/old.go 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
 GREPPLE_WRITE_ab12
 ```
 
-`::grepple file PATH` starts a file block; the complete remainder of that directive is the path, so spaces do not require JSON quoting. `replace START [END]` starts a literal replacement and defaults `END` to `START`. Multiple replacements may follow one file directive. An empty body deletes the anchored range. `create` supplies complete literal content for an absent file. `delete SHA256` supplies the same required digest as JSON and has no body. A following file directive implicitly closes the previous file; a standalone `::grepple end` may explicitly close a bodyless delete/file block.
+The supported operation directives are `::grepple replace PATH START [END]`, `::grepple create PATH`, and `::grepple delete PATH SHA256`. `START` and optional `END` are fresh case-sensitive line hashes; the range is inclusive and omitting `END` means a one-line replacement. Delete uses the exact current lowercase 64-character SHA-256 digest. Replace and create consume literal body lines until the next line beginning with `::grepple` or end-of-input (EOF). There is no `::grepple end` terminator, `--end-marker` option, or inferred-end warning.
 
-The default body terminator is an exact `::grepple end` line. For source containing directive-looking lines (including `::grepple end`), select a collision-free terminator with `--end-marker TOKEN` and close the body with `::grepple end TOKEN`; marked bodies always require their exact terminator. Blank lines outside bodies are ignored. One body line maps to one `content_lines` entry; include a blank line before a create terminator to preserve a final newline in the new file.
+Paths with spaces are supported, including create paths. Replace uses the last three-character hash as an anchor and treats a preceding three-character token as an optional end anchor; delete uses the final digest. A replace path ending in a space-separated three-character hash-shaped component is ambiguous: use strict JSON for that path. Because any `::grepple` directive line ends the current body and starts directive parsing, the envelope cannot represent body content that looks like a directive. Use strict JSON for such content, or use `grepple write edit` for a single edit.
 
-For unmarked `replace` and `create` bodies, Grepple automatically infers a missing terminator at end-of-input or immediately before a syntactically valid following `::grepple file`, `replace`, `create`, or `delete` directive. It applies the transaction with an `inferred_heredoc_end` warning; malformed directive-looking lines remain literal source. Because a valid directive-looking source line can end an unmarked body even when an explicit terminator appears later, use `--end-marker TOKEN` for such source. Named markers remain strict at both a following directive and EOF. The warning is included in `--json` responses and printed before a human receipt.
+Each replacement in a file refers to that file's original snapshot; multiple replacements must not overlap and must not adjust later anchors for prior changes. Multiple operations can appear in any order and are prevalidated together. A blank line immediately after a body directive is body content, not envelope whitespace. Include a final blank body line for create when the new file should end in a newline; omitting it creates a file without a final newline. An empty replacement body deletes its anchored range.
 
-The heredoc envelope and strict JSON both compile to the same in-memory `grepple-write-v1` request. File/change order, original-snapshot anchors, empty deletion content, size limits, confinement, stale checks, overlap rejection, mixed edit/create/delete prevalidation and installation, output modes, staging, concurrent-mutation checks, and rollback are identical.
-
-## Literal single-edit input
-
-For one edit, avoid JSON and shell escaping by reading the replacement as literal text:
-
-```sh
-grepple write edit --root . --path path/to/file.kt --start abc --end def <<'EOF'
-val payload = """{"labels":["owner"]}"""
-EOF
-```
-
-`--end` defaults to the `--start` anchor for a one-line replacement. Use `--content-file PATH` to read the replacement from a file, or `--content-file -` (the default) to read stdin. One terminal LF or CRLF terminates the final replacement line and does not create an extra blank line; use two terminal newlines to retain one blank line. Empty input deletes the anchored range.
-
-Literal single-edit mode builds the same in-memory `grepple-write-v1` edit and uses the same confinement, stale-anchor, size, newline, transactional installation, and output behavior. Use either the literal multi-file envelope or strict JSON when multiple edits or files must be committed atomically.
-
-A successful human response reports each changed post-write line range with its first and last fresh hashes, without echoing source content:
-
-```text
-path/to/file.go:42-44|Ab3-Pq2
-applied 1 files, 1 changes
-```
-
-Use `--return` to include the resulting edit-ready rows instead:
-
-```text
-path/to/file.go
-
-Ab3│42│func updated() {
-K9x│43│    run()
-Pq2│44│}
-
-applied 1 files, 1 changes
-```
+The envelope and strict JSON compile to the same in-memory `grepple-write-v1` request. Validation, confinement, stale checks, overlap rejection, mixed edit/create/delete prevalidation and installation, output modes, staging, concurrent-mutation checks, and rollback are identical.
 
 Fresh hashes are recomputed against the complete resulting file. Compact receipts use `PATH:START-END|FIRST-LAST` for replacements and creates, `PATH:deleted at LINE (near LINE|HASH)` for range deletions with surviving context (or just the insertion point when the file becomes empty), and `PATH:deleted`, `PATH:created empty`, or `PATH:unchanged` for whole-file operations and no-op edits. Each change gets its own line. Use `grepple --line-only --at PATH:START-END` to retrieve content when needed. With `--return`, replacement rows include neighboring anchors for orientation, and deletions return surviving neighbors. The complete structured `--json` response still includes content-bearing anchors and `after_sha256`.
 
@@ -131,7 +89,7 @@ Creation is explicit and only targets an absent repository-relative path beneath
 }
 ```
 
-The equivalent literal operation is `::grepple file path/to/new.go` followed by `::grepple create`, its body, and `::grepple end`.
+The equivalent literal operation is `::grepple create path/to/new.go`, followed by its body. A blank body line is significant: include one as the final body line to preserve a final newline in the created file; without it, the file has no final newline.
 
 Each array entry is one logical line. A trailing empty entry preserves a final newline. Created files use mode `0644` and automatically created directories use mode `0755`, both subject to the process umask and platform support. New directories participate in transaction rollback: a later installation failure removes files and directories created by the transaction in reverse order. Existing targets, symlink escapes, parent paths that are files, embedded newlines, NUL bytes, and oversized results are rejected.
 
@@ -147,7 +105,7 @@ Deletion requires the exact digest of the current file and does not accept chang
 }
 ```
 
-The equivalent literal operation is `::grepple file path/to/old.go` followed by `::grepple delete SHA256`.
+The equivalent literal operation is `::grepple delete path/to/old.go SHA256`.
 
 A stale digest rejects the entire transaction. Deletions are installed through the same backup sequence as replacements and are restored if a later installation fails.
 
