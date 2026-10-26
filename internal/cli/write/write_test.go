@@ -331,30 +331,30 @@ func TestDecodeWriteRequestIsStrictAndBounded(t *testing.T) {
 	}
 }
 
+func assertWriteContents(t *testing.T, path, want string) {
+	t.Helper()
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(content) != want {
+		t.Fatalf("content=%q want=%q", content, want)
+	}
+}
+
 func TestDecodeWriteHeredocRequestSupportsJSONFeatureParity(t *testing.T) {
 	digest := strings.Repeat("a", 64)
 	literalLine := "    return \"anything ' ` $ here\""
 	input := fmt.Sprintf(`
-::grepple file internal/foo.go
-::grepple replace a83 e11 --end-marker GREPPLE_WRITE_ab12
+::grepple replace internal/foo.go a83 e11
 func foo() {
 %s
 }
-::grepple end
-::grepple file literal.go
-::grepple end GREPPLE_WRITE_ab12
-::grepple replace c22
-::grepple end
-
-::grepple file internal/new file.go
-::grepple create --end-marker CREATE_ab12
+::grepple replace internal/foo.go c22
+::grepple create internal/new file.go
 package sample
 
-::grepple end CREATE_ab12
-
-::grepple file internal/old.go
-::grepple delete %s
-::grepple end
+::grepple delete internal/old file.go %s
 `, literalLine, digest)
 	request, failure := decodeWriteRequest(strings.NewReader(input))
 	if failure != nil {
@@ -362,11 +362,11 @@ package sample
 	}
 	want := writeRequest{Schema: writeSchema, Files: []writeRequestFile{
 		{Path: "internal/foo.go", Changes: []writeChange{
-			{HashRangeInclusive: []string{"a83", "e11"}, ContentLines: []string{"func foo() {", literalLine, "}", "::grepple end", "::grepple file literal.go"}},
+			{HashRangeInclusive: []string{"a83", "e11"}, ContentLines: []string{"func foo() {", literalLine, "}"}},
 			{HashRangeInclusive: []string{"c22", "c22"}, ContentLines: []string{}},
 		}},
 		{Path: "internal/new file.go", Operation: "create", ContentLines: []string{"package sample", ""}},
-		{Path: "internal/old.go", Operation: "delete", BeforeSHA256: digest},
+		{Path: "internal/old file.go", Operation: "delete", BeforeSHA256: digest},
 	}}
 	if !reflect.DeepEqual(request, want) {
 		t.Fatalf("request=%#v\nwant=%#v", request, want)
@@ -375,51 +375,94 @@ package sample
 	if request, failure := decodeWriteRequest(strings.NewReader(crlf)); failure != nil || !reflect.DeepEqual(request, want) {
 		t.Fatalf("CRLF request=%#v failure=%+v", request, failure)
 	}
+
+	jsonInput, err := json.Marshal(want)
+	if err != nil {
+		t.Fatal(err)
+	}
+	jsonRequest, failure := decodeWriteRequest(bytes.NewReader(jsonInput))
+	if failure != nil || !reflect.DeepEqual(jsonRequest, want) {
+		t.Fatalf("JSON request=%#v failure=%+v", jsonRequest, failure)
+	}
 }
 
 func TestWriteHeredocCommandAppliesMixedTransaction(t *testing.T) {
 	root := t.TempDir()
-	editContent := "before\nsecond\n"
+	editContent := "before\nsecond\nthird\n"
 	deleteContent := "delete me\n"
-	writeTestFile(t, filepath.Join(root, "edit.txt"), editContent, 0o640)
-	writeTestFile(t, filepath.Join(root, "delete.txt"), deleteContent, 0o600)
-	hash := hashline.Lines(editContent)[0]
+	writeTestFile(t, filepath.Join(root, "edit file.txt"), editContent, 0o640)
+	writeTestFile(t, filepath.Join(root, "delete file.txt"), deleteContent, 0o600)
+	hashes := hashline.Lines(editContent)
 	replacement := "after \" ' ` $ literal"
-	request := fmt.Sprintf(`::grepple file edit.txt
-::grepple replace %s
+	request := fmt.Sprintf(`::grepple replace edit file.txt %s
 %s
-::grepple end
-
-::grepple file created.txt
-::grepple create
+::grepple create created file.txt
 created
 
-::grepple end
-
-::grepple file delete.txt
-::grepple delete %s
-`, hash, replacement, writeDigest([]byte(deleteContent)))
-	withStdin(t, request, func() {
-		captureStdout(t, func() {
+::grepple delete delete file.txt %s
+::grepple replace edit file.txt %s
+last
+`, hashes[0], replacement, writeDigest([]byte(deleteContent)), hashes[2])
+	output := captureStdout(t, func() {
+		withStdin(t, request, func() {
 			if err := Run([]string{"--root", root}, Dependencies{}); err != nil {
 				t.Fatal(err)
 			}
 		})
 	})
-	assertWriteFile(t, filepath.Join(root, "edit.txt"), replacement+"\nsecond\n", 0o640)
-	assertWriteFile(t, filepath.Join(root, "created.txt"), "created\n", 0o644)
-	if _, err := os.Stat(filepath.Join(root, "delete.txt")); !os.IsNotExist(err) {
+	if strings.Contains(output, "warning:") {
+		t.Fatalf("unexpected warning: %q", output)
+	}
+	assertWriteContents(t, filepath.Join(root, "edit file.txt"), replacement+"\nsecond\nlast\n")
+	assertWriteContents(t, filepath.Join(root, "created file.txt"), "created\n")
+	if _, err := os.Stat(filepath.Join(root, "delete file.txt")); !os.IsNotExist(err) {
 		t.Fatalf("deleted file still exists: %v", err)
 	}
 }
 
-func TestDecodeWriteHeredocRequestRejectsMalformedEnvelopes(t *testing.T) {
+func TestDecodeWriteHeredocRequestHandlesEmptyBodyAndEOF(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		input string
+		want  []string
+	}{
+		{name: "empty before next directive", input: "::grepple replace empty.go aaa\n::grepple create next.go\nbody\n", want: []string{}},
+		{name: "EOF body", input: "::grepple create eof.go\nbody\n", want: []string{"body"}},
+		{name: "empty EOF body", input: "::grepple create empty.go\n", want: []string{}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			request, failure := decodeWriteRequest(strings.NewReader(test.input))
+			if failure != nil {
+				t.Fatal(failure)
+			}
+			if len(request.warnings) != 0 {
+				t.Fatalf("unexpected warnings: %+v", request.warnings)
+			}
+			if test.name == "empty before next directive" {
+				if !reflect.DeepEqual(request.Files[0].Changes[0].ContentLines, test.want) {
+					t.Fatalf("body=%#v want=%#v", request.Files[0].Changes[0].ContentLines, test.want)
+				}
+				return
+			}
+			if !reflect.DeepEqual(request.Files[0].ContentLines, test.want) {
+				t.Fatalf("body=%#v want=%#v", request.Files[0].ContentLines, test.want)
+			}
+		})
+	}
+}
+
+func TestDecodeWriteHeredocRequestRejectsMalformedDirectives(t *testing.T) {
 	tests := []string{
-		"::grepple replace AAA\n::grepple end\n",
-		"::grepple file file.go\n::grepple unknown\n",
-		"::grepple file file.go\n::grepple replace AAA --end-marker TOKEN\n::grepple end OTHER\n",
-		"::grepple file file.go\n::grepple create\n::grepple end\n::grepple replace AAA\n::grepple end\n",
-		"::grepple file file.go\nnot a directive\n",
+		"::grepple replace\nbody\n",
+		"::grepple replace file.go\nbody\n",
+		"::grepple unknown file.go\n",
+		"::grepple create file.go\ntext\n::grepplex not-literal\n",
+		"::grepple file file.go\n",
+		"::grepple end\n",
+		"::grepple replace file.go aaa --end-marker TOKEN\n",
+		"::grepple create\nbody\n",
+		"::grepple delete file.go\n",
+		"::grepple create same.go\nbody\n::grepple replace same.go aaa\nbody\n",
 	}
 	for _, input := range tests {
 		if _, failure := decodeWriteRequest(strings.NewReader(input)); failure == nil || failure.code != "invalid_request" {
@@ -428,55 +471,11 @@ func TestDecodeWriteHeredocRequestRejectsMalformedEnvelopes(t *testing.T) {
 	}
 }
 
-func TestDecodeWriteHeredocRequestRecoversMissingDefaultTerminator(t *testing.T) {
-	tests := []struct {
-		name, input string
-		wantFiles   int
-		wantBody    []string
-		wantWarning int
-	}{
-		{"EOF", "::grepple file a.go\n::grepple replace aaa\nbody\n", 1, []string{"body"}, 1},
-		{"malformed directive remains literal", "::grepple file a.go\n::grepple replace aaa\nbody\n::grepple unknown\n", 1, []string{"body", "::grepple unknown"}, 1},
-		{"incomplete replace remains literal", "::grepple file a.go\n::grepple replace aaa\nbody\n::grepple replace\n", 1, []string{"body", "::grepple replace"}, 1},
-		{"file boundary", "::grepple file a.go\n::grepple replace aaa\nbody\n::grepple file b.go\n::grepple replace bbb\nnext\n", 2, []string{"body"}, 2},
-		{"create boundary", "::grepple file a.go\n::grepple replace aaa\nbody\n::grepple file b.go\n::grepple create\nnext\n", 2, []string{"body"}, 2},
-		{"delete boundary", "::grepple file a.go\n::grepple replace aaa\nbody\n::grepple file b.go\n::grepple delete deadbeef\n", 2, []string{"body"}, 1},
-		{"replace boundary", "::grepple file a.go\n::grepple replace aaa\nbody\n::grepple replace bbb\nnext\n", 1, []string{"body"}, 2},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			request, failure := decodeWriteRequest(strings.NewReader(test.input))
-			if failure != nil {
-				t.Fatal(failure)
-			}
-			if len(request.Files) != test.wantFiles || !reflect.DeepEqual(request.Files[0].Changes[0].ContentLines, test.wantBody) || len(request.warnings) != test.wantWarning {
-				t.Fatalf("request=%#v", request)
-			}
-			for _, warning := range request.warnings {
-				if warning.Code != "inferred_heredoc_end" || warning.Path == "" || warning.Line == 0 {
-					t.Fatalf("warning=%+v", warning)
-				}
-			}
-		})
-	}
-	for _, input := range []string{
-		"::grepple file a.go\n::grepple replace aaa --end-marker TOKEN\n::grepple file b.go\n",
-		"::grepple file a.go\n::grepple replace aaa --end-marker TOKEN\nbody\n",
-	} {
-		if _, failure := decodeWriteRequest(strings.NewReader(input)); failure == nil {
-			t.Fatalf("marked body recovered: %q", input)
-		}
-	}
-	if request, failure := decodeWriteRequest(strings.NewReader(`{"schema":"grepple-write-v1","files":[]}`)); failure != nil || request.Schema != writeSchema {
-		t.Fatalf("JSON decoding changed: request=%+v failure=%+v", request, failure)
-	}
-}
-
-func TestWriteHeredocRecoveryWarningAndAtomicFailure(t *testing.T) {
+func TestWriteHeredocJSONParityAndAtomicFailure(t *testing.T) {
 	root := t.TempDir()
 	writeTestFile(t, filepath.Join(root, "a.go"), "old\n", 0o644)
 	hash := hashline.Lines("old\n")[0]
-	input := "::grepple file a.go\n::grepple replace " + hash + "\nnew\n"
+	input := "::grepple replace a.go " + hash + "\nnew\n"
 	output := captureStdout(t, func() {
 		withStdin(t, input, func() {
 			if err := Run([]string{"--root", root}, Dependencies{}); err != nil {
@@ -484,10 +483,10 @@ func TestWriteHeredocRecoveryWarningAndAtomicFailure(t *testing.T) {
 			}
 		})
 	})
-	if !strings.Contains(output, "warning: inferred_heredoc_end") {
-		t.Fatalf("output=%q", output)
+	if strings.Contains(output, "warning:") {
+		t.Fatalf("EOF body emitted warning: %q", output)
 	}
-	assertWriteFile(t, filepath.Join(root, "a.go"), "new\n", 0o644)
+	assertWriteContents(t, filepath.Join(root, "a.go"), "new\n")
 
 	writeTestFile(t, filepath.Join(root, "a.go"), "old\n", 0o644)
 	jsonOutput := captureStdout(t, func() {
@@ -498,14 +497,15 @@ func TestWriteHeredocRecoveryWarningAndAtomicFailure(t *testing.T) {
 		})
 	})
 	var response writeResponse
-	if err := json.Unmarshal([]byte(jsonOutput), &response); err != nil || len(response.Warnings) != 1 || response.Warnings[0].Code != "inferred_heredoc_end" {
+	if err := json.Unmarshal([]byte(jsonOutput), &response); err != nil || !response.Applied || len(response.Warnings) != 0 {
 		t.Fatalf("response=%+v err=%v", response, err)
 	}
+	assertWriteContents(t, filepath.Join(root, "a.go"), "new\n")
 
 	writeTestFile(t, filepath.Join(root, "a.go"), "old\n", 0o644)
-	input += "::grepple file missing.go\n::grepple replace aaa\nbad\n"
+	atomicInput := input + "::grepple replace missing.go aaa\nbad\n"
 	output = captureStdout(t, func() {
-		withStdin(t, input, func() {
+		withStdin(t, atomicInput, func() {
 			if err := Run([]string{"--root", root}, Dependencies{}); err != nil {
 				t.Fatal(err)
 			}
@@ -514,26 +514,21 @@ func TestWriteHeredocRecoveryWarningAndAtomicFailure(t *testing.T) {
 	if !strings.Contains(output, "write rejected") {
 		t.Fatalf("output=%q", output)
 	}
-	assertWriteFile(t, filepath.Join(root, "a.go"), "old\n", 0o644)
+	assertWriteContents(t, filepath.Join(root, "a.go"), "old\n")
 }
 
-func TestWriteHeredocInfersMidTransactionEndWithoutFlag(t *testing.T) {
+func TestWriteHeredocSameFileNonadjacentEditsShareSnapshot(t *testing.T) {
 	root := t.TempDir()
-	writeTestFile(t, filepath.Join(root, "existing.txt"), "old\n", 0o600)
-	hash := hashline.Lines("old\n")[0]
-	input := "::grepple file existing.txt\n::grepple replace " + hash + "\nnew\n::grepple file created.txt\n::grepple create\ncreated\n\n::grepple end\n"
-	output := captureStdout(t, func() {
-		withStdin(t, input, func() {
-			if err := Run([]string{"--root", root}, Dependencies{}); err != nil {
-				t.Fatal(err)
-			}
-		})
+	before := "one\ntwo\nthree\n"
+	writeTestFile(t, filepath.Join(root, "same.go"), before, 0o600)
+	hashes := hashline.Lines(before)
+	input := fmt.Sprintf("::grepple replace same.go %s\nONE\n::grepple create middle.go\nother\n::grepple replace same.go %s\nTHREE\n", hashes[0], hashes[2])
+	withStdin(t, input, func() {
+		if err := Run([]string{"--root", root}, Dependencies{}); err != nil {
+			t.Fatal(err)
+		}
 	})
-	if !strings.Contains(output, "warning: inferred_heredoc_end") {
-		t.Fatalf("output=%q", output)
-	}
-	assertWriteFile(t, filepath.Join(root, "existing.txt"), "new\n", 0o600)
-	assertWriteFile(t, filepath.Join(root, "created.txt"), "created\n", 0o644)
+	assertWriteFile(t, filepath.Join(root, "same.go"), "ONE\ntwo\nTHREE\n", 0o600)
 }
 
 func TestLiteralWriteLinesTreatsTerminalNewlineAsSeparator(t *testing.T) {
@@ -600,6 +595,10 @@ func TestWriteEditReadsLiteralContentFile(t *testing.T) {
 func writeTestFile(t *testing.T, path, content string, mode os.FileMode) {
 	t.Helper()
 	if err := os.WriteFile(path, []byte(content), mode); err != nil {
+		t.Fatal(err)
+	}
+	// os.WriteFile applies the process umask to new files.
+	if err := os.Chmod(path, mode); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -780,7 +779,7 @@ func TestWriteHelpDocumentsTransactionalInput(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"Usage: grepple write", "grepple write edit", "--content-file", "grepple-write-v1", "::grepple file", "--end-marker", "inferred_heredoc_end", "hash_range_inclusive", "operation", "before_sha256", "--json", "--return", "HASH│LINE│content"} {
+	for _, expected := range []string{"Usage: grepple write", "grepple write edit", "--content-file", "grepple-write-v1", "::grepple replace file.go START END", "::grepple create new.go", "::grepple delete old.go", "next ::grepple directive or EOF", "hash_range_inclusive", "operation", "before_sha256", "--json", "--return", "HASH│LINE│content"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("write help missing %q:\n%s", expected, output)
 		}

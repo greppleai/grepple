@@ -3,6 +3,8 @@ package write
 import (
 	"fmt"
 	"strings"
+
+	"github.com/greppleai/grepple/internal/hashline"
 )
 
 const writeHeredocDirective = "::grepple"
@@ -12,15 +14,13 @@ func decodeHeredocWriteRequest(content []byte) (writeRequest, *writeFailure) {
 	if err != nil {
 		return writeRequest{}, newWriteFailure("invalid_request", fmt.Sprintf("decode heredoc request: %v", err), "", nil)
 	}
-	decoder := writeHeredocDecoder{lines: lines, request: writeRequest{Schema: writeSchema, Files: []writeRequestFile{}}, current: -1}
-	return decoder.decode()
+	decoder := writeHeredocDecoder{lines: lines, request: writeRequest{Schema: writeSchema, Files: []writeRequestFile{}}}
 	return decoder.decode()
 }
 
 type writeHeredocDecoder struct {
 	lines   []string
 	request writeRequest
-	current int
 }
 
 func (decoder *writeHeredocDecoder) decode() (writeRequest, *writeFailure) {
@@ -32,130 +32,85 @@ func (decoder *writeHeredocDecoder) decode() (writeRequest, *writeFailure) {
 		}
 		command, arguments, ok := parseWriteHeredocDirective(line)
 		if !ok {
-			return writeRequest{}, decoder.failure(index+1, "expected a ::grepple directive")
+			return writeRequest{}, writeHeredocFailure(index+1, "", "expected a ::grepple directive")
 		}
-		next, failure := decoder.applyDirective(index, command, arguments)
+		var next int
+		var failure *writeFailure
+		switch command {
+		case "replace":
+			next, failure = decoder.addReplace(index, arguments)
+		case "create":
+			next, failure = decoder.addCreate(index, arguments)
+		case "delete":
+			next, failure = decoder.addDelete(index, arguments)
+		default:
+			failure = writeHeredocFailure(index+1, "", fmt.Sprintf("unknown directive %q", command))
+		}
 		if failure != nil {
 			return writeRequest{}, failure
 		}
 		index = next
 	}
 	if len(decoder.request.Files) == 0 {
-		return writeRequest{}, writeHeredocFailure(1, "", "request requires at least one file")
+		return writeRequest{}, writeHeredocFailure(1, "", "request requires at least one operation")
 	}
 	return decoder.request, nil
 }
 
-func (decoder *writeHeredocDecoder) applyDirective(index int, command, arguments string) (int, *writeFailure) {
-	switch command {
-	case "file":
-		return index + 1, decoder.addFile(index+1, arguments)
-	case "replace":
-		return decoder.addReplace(index, arguments)
-	case "create":
-		return decoder.addCreate(index, arguments)
-	case "delete":
-		return index + 1, decoder.addDelete(index+1, arguments)
-	case "end":
-		return index + 1, decoder.closeFile(index+1, arguments)
-	default:
-		return 0, decoder.failure(index+1, fmt.Sprintf("unknown directive %q", command))
-	}
-}
-
-func (decoder *writeHeredocDecoder) addFile(line int, path string) *writeFailure {
-	if path == "" {
-		return writeHeredocFailure(line, "", "file requires a path")
-	}
-	decoder.request.Files = append(decoder.request.Files, writeRequestFile{Path: path})
-	decoder.current = len(decoder.request.Files) - 1
-	return nil
-}
-
 func (decoder *writeHeredocDecoder) addReplace(index int, arguments string) (int, *writeFailure) {
-	file, failure := decoder.currentFile(index+1, "replace")
-	if failure != nil {
-		return 0, failure
-	}
-	if file.Operation != "" {
-		return 0, decoder.failure(index+1, "replace cannot follow create or delete")
-	}
-	start, end, marker, err := parseWriteHeredocReplace(arguments)
+	path, start, end, err := parseWriteHeredocReplace(arguments)
 	if err != nil {
-		return 0, decoder.failure(index+1, err.Error())
+		return 0, writeHeredocFailure(index+1, "", err.Error())
 	}
-	body, next, warning, failure := readWriteHeredocBody(decoder.lines, index+1, marker, file.Path)
-	if failure != nil {
-		return 0, failure
+	file := decoder.editFile(path)
+	if file.Operation != "" {
+		return 0, writeHeredocFailure(index+1, path, "replace cannot follow create or delete")
 	}
-	if warning != nil {
-		decoder.request.warnings = append(decoder.request.warnings, *warning)
-	}
+	body, next := readWriteHeredocBody(decoder.lines, index+1)
 	file.Changes = append(file.Changes, writeChange{HashRangeInclusive: []string{start, end}, ContentLines: body})
 	return next, nil
 }
 
+func (decoder *writeHeredocDecoder) editFile(path string) *writeRequestFile {
+	// Nonadjacent edits of the same file share the original snapshot and must
+	// produce one request file; the write engine rejects overlapping ranges.
+	for index := range decoder.request.Files {
+		if decoder.request.Files[index].Path == path {
+			return &decoder.request.Files[index]
+		}
+	}
+	decoder.request.Files = append(decoder.request.Files, writeRequestFile{Path: path})
+	return &decoder.request.Files[len(decoder.request.Files)-1]
+}
+
 func (decoder *writeHeredocDecoder) addCreate(index int, arguments string) (int, *writeFailure) {
-	file, failure := decoder.currentFile(index+1, "create")
-	if failure != nil {
-		return 0, failure
+	path := strings.TrimSpace(arguments)
+	if path == "" {
+		return 0, writeHeredocFailure(index+1, "", "create requires a path")
 	}
-	if file.Operation != "" || len(file.Changes) != 0 || file.ContentLines != nil {
-		return 0, decoder.failure(index+1, "create must be the file's only operation")
+	for _, file := range decoder.request.Files {
+		if file.Path == path {
+			return 0, writeHeredocFailure(index+1, path, "create must be the file's only operation")
+		}
 	}
-	marker, err := parseWriteHeredocMarker(arguments)
-	if err != nil {
-		return 0, decoder.failure(index+1, err.Error())
-	}
-	body, next, warning, failure := readWriteHeredocBody(decoder.lines, index+1, marker, file.Path)
-	if failure != nil {
-		return 0, failure
-	}
-	if warning != nil {
-		decoder.request.warnings = append(decoder.request.warnings, *warning)
-	}
-	file.Operation = "create"
-	file.ContentLines = body
+	body, next := readWriteHeredocBody(decoder.lines, index+1)
+	decoder.request.Files = append(decoder.request.Files, writeRequestFile{Path: path, Operation: "create", ContentLines: body})
 	return next, nil
 }
 
-func (decoder *writeHeredocDecoder) addDelete(line int, arguments string) *writeFailure {
-	file, failure := decoder.currentFile(line, "delete")
-	if failure != nil {
-		return failure
-	}
+func (decoder *writeHeredocDecoder) addDelete(index int, arguments string) (int, *writeFailure) {
 	fields := strings.Fields(arguments)
-	if len(fields) != 1 {
-		return decoder.failure(line, "delete requires exactly one SHA-256 digest")
+	if len(fields) < 2 {
+		return 0, writeHeredocFailure(index+1, "", "delete requires a path and SHA-256 digest")
 	}
-	if file.Operation != "" || len(file.Changes) != 0 || file.ContentLines != nil {
-		return decoder.failure(line, "delete must be the file's only operation")
+	path := strings.Join(fields[:len(fields)-1], " ")
+	for _, file := range decoder.request.Files {
+		if file.Path == path {
+			return 0, writeHeredocFailure(index+1, path, "delete must be the file's only operation")
+		}
 	}
-	file.Operation = "delete"
-	file.BeforeSHA256 = fields[0]
-	return nil
-}
-
-func (decoder *writeHeredocDecoder) closeFile(line int, arguments string) *writeFailure {
-	if arguments != "" {
-		return decoder.failure(line, "unexpected named end outside a literal body")
-	}
-	if decoder.current < 0 {
-		return writeHeredocFailure(line, "", "end requires an open file")
-	}
-	decoder.current = -1
-	return nil
-}
-
-func (decoder *writeHeredocDecoder) currentFile(line int, operation string) (*writeRequestFile, *writeFailure) {
-	if decoder.current < 0 {
-		return nil, writeHeredocFailure(line, "", operation+" requires a preceding file directive")
-	}
-	return &decoder.request.Files[decoder.current], nil
-}
-
-func (decoder *writeHeredocDecoder) failure(line int, message string) *writeFailure {
-	return writeHeredocFailure(line, currentWriteHeredocPath(decoder.request, decoder.current), message)
+	decoder.request.Files = append(decoder.request.Files, writeRequestFile{Path: path, Operation: "delete", BeforeSHA256: fields[len(fields)-1]})
+	return index + 1, nil
 }
 
 func parseWriteHeredocDirective(line string) (string, string, bool) {
@@ -175,90 +130,34 @@ func parseWriteHeredocDirective(line string) (string, string, bool) {
 
 func parseWriteHeredocReplace(arguments string) (string, string, string, error) {
 	fields := strings.Fields(arguments)
-	if len(fields) == 0 {
-		return "", "", "", fmt.Errorf("replace requires a start anchor")
+	if len(fields) < 2 {
+		return "", "", "", fmt.Errorf("replace requires a path and start anchor")
 	}
-	start, end := fields[0], fields[0]
-	position := 1
-	if position < len(fields) && fields[position] != "--end-marker" {
-		end = fields[position]
-		position++
+	// A second trailing three-character hash is the optional end anchor.
+	// A path whose final component is itself a three-character token is
+	// ambiguous; use the JSON request for such paths.
+	last := len(fields) - 1
+	if !hashline.Valid(fields[last]) {
+		return "", "", "", fmt.Errorf("replace requires a valid three-character anchor")
 	}
-	marker, err := parseWriteHeredocMarkerFields(fields[position:])
-	if err != nil {
-		return "", "", "", err
+	if len(fields) >= 3 && hashline.Valid(fields[last-1]) {
+		path := strings.Join(fields[:last-1], " ")
+		return path, fields[last-1], fields[last], nil
 	}
-	return start, end, marker, nil
+	return strings.Join(fields[:last], " "), fields[last], fields[last], nil
 }
 
-func parseWriteHeredocMarker(arguments string) (string, error) {
-	return parseWriteHeredocMarkerFields(strings.Fields(arguments))
-}
-
-func parseWriteHeredocMarkerFields(fields []string) (string, error) {
-	if len(fields) == 0 {
-		return "", nil
-	}
-	if len(fields) != 2 || fields[0] != "--end-marker" || fields[1] == "" {
-		return "", fmt.Errorf("expected optional --end-marker TOKEN")
-	}
-	return fields[1], nil
-}
-
-func readWriteHeredocBody(lines []string, start int, marker, path string) ([]string, int, *writeWarning, *writeFailure) {
-	terminator := writeHeredocDirective + " end"
-	if marker != "" {
-		terminator += " " + marker
-	}
+func readWriteHeredocBody(lines []string, start int) ([]string, int) {
 	for index := start; index < len(lines); index++ {
-		if lines[index] == terminator {
-			body := append([]string{}, lines[start:index]...)
-			return body, index + 1, nil, nil
-		}
-		if marker == "" && recoverableWriteHeredocDirective(lines[index]) {
-			body := append([]string{}, lines[start:index]...)
-			return body, index, &writeWarning{Code: "inferred_heredoc_end", Message: fmt.Sprintf("inferred missing ::grepple end before heredoc line %d", index+1), Path: path, Line: index + 1}, nil
+		if strings.HasPrefix(lines[index], writeHeredocDirective) {
+			return append([]string{}, lines[start:index]...), index
 		}
 	}
-	if marker == "" {
-		end := len(lines)
-		if end > start && lines[end-1] == "" {
-			end--
-		}
-		body := append([]string{}, lines[start:end]...)
-		return body, len(lines), &writeWarning{Code: "inferred_heredoc_end", Message: "inferred missing ::grepple end at end of input", Path: path, Line: end + 1}, nil
+	end := len(lines)
+	if end > start && lines[end-1] == "" {
+		end-- // The terminal newline separates lines; it is not a body line.
 	}
-	return nil, 0, nil, writeHeredocFailure(start+1, path, fmt.Sprintf("literal body is missing terminator %q", terminator))
-}
-
-func recoverableWriteHeredocDirective(line string) bool {
-	command, arguments, ok := parseWriteHeredocDirective(line)
-	if !ok {
-		return false
-	}
-	switch command {
-	case "file":
-		return arguments != ""
-	case "replace":
-		_, _, _, err := parseWriteHeredocReplace(arguments)
-		return err == nil
-	case "create":
-		_, err := parseWriteHeredocMarker(arguments)
-		return err == nil
-	case "delete":
-		return len(strings.Fields(arguments)) == 1
-	case "end":
-		return arguments == ""
-	default:
-		return false
-	}
-}
-
-func currentWriteHeredocPath(request writeRequest, current int) string {
-	if current < 0 || current >= len(request.Files) {
-		return ""
-	}
-	return request.Files[current].Path
+	return append([]string{}, lines[start:end]...), len(lines)
 }
 
 func writeHeredocFailure(line int, path, message string) *writeFailure {

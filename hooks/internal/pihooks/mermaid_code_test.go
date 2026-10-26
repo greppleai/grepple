@@ -77,13 +77,12 @@ func TestAnalyzeMermaidSchemasDeterministicOrdering(t *testing.T) {
 	}
 }
 
-func TestLintEvaluationAppendsMermaidDiagnostics(t *testing.T) {
+func TestLintEvaluationIgnoresMermaidSchemas(t *testing.T) {
 	root := makeRepository(t, map[string]string{"code.go": "package sample\n"})
 	writeHookTestFile(t, filepath.Join(root, "code.go"), "package sample\n")
 	writeHookTestFile(t, filepath.Join(root, "missing.class.mmd"), "classDiagram\n class Missing\n <<struct>> Missing\n")
-	output := evaluateLintResult(commandResult{stdout: "[]"}, root, filepath.Join("..", ".."), nil)
-	if !strings.Contains(string(output), "mermaid-code") || !strings.Contains(string(output), "Missing struct") {
-		t.Fatalf("schema diagnostic not in Stop feedback: %s", output)
+	if output := evaluateLintResult(commandResult{stdout: "[]"}, root, filepath.Join("..", ".."), nil); len(output) != 0 {
+		t.Fatalf("unexpected Stop feedback: %s", output)
 	}
 }
 

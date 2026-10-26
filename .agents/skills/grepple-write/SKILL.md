@@ -35,18 +35,22 @@ Pq2│42│}
 
 ```sh
 grepple write --root . <<'GREPPLE_WRITE_example'
-::grepple file path/to/file.go
-::grepple replace Ab3 Pq2
+::grepple replace path/to/file.go Ab3 Pq2
 func newName() {
     newCall()
 }
-::grepple end
+::grepple create path/to/new.go
+package sample
+
+::grepple delete path/to/obsolete.go CURRENT_64_CHARACTER_SHA256
 GREPPLE_WRITE_example
 ```
 
-The quoted shell heredoc delimiter preserves quotes, backticks, and dollar signs literally. Replacement bodies contain source only, without anchor prefixes. Review the edit-ready source and request before submitting; the transaction prevalidates all requested changes before applying any file changes.
+Each operation is one directive: `::grepple replace PATH START [END]`, `::grepple create PATH`, or `::grepple delete PATH SHA256`. Replace consumes literal source lines through the next line beginning `::grepple` or EOF; create does likewise with complete new-file content. Delete has no body. There is no `::grepple end` terminator, `--end-marker`, or inferred-end warning. The quoted shell heredoc delimiter preserves quotes, backticks, and dollar signs literally. Review edit-ready source and requests before submitting; all requested changes are prevalidated before mutation.
 
-Multiple `replace` blocks can follow one `file` directive; add another `file` directive for another path. Keep related edits in one transaction so every operation is validated before any requested file changes.
+Paths with spaces are supported, including create paths. The final hash/digest fields are parsed as anchors; for replace, a preceding three-character hash-shaped token is interpreted as `START` when two anchors are present. A replace path ending in a space-separated three-character hash-shaped component is ambiguous: use strict JSON for it. Use fresh, case-sensitive hashes; replacement ranges are inclusive. Multiple replacements in one file all refer to the same original snapshot and must not overlap. Do not shift later anchors to account for earlier replacements. Keep related operations in one transaction so every operation is validated together.
+
+Any line beginning with `::grepple` ends the active body and is parsed as an operation directive, so directive-looking body lines cannot be represented in this envelope. Use strict JSON for such content, or use `grepple write edit` for a single edit. Blank lines are body content, including a blank line immediately following a directive; they are not ignored envelope whitespace. Include a final blank body line in a create operation to preserve the new file's final newline. An empty replace body deletes the anchored range.
 
 ### Insert or delete lines
 
@@ -54,11 +58,9 @@ There is no need to invent an insertion anchor: replace an existing anchored lin
 
 ```sh
 grepple write --root . <<'GREPPLE_INSERT_example'
-::grepple file path/to/file.go
-::grepple replace K9x K9x
+::grepple replace path/to/file.go K9x K9x
     oldCall()
     addedCall()
-::grepple end
 GREPPLE_INSERT_example
 ```
 
@@ -66,13 +68,11 @@ An empty replacement body deletes an inclusive range:
 
 ```sh
 grepple write --root . <<'GREPPLE_DELETE_LINES_example'
-::grepple file path/to/file.go
-::grepple replace START END
-::grepple end
+::grepple replace path/to/file.go START END
 GREPPLE_DELETE_LINES_example
 ```
 
-Replace `START` and `END` with actual fresh hashes. A single anchor is allowed when both endpoints are the same line.
+For an empty body, EOF closes it; the next operation directive can alternatively close it. Replace `START` and `END` with actual fresh hashes. A single anchor is allowed when both endpoints are the same line.
 
 ## 3. Create or delete whole files explicitly
 
@@ -80,17 +80,13 @@ Create only an absent path; missing parent directories are created automatically
 
 ```sh
 grepple write --root . <<'GREPPLE_CREATE_example'
-::grepple file path/to/new.go
-::grepple create
+::grepple create path/to/new.go
 package sample
 
-::grepple end
 GREPPLE_CREATE_example
 ```
 
-The blank body line before the terminator preserves the new file's final newline. Creation does not overwrite an existing file. Existing-file edits preserve its LF/CRLF style and final-newline behavior.
-
-Unmarked bodies infer a missing end at EOF or before the next valid directive, with a warning. Use a named `--end-marker TOKEN` for directive-shaped source to prevent unintended splits; named terminators remain strict.
+The blank body line after `package sample` preserves the new file's final newline. Creation does not overwrite an existing file. Existing-file edits preserve their LF/CRLF style and final-newline behavior.
 
 Whole-file deletion requires the current lowercase SHA-256 digest, **not a three-character line anchor**:
 
@@ -102,27 +98,11 @@ After inspecting the file and confirming deletion is intended, copy that exact d
 
 ```sh
 grepple write --root . <<'GREPPLE_DELETE_FILE_example'
-::grepple file path/to/obsolete.go
-::grepple delete CURRENT_64_CHARACTER_SHA256
+::grepple delete path/to/obsolete.go CURRENT_64_CHARACTER_SHA256
 GREPPLE_DELETE_FILE_example
 ```
+
 Edits, creates, and digest-guarded deletes can share one transaction. A stale digest rejects the transaction.
-
-### Escape a body terminator collision
-
-If the content itself has an exact `::grepple end` line, choose a collision-free marker:
-
-```sh
-grepple write --root . <<'GREPPLE_CREATE_DOC_example'
-::grepple file docs/example.md
-::grepple create --end-marker DOC_BODY
-Literal documentation containing this line:
-::grepple end
-
-::grepple end DOC_BODY
-GREPPLE_CREATE_DOC_example
-```
-The marker option also works on `replace`. Only the selected exact terminator closes that body; other directive-looking lines inside it are literal content. Keep the shell heredoc delimiter distinct from the body marker and absent from the content.
 
 ## 4. Interpret receipts and retry safely
 

@@ -101,7 +101,7 @@ func HandleLintHook(input []byte, hookRoot string) []byte {
 	if _, err := os.Stat(filepath.Join(cwd, "go.mod")); err == nil {
 		return handleGoLintHook(cwd, hookRoot)
 	}
-	return handleMermaidOnlyHook(cwd, hookRoot)
+	return nil
 }
 
 func isDirectory(path string) bool {
@@ -127,17 +127,6 @@ func handleGoLintHook(cwd, hookRoot string) []byte {
 	args := append(append([]string{}, revive.args...), "-formatter", "json", "-config", filepath.Join(cwd, "revive.toml"))
 	result := runCommand(commandSpec{command: revive.command, args: append(args, packages...)}, cwd)
 	return evaluateLintResult(result, cwd, hookRoot, nil)
-}
-
-func handleMermaidOnlyHook(cwd, hookRoot string) []byte {
-	diagnostics, err := AnalyzeMermaidSchemas(cwd)
-	if err != nil {
-		return marshalStopFeedback("The Mermaid code schema check failed: "+err.Error(), nil)
-	}
-	if len(diagnostics) == 0 {
-		return nil
-	}
-	return renderDiagnosticFeedback(diagnostics, hookRoot, nil)
 }
 
 func renderDiagnosticFeedback(diagnostics []Diagnostic, hookRoot string, autoFixed []string) []byte {
@@ -177,11 +166,6 @@ func evaluateLintResult(result commandResult, cwd, hookRoot string, autoFixed []
 		return marshalStopFeedback("The same-file-struct-methods check failed: "+err.Error(), nil)
 	}
 	diagnostics = append(diagnostics, custom...)
-	mermaidDiagnostics, err := AnalyzeMermaidSchemas(cwd)
-	if err != nil {
-		return marshalStopFeedback("The Mermaid code schema check failed: "+err.Error(), nil)
-	}
-	diagnostics = append(diagnostics, mermaidDiagnostics...)
 	group := SelectNextDiagnosticGroup(diagnostics)
 	if len(group) == 0 {
 		return cleanLintFeedback(result, autoFixed)

@@ -44,18 +44,19 @@ separates lines but does not add a blank line. Empty input deletes the range.
   EOF
 
 Literal heredoc transactions support the same edits, creates, and deletes:
-  ::grepple file file.go
-  ::grepple replace START END [--end-marker TOKEN]
+  ::grepple replace file.go START END
   literal replacement text
-  ::grepple end [TOKEN]
-  ::grepple file new.go
-  ::grepple create [--end-marker TOKEN]
+  ::grepple replace file.go NEXT
+  next replacement text
+  ::grepple create new.go
   literal new-file content
-  ::grepple end [TOKEN]
-  ::grepple file old.go
-  ::grepple delete 64-lowercase-hex-digest
 
-An unmarked replace or create body may omit ::grepple end: Grepple infers it at end of input or before a syntactically valid following ::grepple file, replace, create, or delete directive, and emits an inferred_heredoc_end warning. To keep directive-looking source literal, use --end-marker TOKEN; marked bodies always require their exact terminator.
+  ::grepple delete old.go 64-lowercase-hex-digest
+
+
+A body ends at the next ::grepple directive or EOF; delete has no body. A blank
+line before the next directive preserves a final newline in a created file.
+For directive-shaped source use strict JSON or single-edit mode instead.
 Create and delete are also explicit JSON file operations:
   {"path":"new.go","operation":"create","content_lines":["package sample",""]}
   {"path":"old.go","operation":"delete","before_sha256":"64-lowercase-hex-digest"}
