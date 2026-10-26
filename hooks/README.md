@@ -1,18 +1,16 @@
 # Grepple project hooks
 
 This directory is a small Go module containing project-local Pi hook orchestration.
-Mermaid analysis is imported from the main module's `extract` package so CLI focused generation, checks, and automatic Stop validation share one implementation.
 
 Source coverage deduplication and its Pi SessionStart/PostCompact cache-invalidation commands have been removed. Grepple renders the complete selected source and edit anchors on each read, subject to explicit output, spill, and paging limits. The Pi configuration retains independent PreToolUse grep-guard and Stop lint/check hooks; these do not track source coverage or substitute for removed invalidation hooks.
 
 ## Layout
 
 - `cmd/pi-hook` — command-hook protocol entry point.
-- `internal/pihooks` — grep guard, lint orchestration, feedback, schema discovery, and adapters.
-- `../extract` — shared Tree-sitter Mermaid generation and validation engine.
+- `internal/pihooks` — grep guard, lint orchestration, feedback, and adapters.
 - `guides` — remediation text returned by the Stop hook.
 
-Pi invokes `make -C hooks run-…` from `.pi/settings.json`. In Go modules the Stop lint hook checks formatting with read-only `gofmt -l` and runs Revive, then adapts the repository-owned GritQL `same-file-struct-methods` relation into diagnostic feedback before Mermaid validation. It never formats source or inserts annotations. Without `go.mod`, the hook skips Go tooling but still validates Mermaid schemas; a schema-free project returns no output and does not require Revive.
+Pi invokes `make -C hooks run-…` from `.pi/settings.json`. In Go modules the Stop lint hook checks formatting with read-only `gofmt -l`, runs Revive, and adapts the repository-owned GritQL `same-file-struct-methods` relation into diagnostic feedback. It never formats source or inserts annotations. Without `go.mod`, it returns no output.
 
 Hexagonal policy belongs to `grepple-backend/.grepple/hooks/`, not the CLI repository.
 The hook cheaply scans for Mermaid schema files and only loads Go/TypeScript
