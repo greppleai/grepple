@@ -53,6 +53,7 @@ func localEntriesV1(files []string, base, working string, depth int, inventory d
 			key, err := directorymeta.DirectoryKey(working, filepath.Join(base, filepath.FromSlash(entryPath)))
 			if err == nil {
 				inspection := inventory.Directories[key]
+				entry.Description = inspection.Description
 				entry.MetadataStatus = inspection.Status
 				entry.MetadataIssues = append([]string(nil), inspection.Issues...)
 			}

@@ -42,6 +42,9 @@ func buildLocalSelected(path string, depth int, selector directorymeta.SelectorV
 	if err != nil {
 		return wire.TreeResponse{}, err
 	}
+	if err := overlayNestedTreeMetadata(working, metadataFiles, &inventory); err != nil {
+		return wire.TreeResponse{}, err
+	}
 	baseKey, err := directorymeta.DirectoryKey(working, base)
 	if err != nil {
 		return wire.TreeResponse{}, err
@@ -76,7 +79,7 @@ func buildLocalSelected(path string, depth int, selector directorymeta.SelectorV
 	}
 	inspection := inventory.Directories[baseKey]
 	return wire.TreeResponse{Repo: ".", Path: filepath.ToSlash(display), Depth: depth, Entries: entries,
-		Labels: treeLabelSummary(union[baseKey]), MetadataStatus: inspection.Status,
+		Labels: treeLabelSummary(union[baseKey]), Description: inspection.Description, MetadataStatus: inspection.Status,
 		MetadataIssues: append([]string(nil), inspection.Issues...)}, nil
 }
 

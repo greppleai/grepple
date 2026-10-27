@@ -15,15 +15,16 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// DocumentV1 is the new, file-owned metadata contract. Directory labels are
-// derived from current files, never stored in this document.
+// DocumentV1 stores file annotations and optional directory descriptions.
+// Directory labels are derived from current files, never stored here.
 type DocumentV1 struct {
 	Schema    string                 `yaml:"schema" json:"schema"`
 	Directory map[string]DirectoryV1 `yaml:"directory" json:"directory"`
 }
 
 type DirectoryV1 struct {
-	Files []FileV1 `yaml:"files" json:"files"`
+	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
+	Files       []FileV1 `yaml:"files" json:"files"`
 }
 
 type FileV1 struct {
@@ -75,6 +76,10 @@ func (document *DocumentV1) Normalize() error {
 	for key, directory := range document.Directory {
 		if key != "." && (key == "" || path.Clean(key) != key || strings.HasPrefix(key, "/") || key == ".." || strings.HasPrefix(key, "../") || strings.ContainsAny(key, "\\:\x00") || !utf8.ValidString(key)) {
 			return fmt.Errorf("invalid metadata directory %q", key)
+		}
+		directory.Description = strings.Join(strings.Fields(directory.Description), " ")
+		if len(directory.Description) > 240 {
+			return fmt.Errorf("description for directory %q must be at most 240 bytes", key)
 		}
 		seen := map[string]bool{}
 		for index := range directory.Files {

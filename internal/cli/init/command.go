@@ -45,7 +45,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 		return err
 	}
 	return runGenerationV1(ctx, application, root, plan, values.Concurrency, func(ctx context.Context, job generationJobV1) (directorymeta.DirectoryV1, error) {
-		prompt, err := generationPromptV1(root, job.directory, job.files)
+		prompt, err := generationPromptV1(root, job.directory, job.files, job.descendants...)
 		if err != nil {
 			return directorymeta.DirectoryV1{}, err
 		}

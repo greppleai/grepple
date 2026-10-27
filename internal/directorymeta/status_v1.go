@@ -18,9 +18,10 @@ type FileStateV1 struct {
 }
 
 type InspectionV1 struct {
-	Status string
-	Issues []string
-	Files  map[string]FileStateV1
+	Status      string
+	Description string
+	Issues      []string
+	Files       map[string]FileStateV1
 }
 
 // InspectDirectoryV1 checks only selected direct files in one directory.
@@ -62,6 +63,7 @@ func inspectDirectorySnapshotV1(root, directory string, paths []string, document
 		}
 		return inspection
 	}
+	inspection.Description = entry.Description
 	entries := make(map[string]FileV1, len(entry.Files))
 	for _, file := range entry.Files {
 		entries[file.Name] = file

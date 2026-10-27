@@ -34,12 +34,12 @@ func TestInitV1AgentRetriesInvalidResponseAndPreservesReviewedAnnotations(t *tes
 			t.Fatalf("missing read-only tool configuration: %+v", request)
 		}
 		if calls == 1 {
-			return agent.Result{Answer: "files: []"}, nil
+			return agent.Result{Answer: "description: Directory.\nfiles: []"}, nil
 		}
 		if !strings.Contains(request.Prompt, "model omitted 1 selected files") || !strings.Contains(request.Prompt, "Original manifest prompt") {
 			t.Fatalf("missing retry feedback: %q", request.Prompt)
 		}
-		return agent.Result{Answer: "files:\n- name: one.go\n  checksum: fabricated\n  description: Refreshed from source.\n  purpose: Custom capability\n  domainAreas: [duplicate, New feature]\n  keywords: [c++]"}, nil
+		return agent.Result{Answer: "description: Handles the source capability.\nfiles:\n- name: one.go\n  checksum: fabricated\n  description: Refreshed from source.\n  purpose: Custom capability\n  domainAreas: [duplicate, New feature]\n  keywords: [c++]"}, nil
 	})
 	if err != nil || calls != 2 || len(got.Files) != 1 {
 		t.Fatalf("generation=%+v calls=%d err=%v", got, calls, err)
@@ -61,7 +61,7 @@ func TestInitV1AgentBoundsValidationRetryAndPropagatesRunError(t *testing.T) {
 	calls := 0
 	_, err = generateDirectoryMetadataWithRunnerV1(context.Background(), application, nil, root, job, "manifest", func(context.Context, agent.Request) (agent.Result, error) {
 		calls++
-		return agent.Result{Answer: "files:\n- name: invented.go\n  description: Invalid.\n  purpose: Testing"}, nil
+		return agent.Result{Answer: "description: Directory.\nfiles:\n- name: invented.go\n  description: Invalid.\n  purpose: Testing"}, nil
 	})
 	if err == nil || !strings.Contains(err.Error(), "unexpected") || calls != 2 {
 		t.Fatalf("invalid model reply accepted: calls=%d err=%v", calls, err)
