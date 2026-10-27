@@ -17,16 +17,17 @@ import (
 )
 
 type generationJobV1 struct {
-	directory string
-	files     []directorymeta.FileV1
-	globs     []string // original source selection; re-evaluated after the model runs
-	skip      bool
+	directory   string
+	files       []directorymeta.FileV1
+	descendants []string // selected source paths when no direct files are selected
+	globs       []string // original source selection; re-evaluated after the model runs
+	skip        bool
 }
 type generationPlanV1 []generationJobV1
 
 func (plan generationPlanV1) needsGeneration() bool {
 	for _, job := range plan {
-		if !job.skip && len(job.files) != 0 {
+		if !job.skip && (len(job.files) != 0 || len(job.descendants) != 0) {
 			return true
 		}
 	}
@@ -85,12 +86,16 @@ func planGenerationV1(ctx context.Context, application cliruntime.Context, globs
 			return nil, err
 		}
 		job := generationJobV1{directory: directory, globs: append([]string(nil), globs...)}
-		if !force && inventory.Directories[key].Status == directorymeta.StatusCurrent {
+		inspection := inventory.Directories[key]
+		if !force && inspection.Status == directorymeta.StatusCurrent && (inspection.Description != "" || len(paths) == 0) {
 			job.skip = true
 		} else {
 			job.files, err = directorymeta.FilesForDirectoryV1(root, directory, paths)
 			if err != nil {
 				return nil, fmt.Errorf("inspect %s: %w", displayPath(root, directory), err)
+			}
+			if len(job.files) == 0 {
+				job.descendants = pathsWithinDirectory(root, directory, paths)
 			}
 		}
 		plan = append(plan, job)
@@ -216,7 +221,7 @@ func runGenerationV1(ctx context.Context, application cliruntime.Context, root s
 					continue
 				}
 				entry, err := directorymeta.DirectoryV1{Files: []directorymeta.FileV1{}}, error(nil)
-				if len(job.files) != 0 {
+				if len(job.files) != 0 || len(job.descendants) != 0 {
 					entry, err = generate(ctx, job)
 				}
 				if err == nil {

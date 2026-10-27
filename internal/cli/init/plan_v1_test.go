@@ -21,7 +21,7 @@ func generatedV1(job generationJobV1) directorymeta.DirectoryV1 {
 		files[i].Purpose = "Implementation"
 		files[i].DomainAreas = []string{"Checkout"}
 	}
-	return directorymeta.DirectoryV1{Files: files}
+	return directorymeta.DirectoryV1{Description: "Describes selected sources.", Files: files}
 }
 
 func TestInitV1RefreshAndSkipWithoutModel(t *testing.T) {
@@ -38,7 +38,7 @@ func TestInitV1RefreshAndSkipWithoutModel(t *testing.T) {
 		calls.Add(1)
 		return generatedV1(job), nil
 	}
-	if err := runGenerationV1(ctx, application, root, plan, 2, generate); err != nil || calls.Load() != 2 {
+	if err := runGenerationV1(ctx, application, root, plan, 2, generate); err != nil || calls.Load() != 3 {
 		t.Fatalf("generate calls=%d: %v", calls.Load(), err)
 	}
 	if got := output.String(); got != "write .grepple/grepple.yaml (.)\nwrite .grepple/grepple.yaml (a)\nwrite .grepple/grepple.yaml (b)\n" {

@@ -9,6 +9,7 @@ import (
 const sampleV1 = `schema: v1
 directory:
   ".":
+    description: "  Parses   source files.  "
     files:
       - name: main.go
         checksum: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
@@ -19,10 +20,21 @@ directory:
         keywords: ["c++", "C++"]
 `
 
+func TestDocumentV1AcceptsLegacyDirectoryWithoutDescription(t *testing.T) {
+	legacy := strings.Replace(sampleV1, "    description: \"  Parses   source files.  \"\n", "", 1)
+	document, err := ParseDocumentV1([]byte(legacy))
+	if err != nil || document.Directory["."].Description != "" {
+		t.Fatalf("legacy snapshot rejected: %+v err=%v", document, err)
+	}
+}
+
 func TestDocumentV1RoundTrip(t *testing.T) {
 	document, err := ParseDocumentV1([]byte(sampleV1))
 	if err != nil {
 		t.Fatal(err)
+	}
+	if document.Directory["."].Description != "Parses source files." {
+		t.Fatalf("directory description was not normalized: %+v", document.Directory["."])
 	}
 	file := document.Directory["."].Files[0]
 	if file.Purpose != "implementation" || len(file.DomainAreas) != 1 || file.DomainAreas[0] != "parser" || len(file.Keywords) != 1 || file.Keywords[0] != "c++" || LabelKey("  IMPLEMENTATION ") != "implementation" {
@@ -81,6 +93,7 @@ func TestDocumentV1RejectsMalformedAndOldSchemas(t *testing.T) {
 		strings.Replace(sampleV1, "Entry point.", "  ", 1),
 		strings.Replace(sampleV1, "Implementation", "  ", 1),
 		strings.Replace(sampleV1, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "bad", 1),
+		strings.Replace(sampleV1, "Parses   source files.", strings.Repeat("x", 241), 1),
 		sampleV1 + "unexpected: true\n",
 	} {
 		if _, err := ParseDocumentV1([]byte(content)); err == nil {
