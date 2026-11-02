@@ -16,6 +16,8 @@ type Options struct {
 	Cursor           string
 	CursorPage       *apiclient.SearchPage
 	MixedRemote      bool
+	// ServerWindow means the remote source already applied the offset.
+	ServerWindow     bool
 	RemoteServer     string
 	RelatedExplicit  bool
 	LineOnly         bool

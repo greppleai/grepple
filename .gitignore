@@ -7,4 +7,5 @@ bin/
 github-app.pem
 dist/
 grepple-linux-*
+.planner/
 /.shepard/

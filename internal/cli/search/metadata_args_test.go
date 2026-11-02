@@ -31,6 +31,7 @@ func TestMetadataSearchFlagsParseNormalizedExactAndRejectUnsafeScopes(t *testing
 		{[]string{"--purpose", "Testing", "--server", "https://example.test", "needle"}, "--server"},
 		{[]string{"--purpose", "Testing", "--cursor", "token", "needle"}, "--cursor"},
 		{[]string{"--purpose", "Testing", "--repo", "owner/repo", "needle"}, "--repo"},
+		{[]string{"--purpose", "Testing", "--exclude-repo", "owner/repo", "needle"}, "--exclude-repo"},
 		{[]string{"--purpose", "Testing", "--related", "needle"}, "--related"},
 		{[]string{"--purpose", "Testing", "--follow-related", "2", "needle"}, "--follow-related"},
 		{[]string{"--keyword", "", "needle"}, "--keyword"},

@@ -61,16 +61,17 @@ type Args struct {
 	Context          int           `arg:"-C,--context" placeholder:"N" help:"print N lines before and after matches"`
 	AfterContext     int           `arg:"-A,--after-context" placeholder:"N" help:"print N lines after matches"`
 	BeforeContext    int           `arg:"-B,--before-context" placeholder:"N" help:"print N lines before matches"`
-	MaxFiles         int           `arg:"--max-files" placeholder:"N" help:"admit at most N matching result files before paging (0 = unlimited)"`
+	MaxFiles         int           `arg:"--max-files" placeholder:"N" help:"cap matching files per page in addition to --limit (0 = unlimited)"`
 	MaxOutputBytes   int           `arg:"--max-output-bytes" default:"16384" placeholder:"N" help:"cap human-readable output (default 16384; 0 = unlimited; JSON is uncapped)"`
 	Related          bool          `arg:"--related" help:"show repository-local types, callees, and callers (default for structural search)"`
 	NoRelated        bool          `arg:"--no-related" help:"disable automatic code navigation"`
 	FollowRelated    int           `arg:"--follow-related" placeholder:"N" help:"follow 1-3 outgoing call hops; search also shows direct callers of matches"`
 	At               string        `arg:"--at" placeholder:"PATH:LINE[-END]" help:"retrieve a declaration at PATH:LINE, exact legacy lines at PATH:START-END, or a verified local scope with --at PATH @KIND:LINE[-END]"`
 	Skip             int           `arg:"--skip" placeholder:"N" help:"skip the first N ranked result files"`
-	Limit            int           `arg:"--limit" default:"20" placeholder:"N" help:"return at most N ranked result files (default 20; 0 = all local; servers cap a page at 100 — page further with --skip)"`
+	Limit            int           `arg:"--limit" default:"20" placeholder:"N" help:"return at most N ranked files (default 20; 0 = all local; remote cap 100 per page; mixed skip + effective limit must fit 100, otherwise use --remote-only or --local)"`
 	Sort             string        `arg:"--sort" default:"path" placeholder:"ORDER" help:"order result files by path (default) or matching-line count (matches)"`
 	Repos            []string      `arg:"--repo,separate" placeholder:"PATTERN" help:"restrict remote repositories; repeatable"`
+	ExcludeRepos     []string      `arg:"--exclude-repo,separate" placeholder:"PATTERN" help:"exclude repositories; repeatable"`
 	Purposes         metadataFlags `arg:"--purpose" placeholder:"LABEL" help:"restrict local files by exact purpose; repeatable"`
 	DomainAreas      metadataFlags `arg:"--domain-area" placeholder:"LABEL" help:"restrict local files by exact domain area; repeatable"`
 	FunctionalAreas  metadataFlags `arg:"--functional-area" placeholder:"LABEL" help:"restrict local files by exact functional area; repeatable"`
@@ -396,6 +397,7 @@ func buildSearchParams(application cliruntime.Context, parser interface{ WriteUs
 		Limit:         values.Limit,
 		Sort:          values.Sort,
 		Repo:          values.Repos,
+		ExcludeRepo:   values.ExcludeRepos,
 	}
 	if values.BeforeContext > 0 {
 		params.BeforeContext = values.BeforeContext
