@@ -21,7 +21,7 @@ func compileSearchMetadataSelector(values *Args) (directorymeta.SelectorV1, erro
 	}{
 		{values.Remote, "--remote"}, {values.RemoteOnly, "--remote-only"},
 		{values.Server != "", "--server"}, {values.Cursor != "", "--cursor"},
-		{len(values.Repos) > 0, "--repo"},
+		{len(values.Repos) > 0, "--repo"}, {len(values.ExcludeRepos) > 0, "--exclude-repo"},
 		{values.Related || values.FollowRelated > 0, "--related/--follow-related"},
 	} {
 		if entry.enabled {

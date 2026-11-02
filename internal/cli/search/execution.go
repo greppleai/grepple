@@ -108,16 +108,20 @@ func executeSearch(application cliruntime.Context, options *Options, explicitSer
 	// remote source is involved, clamp the request here too so the merged
 	// local+remote window is consistent, and say so when the user asked for more.
 	if remote && (options.Params.Limit == 0 || options.Params.Limit > search.MaxPageLimit) {
-		fmt.Fprintf(application.Stderr(), "note: server pages are capped at %d files; returning the max - page further with --skip N\n", search.MaxPageLimit)
+		fmt.Fprintf(application.Stderr(), "note: server pages are capped at %d files; returning the max; use --remote-only --skip N for remote offset pages (mixed windows require skip + effective limit <= %d)\n", search.MaxPageLimit, search.MaxPageLimit)
 		options.Params.Limit = search.MaxPageLimit
 	}
 
-	// When results are merged from multiple sources (local + remote), each
-	// source must return enough ranked candidates for the final skip/limit to be
-	// applied correctly. Ask sources for the top (skip+limit) with skip=0, then
-	// window the merged set below.
+	// Only merged/local searches need a prefix for client-side windowing.
+	options.ServerWindow = remote && (options.RemoteOnly || options.Params.At != "")
 	child := *options
-	child.Params = childWindowParams(options.Params)
+	if !options.ServerWindow {
+		var err error
+		child.Params, err = childWindowParams(options.Params, remote)
+		if err != nil {
+			return err
+		}
+	}
 	child.MixedRemote = options.Params.Skip != 0
 
 	results, err := initialSearchResults(application, &child, remote)
@@ -194,16 +198,27 @@ func appendRemoteResults(application cliruntime.Context, results []wire.FileResu
 	return append(results, remoteResults...), nil
 }
 
-// childWindowParams returns source-query parameters that fetch the top
-// skip+limit window (with skip=0) so the final window applies to the merged
-// result set.
-func childWindowParams(params search.Params) search.Params {
-	skip := params.Skip
-	params.Skip = 0
-	if params.Limit > 0 {
-		params.Limit += skip
+// childWindowParams fetches enough ranked candidates for a client-side window.
+// MaxFiles is also a per-page cap, so it must not truncate the prefix before Skip.
+func childWindowParams(params search.Params, mixed bool) (search.Params, error) {
+	limit := params.Limit
+	if params.MaxFiles > 0 && (limit == 0 || params.MaxFiles < limit) {
+		limit = params.MaxFiles
 	}
-	return params
+	if mixed && (limit == 0 || limit > search.MaxPageLimit || params.Skip > search.MaxPageLimit-limit) {
+		return params, fmt.Errorf("mixed local/remote window exceeds the server's %d-file prefix cap; use --remote-only or --local to page each source separately", search.MaxPageLimit)
+	}
+	if limit > 0 {
+		if params.Skip > int(^uint(0)>>1)-limit {
+			return params, fmt.Errorf("search skip plus limit exceeds the supported integer range")
+		}
+		params.Limit = params.Skip + limit
+	}
+	params.Skip = 0
+	if params.MaxFiles > 0 {
+		params.MaxFiles = params.Limit
+	}
+	return params, nil
 }
 
 // sortResults applies the same deterministic file ranking to merged local and
@@ -231,7 +246,7 @@ func noteDefaultLimitCap(application cliruntime.Context, options *Options, resul
 		return
 	}
 	if options.Params.Limit == DefaultResultLimit && options.Params.MaxFiles == 0 && len(results) == DefaultResultLimit {
-		fmt.Fprintf(application.Stderr(), "note: showing the first %d files (default --limit); raise with --limit N and page with --skip N (servers cap a page at %d; --limit 0 = all local)\n", DefaultResultLimit, search.MaxPageLimit)
+		fmt.Fprintf(application.Stderr(), "note: showing %d files (default --limit); raise with --limit N or page with --skip N (--limit 0 = all local; remote pages cap at %d; mixed windows require skip + effective limit <= %d, otherwise split with --remote-only or --local)\n", DefaultResultLimit, search.MaxPageLimit, search.MaxPageLimit)
 	}
 }
 

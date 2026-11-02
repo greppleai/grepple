@@ -20,3 +20,26 @@ have an empty final continuation. Errors never silently fall back to legacy.
 
 The authenticated, bounded, nonredirecting HTTP transport is reused with a
 40-second deadline. Old opaque session cursors are invalid; submit a new search.
+
+## Legacy offset pages
+
+For modes that do not support cursors, use `--remote-only --skip N --limit N`.
+The server applies the offset before the per-page cap of 100 files; the CLI does
+not skip those results again. For example, to list the second remote page:
+
+```sh
+grepple search --remote-only --server http://localhost:8080 -F needle --files-with-matches --limit 100 --skip 100 --json
+```
+
+`--limit 0` and limits over 100 are clamped to 100 when remote search is enabled.
+`--max-files` is an additional per-page cap, not a cap on the prefix before the
+offset. Legacy responses do not establish a complete remote corpus count; a
+short page alone is not proof of complete coverage. Check truncation/shard warnings.
+
+Mixed local/remote searches fetch a prefix from each source before applying one
+merged window. They require `skip + effective limit <= 100`, where the effective
+limit is the smaller positive value of `--limit` and `--max-files` after remote
+limit clamping. Requests exceeding that prefix cap fail explicitly, even if no
+local files happen to match. Split these searches with `--remote-only` and
+`--local` rather than treating a capped prefix as exhaustion. Eligible remote
+content searches can instead follow their emitted cursor continuation commands.

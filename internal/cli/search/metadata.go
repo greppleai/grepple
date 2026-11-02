@@ -59,6 +59,9 @@ func searchResultMetadata(application cliruntime.Context, options *Options, tota
 	mode := "local"
 	if remote {
 		mode = "local+remote"
+		if options.ServerWindow || options.RemoteOnly {
+			mode = "remote"
+		}
 	}
 	scopePaths := options.Params.Globs
 	if options.Stdin {
@@ -107,7 +110,36 @@ func searchNextCommand(application cliruntime.Context, options *Options, skip in
 	if options.CursorPage != nil {
 		parts = append(parts, "--remote-only", "--cursor", shellquote.Argument(options.CursorPage.Cursor), "--server", shellquote.Argument(options.RemoteServer))
 	} else if remote {
-		parts = append(parts, "--remote")
+		if options.RemoteOnly || options.ServerWindow {
+			parts = append(parts, "--remote-only")
+		} else {
+			parts = append(parts, "--remote")
+		}
+		if options.RemoteServer != "" {
+			parts = append(parts, "--server", shellquote.Argument(options.RemoteServer))
+		}
+	}
+	if options.FilesWithMatches {
+		parts = append(parts, "--files-with-matches")
+	} else if options.Params.Files {
+		parts = append(parts, "--files")
+	} else if options.Count {
+		parts = append(parts, "--count")
+	}
+	if options.Params.MaxFiles > 0 {
+		parts = append(parts, "--max-files", fmt.Sprint(options.Params.MaxFiles))
+	}
+	if options.Params.ProductionOnly {
+		parts = append(parts, "--production-only")
+	}
+	if options.Params.At != "" {
+		parts = append(parts, "--at", shellquote.Argument(options.Params.At))
+	}
+	if options.Params.BeforeContext > 0 {
+		parts = append(parts, "--before-context", fmt.Sprint(options.Params.BeforeContext))
+	}
+	if options.Params.AfterContext > 0 {
+		parts = append(parts, "--after-context", fmt.Sprint(options.Params.AfterContext))
 	}
 	if !options.Params.Regex {
 		parts = append(parts, "-F")

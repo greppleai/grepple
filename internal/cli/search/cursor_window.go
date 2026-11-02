@@ -5,13 +5,17 @@ import (
 	"github.com/greppleai/grepple/internal/wire"
 )
 
-// The server already applies the cursor's global offset and page window.
+// Server-paged results must not have their offset applied a second time.
 func selectedSearchWindow(options *Options, results []wire.FileResult) []wire.FileResult {
-	if options.CursorPage == nil {
-		return windowResults(results, options.Params)
+	if options.CursorPage != nil {
+		options.Params.Limit = max(options.Params.Limit, len(results))
+		return results
 	}
-	options.Params.Limit = max(options.Params.Limit, len(results))
-	return results
+	params := options.Params
+	if options.ServerWindow {
+		params.Skip = 0
+	}
+	return windowResults(results, params)
 }
 func finishSearchExit(application cliruntime.Context, options *Options, results []wire.FileResult) error {
 	if options.CursorPage != nil && !options.CursorPage.Complete && len(results) == 0 {

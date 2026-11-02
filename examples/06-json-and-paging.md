@@ -62,8 +62,11 @@ Use `--json` for the full structural result set (files, segments, and metadata).
 ## Paging (`--limit` / `--skip`)
 
 Results are returned in **deterministic path order** and paged by **file**. The default
-`--limit` is 20 (`--limit 0` = all). Combine with `--files-with-matches` for a compact
-page listing.
+`--limit` is 20 (`--limit 0` = all local; remote pages cap at 100). Combine with
+`--files-with-matches` for a compact page listing. For remote-only offset pages,
+use `--remote-only --skip N`; mixed local/remote windows require skip plus the
+effective page limit to fit within 100, otherwise split with `--remote-only` and
+`--local`. Eligible remote content searches emit cursor continuations instead.
 
 Page 1 — the first two matching files:
 
