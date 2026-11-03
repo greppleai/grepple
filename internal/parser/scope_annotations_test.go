@@ -30,6 +30,7 @@ func TestCodeLineScopeAnnotationsAllRegisteredLanguages(t *testing.T) {
 		{"rust", "fn run() {\n  work();\n}\n", 1, 2, "func", "func"},
 		{"php", "<?php\nfunction run() {\n  work();\n}\n", 2, 3, "func", "func"},
 		{"shell", "run() {\n  echo yes\n}\n", 1, 2, "func", "func"},
+		{"lua", "function run()\n  work()\nend\n", 1, 2, "func", "func"},
 	}
 	seen := make(map[string]bool)
 	for _, tt := range tests {

@@ -187,6 +187,18 @@
       "findings": ["target one two three"]
     },
     {
+      "name": "lua-reliability",
+      "language": "lua",
+      "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],
+      "query": "language lua\n`target($args)`",
+      "context_query": "language lua\n`target($args)`",
+      "min_contexts": 2,
+      "path": "src/app.lua",
+      "source": "function run() target(one, two, three) end\n",
+      "malformed_source": "function broken(\n",
+      "findings": ["target(one, two, three)"]
+    },
+    {
       "name": "swift-reliability",
       "language": "swift",
       "features": ["named-metavariable", "list-metavariable", "ambiguous-snippet-context", "malformed-syntax", "cancellation", "resource-limit"],

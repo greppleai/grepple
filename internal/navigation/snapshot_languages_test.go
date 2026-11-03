@@ -29,6 +29,7 @@ func TestSnapshotDifferentialLanguageAdapters(t *testing.T) {
 		"hcl":        {"main.tf", "resource \"widget\" \"one\" { name = \"one\" }\nresource \"widget\" \"two\" { name = widget.one.name }"},
 		"css":        {"main.css", "@keyframes fade { from { opacity: 0; } to { opacity: 1; } }\n.widget { animation: fade 1s; }"},
 		"shell":      {"main.sh", "finish() { echo done; }\nstart() { finish; }"},
+		"lua":        {"main.lua", "local function finish() end\nfunction start() finish() end\n"},
 	}
 	capabilities := parser.NewParser().SupportedLanguages()
 	for _, capability := range capabilities {

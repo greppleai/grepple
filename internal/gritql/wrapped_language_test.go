@@ -19,6 +19,7 @@ func TestWrappedTreeSitterLanguagesEvaluateCalls(t *testing.T) {
 		{name: "rust", language: "rust", snippet: "target($args)", source: "fn run() { target(value); }\n", path: "src/app.rs", want: "target(value)"},
 		{name: "shell", language: "shell", snippet: "target $args", source: "run() { target value; }\n", path: "scripts/app.sh", want: "target value"},
 		{name: "swift", language: "swift", snippet: "target($args)", source: "func run() { target(value) }\n", path: "Sources/App.swift", want: "target(value)"},
+		{name: "lua", language: "lua", snippet: "target($args)", source: "function run() target(value) end\n", path: "src/app.lua", want: "target(value)"},
 	}
 	for _, test := range tests {
 		test := test

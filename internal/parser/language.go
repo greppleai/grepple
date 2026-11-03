@@ -207,6 +207,7 @@ var languageAdapters = buildLanguageAdapters(
 	newRustLanguage(),
 	newPHPLanguage(),
 	newShellLanguage(),
+	newLuaLanguage(),
 )
 
 // contentAdapters hold parser-backed formats that are not code-navigation
@@ -237,6 +238,7 @@ var languageCapabilities = []LanguageCapabilities{
 	{ID: "rust", Extensions: []string{".rs"}, Navigation: true},
 	{ID: "php", Extensions: []string{".php"}, Navigation: true},
 	{ID: "shell", Extensions: []string{".sh", ".bash", ".zsh"}, Navigation: true},
+	{ID: "lua", Extensions: []string{".lua"}, Navigation: true},
 }
 
 // supportedLanguages returns deterministic metadata for parser-backed languages.

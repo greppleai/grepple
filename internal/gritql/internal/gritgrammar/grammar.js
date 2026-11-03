@@ -622,6 +622,7 @@ module.exports = grammar({
         'cpp',
 'kotlin',
 'shell',
+'lua',
         'elixir',
       ),
 

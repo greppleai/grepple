@@ -28,6 +28,7 @@ func TestEmptyConstraintEverySupportedLanguage(t *testing.T) {
 		{"swift", "target($args)", "func run() { target(); target(value) }\n"},
 		{"tsx", "target($args)", "function run() { target(); target(value); }\n"},
 		{"typescript", "target($args)", "function run() { target(); target(value); }\n"},
+		{"lua", "target($args)", "function run() target() target(value) end\n"},
 	}
 	seen := make(map[string]bool, len(cases))
 	for _, test := range cases {

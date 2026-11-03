@@ -9,7 +9,7 @@ func TestLanguageForMinimumSupportedSet(t *testing.T) {
 		"Main.java": "java", "Main.kt": "kotlin", "main.dart": "dart", "main.swift": "swift",
 		"Program.cs": "csharp", "main.c": "c", "header.h": "c", "main.cpp": "cpp",
 		"main.tf": "hcl", "dev.tfvars": "hcl", "override.hcl": "hcl", "state.tfbackend": "hcl", "main.tf.json": "text",
-		"header.hpp": "cpp", "main.rs": "rust", "build.sh": "shell", "build.zsh": "shell",
+		"header.hpp": "cpp", "main.rs": "rust", "build.sh": "shell", "build.zsh": "shell", "init.lua": "lua", "INIT.LUA": "lua",
 	}
 	for path, want := range tests {
 		t.Run(path, func(t *testing.T) {
@@ -116,6 +116,7 @@ func TestNavigationFactCapabilitiesAreAdapterOwned(t *testing.T) {
 		"rust":       {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true, Entrypoints: true},
 		"php":        {Declarations: true, Calls: true, Imports: true, TypeReferences: true, Fields: true, MemberAccess: true},
 		"shell":      {Declarations: true, Calls: true},
+		"lua":        {Declarations: true, Calls: true},
 	}
 	for _, language := range NewParser().SupportedLanguages() {
 		if language.NavigationFacts != want[language.ID] {
@@ -281,6 +282,7 @@ func TestNewLanguageOutlines(t *testing.T) {
 		{path: "app.cpp", content: "namespace app { class Service { public: int run() { return 1; } }; }\n", kind: "method", name: "run"},
 		{path: "app.rs", content: "trait Runner { fn run(&self); }\nimpl Runner for Service { fn run(&self) {} }\n", kind: "method", name: "run"},
 		{path: "build.sh", content: "build() { echo build; }\n", kind: "function", name: "build"},
+		{path: "init.lua", content: "local function build()\n  return 1\nend\n", kind: "function", name: "build"},
 	}
 	for _, test := range tests {
 		t.Run(test.path, func(t *testing.T) {
@@ -303,6 +305,7 @@ func TestNewLanguagesBuildStructuralSegments(t *testing.T) {
 		{language: "cpp", content: "int run() {\n return 1;\n}\n", hitLine: 2},
 		{language: "rust", content: "fn run() {\n  return;\n}\n", hitLine: 2},
 		{language: "shell", content: "run() {\n  echo yes\n}\n", hitLine: 2},
+		{language: "lua", content: "function run()\n  print(1)\nend\n", hitLine: 2},
 	}
 	for _, test := range tests {
 		t.Run(test.language, func(t *testing.T) {
