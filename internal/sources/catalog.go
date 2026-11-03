@@ -15,11 +15,15 @@ type DiscoveryOptions struct {
 }
 
 func (options DiscoveryOptions) ignore() ignoreConfig {
-	root := options.Root
-	if root == "" {
-		root = options.IgnoreRoot
+	ignore := ignoreConfig{root: options.IgnoreRoot, patterns: options.IgnorePaths, productionOnly: options.ProductionOnly}
+	if options.ProductionOnly {
+		root := options.Root
+		if root == "" {
+			root = options.IgnoreRoot
+		}
+		ignore.classifier = NewClassifier(root)
 	}
-	return ignoreConfig{root: options.IgnoreRoot, patterns: options.IgnorePaths, productionOnly: options.ProductionOnly, classifier: NewClassifier(root)}
+	return ignore
 }
 
 // Candidates discovers content-search candidates in deterministic path order.
