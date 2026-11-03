@@ -457,11 +457,21 @@ func (w *candidateWalker) walk(path string, entry fs.DirEntry, walkErr error) er
 // walkDir absorbs path's .gitignore and reports whether the subtree is
 // ignored (SkipDir) — the walk root itself is never skipped.
 func (w *candidateWalker) walkDir(path, rel string) error {
+	// WalkDir is depth-first. Sibling rules can no longer affect this subtree;
+	// retaining them (even empty rule sets) makes every later lookup scan all
+	// directories visited so far instead of just the active ancestors.
+	for directory := range w.ignorePatterns {
+		if _, inScope := ignoreScope(rel, directory); !inScope {
+			delete(w.ignorePatterns, directory)
+		}
+	}
 	base := rel
 	if base == "." {
 		base = ""
 	}
-	w.ignorePatterns[base] = append(w.ignorePatterns[base], parseGitignore(path)...)
+	if patterns := parseGitignore(path); len(patterns) > 0 {
+		w.ignorePatterns[base] = patterns
+	}
 	if path != w.root && (ignored(rel, w.ignorePatterns) || w.ignore.ignoredDirectory(path) && !w.ignore.hasNegation()) {
 		return filepath.SkipDir
 	}

@@ -1,7 +1,6 @@
 package tree
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/greppleai/grepple/internal/directorymeta"
@@ -13,27 +12,20 @@ import (
 // invocation directory so depth, paths and selector unions remain unchanged.
 func overlayNestedTreeMetadata(working string, files []string, inventory *directorymeta.InventoryV1) error {
 	groups := map[string][]string{}
+	// Cache both found boundaries and misses for the entire invocation. Most
+	// files share directories; probing their ancestors per file dominates tree
+	// latency on filesystems with expensive metadata operations.
+	roots := nestedTreeRoots{working: working, cache: map[string]string{working: ""}}
 	for _, file := range files {
 		absolute := file
 		if !filepath.IsAbs(absolute) {
 			absolute = filepath.Join(working, filepath.FromSlash(file))
 		}
-		root, err := directorymeta.FindRoot(filepath.Dir(absolute))
-		if err != nil {
-			return err
-		}
-		if root == working {
+		if _, err := directorymeta.DirectoryKey(working, filepath.Dir(absolute)); err != nil {
 			continue
 		}
-		// FindRoot returns the starting directory when no boundary exists.
-		// Do not mistake every ordinary subdirectory for a nested checkout.
-		if _, err := os.Stat(filepath.Join(root, ".git")); err != nil {
-			if _, err := os.Stat(filepath.Join(root, ".grepple")); err != nil {
-				continue
-			}
-		}
-		prefix, err := directorymeta.DirectoryKey(working, root)
-		if err != nil || prefix == "." {
+		root := roots.find(filepath.Dir(absolute))
+		if root == "" {
 			continue
 		}
 		groups[root] = append(groups[root], absolute)

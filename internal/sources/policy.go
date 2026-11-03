@@ -28,9 +28,12 @@ type Provider interface {
 
 // ReportExplicitBypasses reports named files that intentionally bypass broad-source policy.
 func ReportExplicitBypasses(paths []string, options Options) {
+	if options.Notices == nil {
+		return
+	}
 	root := options.Root()
 	filter := pathfilter.Config{Root: root, Patterns: options.IgnorePaths}
-	classifier := NewClassifier(root)
+	var classifier *Classifier
 	bypasses := make([]string, 0)
 	for _, path := range paths {
 		info, err := os.Stat(path)
@@ -40,8 +43,13 @@ func ReportExplicitBypasses(paths []string, options Options) {
 		reason := ""
 		if filter.Ignored(path) {
 			reason = "grepple.json ignore.paths"
-		} else if options.ProductionOnly && classifier.Classify(path) != Production {
-			reason = "--production-only"
+		} else if options.ProductionOnly {
+			if classifier == nil {
+				classifier = NewClassifier(root)
+			}
+			if classifier.Classify(path) != Production {
+				reason = "--production-only"
+			}
 		}
 		if reason == "" {
 			continue
