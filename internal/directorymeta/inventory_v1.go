@@ -44,15 +44,16 @@ func BuildInventoryV1(root string, paths []string) (InventoryV1, error) {
 		}
 		byDirectory[filepath.Clean(filepath.Dir(absolute))] = append(byDirectory[filepath.Clean(filepath.Dir(absolute))], absolute)
 	}
+	inspections := inspectInventoryDirectoriesV1(root, directories, byDirectory, document, loadErr)
 	// Sorted directory and selected-file order makes display spelling stable
 	// when two files share the same case-insensitive label.
 	aggregate := map[string]*labelSetsV1{}
-	for _, directory := range directories {
+	for index, directory := range directories {
 		key, err := DirectoryKey(root, directory)
 		if err != nil {
 			return InventoryV1{}, err
 		}
-		inspection := inspectDirectorySnapshotV1(root, directory, byDirectory[filepath.Clean(directory)], document, loadErr)
+		inspection := inspections[index]
 		result.Directories[key] = inspection
 		names := make([]string, 0, len(inspection.Files))
 		for name := range inspection.Files {
