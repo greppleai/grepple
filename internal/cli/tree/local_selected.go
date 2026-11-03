@@ -13,13 +13,18 @@ func buildLocalSelected(path string, depth int, selector directorymeta.SelectorV
 	if path == "" {
 		path = "."
 	}
-	info, files, err := localSourcePaths(path, repository)
-	if err != nil {
-		return wire.TreeResponse{}, err
-	}
 	working := "."
 	if repository != nil {
 		working = repository.WorkingDirectory()
+	}
+	if checkout, missing := directorymeta.UninitializedCheckout(working); missing {
+		if response, handled, err := buildUninitializedTree(path, depth, selector, repository, working, checkout); handled || err != nil {
+			return response, err
+		}
+	}
+	info, files, err := localSourcePaths(path, repository)
+	if err != nil {
+		return wire.TreeResponse{}, err
 	}
 	working, err = filepath.Abs(working)
 	if err != nil {

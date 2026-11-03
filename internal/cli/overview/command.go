@@ -12,7 +12,8 @@ import (
 	sourcedomain "github.com/greppleai/grepple/internal/sources"
 )
 
-// Limit the output independent of repository size, including JSON. Counts remain complete.
+// Limit vocabulary output independent of repository size, including JSON.
+// Coverage counts are complete only when CountsComputed is true.
 const maxLabels = 8
 const maxExamples = 2
 
@@ -44,6 +45,8 @@ type Category struct {
 type Report struct {
 	Schema          string   `json:"schema"`
 	Root            string   `json:"root"`
+	MetadataStatus  string   `json:"metadataStatus,omitempty"`
+	CountsComputed  bool     `json:"countsComputed"`
 	Files           Coverage `json:"files"`
 	Directories     Coverage `json:"directories"`
 	Purposes        Category `json:"purposes"`
@@ -66,10 +69,19 @@ func Execute(application cliruntime.Context, args *Args) error {
 	return err
 }
 
-// Build uses precisely the same source-scoped V1 inventory as tree and verify.
-// Reading YAML never causes source selection or a model invocation.
+// Build uses the source-scoped V1 inventory unless an enclosing Git checkout
+// has no .grepple directory. In that case metadata is known to be missing
+// without enumerating sources or computing coverage counts.
 func Build(application cliruntime.Context) (Report, error) {
 	root := application.Repository().WorkingDirectory()
+	if _, missing := directorymeta.UninitializedCheckout(root); missing {
+		return Report{
+			Schema: "grepple-overview-v1", Root: filepath.ToSlash(root),
+			MetadataStatus: directorymeta.StatusMissing,
+			Examples:       []string{},
+			Guidance:       []string{"No .grepple directory in this Git checkout; coverage counts were not computed. Run grepple init to generate metadata (model generation is explicit)."},
+		}, nil
+	}
 	policy, err := application.Repository().ScopeOptions()
 	if err != nil {
 		return Report{}, err
@@ -82,7 +94,7 @@ func Build(application cliruntime.Context) (Report, error) {
 	if err != nil {
 		return Report{}, err
 	}
-	report := Report{Schema: "grepple-overview-v1", Root: filepath.ToSlash(root), Examples: []string{}, Guidance: []string{}}
+	report := Report{Schema: "grepple-overview-v1", Root: filepath.ToSlash(root), CountsComputed: true, Examples: []string{}, Guidance: []string{}}
 	for _, state := range inventory.Files {
 		addStatus(&report.Files, state.Status)
 	}
@@ -181,6 +193,9 @@ func (builder categoryBuilder) finish() Category {
 }
 
 func (report Report) Text() string {
+	if report.MetadataStatus == directorymeta.StatusMissing && !report.CountsComputed {
+		return "overview: metadata missing (coverage counts not computed)\n" + strings.Join(report.Guidance, "\n") + "\n"
+	}
 	var out strings.Builder
 	fmt.Fprintf(&out, "overview: %d/%d current files (%d stale, %d missing, %d invalid); %d/%d current directories\n", report.Files.Current, report.Files.Selected, report.Files.Stale, report.Files.Missing, report.Files.Invalid, report.Directories.Current, report.Directories.Selected)
 	for _, section := range []struct {
