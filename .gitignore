@@ -7,3 +7,4 @@ bin/
 github-app.pem
 dist/
 grepple-linux-*
+/.shepard/
