@@ -121,7 +121,7 @@ func TestGenericNavigationEnginesContainNoGrammarKinds(t *testing.T) {
 			grammarKinds[kind] = true
 		}
 	}
-	for _, vocabulary := range []string{"call", "declaration", "local", "parameter", "receiver", "result"} {
+	for _, vocabulary := range []string{"call", "declaration", "local", "parameter", "parameters", "receiver", "result"} {
 		delete(grammarKinds, vocabulary)
 	}
 	for _, path := range []string{"navigation.go", "navigation_context.go"} {

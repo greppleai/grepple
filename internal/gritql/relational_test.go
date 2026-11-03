@@ -35,6 +35,7 @@ func TestCrossFileDuplicatesAcrossAllLanguages(t *testing.T) {
 		{"swift", "func run() {}\n"},
 		{"tsx", "const value = 1;\n"},
 		{"typescript", "const value = 1;\n"},
+		{"lua", "local value = 1\n"},
 	}
 	if len(sources) != len(SupportedLanguages()) {
 		t.Fatalf("languages=%d sources=%d", len(SupportedLanguages()), len(sources))
@@ -52,6 +53,7 @@ func TestCrossFileDuplicatesAcrossAllLanguages(t *testing.T) {
 				"kotlin": "source_file($statement)", "php": "program($statement)", "python": "module($statement)",
 				"rust": "source_file($statement)", "shell": "program($statement)", "swift": "source_file($statement)",
 				"tsx": "program($statement)", "typescript": "program($statement)",
+				"lua": "chunk($statement)",
 			}[test.language]
 			program := relationProgram(t, query)
 			filesystem := fstest.MapFS{"pkg/a.src": {Data: []byte(test.source)}, "pkg/b.src": {Data: []byte(test.source)}}

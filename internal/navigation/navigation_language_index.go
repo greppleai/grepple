@@ -170,6 +170,9 @@ var languageNavigationIndexFactories = map[string]languageNavigationIndexFactory
 	"shell": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
 		return &base
 	},
+	"lua": func(_ string, base baseLanguageNavigationIndex, _ languageNavigationIndexBuildContext) languageNavigationIndex {
+		return &base
+	},
 }
 
 func newLanguageNavigationIndexes(corpus *navigationCorpus, paths []string) (map[string]languageNavigationIndex, []string) {

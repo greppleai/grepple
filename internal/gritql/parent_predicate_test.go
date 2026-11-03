@@ -23,6 +23,7 @@ func TestDirectFunctionParentAcrossEverySupportedLanguage(t *testing.T) {
 		{"swift", "target($args)", "func run() { target(value) }\n"},
 		{"tsx", "target($args)", "function run() { target(value); }\n"},
 		{"typescript", "target($args)", "function run() { target(value); }\n"},
+		{"lua", "target($args)", "function run() target(value) end\n"},
 	}
 	seen := make(map[string]bool, len(cases))
 	for _, test := range cases {

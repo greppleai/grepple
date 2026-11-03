@@ -68,6 +68,7 @@ var grammars = []grammarSpec{
 	{Language: "rust", Module: "github.com/tree-sitter/tree-sitter-rust"},
 	{Language: "php", Module: "github.com/tree-sitter/tree-sitter-php", Subdir: "php"},
 	{Language: "shell", Module: "github.com/tree-sitter/tree-sitter-bash"},
+	{Language: "lua", Module: "github.com/tree-sitter-grammars/tree-sitter-lua"},
 }
 
 func main() {

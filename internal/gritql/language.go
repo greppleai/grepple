@@ -88,6 +88,7 @@ func targetLanguageAdapterMap() map[string]targetLanguageAdapter {
 func newTargetLanguageAdapters() map[string]targetLanguageAdapter {
 	return map[string]targetLanguageAdapter{
 		"c":      wrappedTargetLanguageAdapter("c", CGrammar, TreeSitterCGrammar, compileCTemplates),
+		"lua":    wrappedTargetLanguageAdapter("lua", LuaGrammar, TreeSitterLuaGrammar, compileLuaTemplates),
 		"cpp":    wrappedTargetLanguageAdapter("cpp", CPPGrammar, TreeSitterCPPGrammar, compileCPPTemplates),
 		"csharp": wrappedTargetLanguageAdapter("csharp", CSharpGrammar, TreeSitterCSharpGrammar, compileCSharpTemplates),
 		"dart":   wrappedTargetLanguageAdapter("dart", DartGrammar, TreeSitterDartGrammar, compileDartTemplates),

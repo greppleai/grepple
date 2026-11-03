@@ -52,6 +52,10 @@ const (
 	ShellGrammar = "shell"
 	// TreeSitterShellGrammar identifies the pinned Bash grammar implementation.
 	TreeSitterShellGrammar = "tree-sitter-bash@0.25.1"
+	// LuaGrammar identifies the Lua syntax contract.
+	LuaGrammar = "lua"
+	// TreeSitterLuaGrammar identifies the pinned Lua grammar implementation.
+	TreeSitterLuaGrammar = "tree-sitter-lua@0.5.0"
 )
 
 type wrappedLanguageConfig struct {
@@ -224,6 +228,14 @@ func compileShellTemplates(decoded decodedSnippet, maxDepth int) ([]Template, st
 
 func shellLanguageConfig() wrappedLanguageConfig {
 	return wrappedLanguageConfig{language: "shell", rootKind: "program", declarations: stringSet("function_definition", "variable_assignment"), shellLike: true}
+}
+
+func compileLuaTemplates(decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
+	return compileWrappedLanguageTemplates(luaLanguageConfig(), decoded, maxDepth)
+}
+
+func luaLanguageConfig() wrappedLanguageConfig {
+	return wrappedLanguageConfig{language: "lua", rootKind: "chunk", expressionPrefix: "local __grit_value = ", expressionSuffix: "\n", statementPrefix: "", statementSuffix: "\n", declarations: stringSet("function_declaration", "variable_declaration")}
 }
 
 func compileWrappedLanguageTemplates(config wrappedLanguageConfig, decoded decodedSnippet, maxDepth int) ([]Template, string, error) {
@@ -444,6 +456,8 @@ func wrappedLanguageByID(language string) wrappedLanguageConfig {
 		return rustLanguageConfig()
 	case "shell":
 		return shellLanguageConfig()
+	case "lua":
+		return luaLanguageConfig()
 	case "svelte":
 		return svelteLanguageConfig()
 	case "css":

@@ -35,6 +35,7 @@ func TestAtScopeRoundTripEmittedRegistryAnnotations(t *testing.T) {
 		"rust":       {".rs", "fn run() {\n work();\n}\n"},
 		"php":        {".php", "<?php\nfunction run() {\n work();\n}\n"},
 		"shell":      {".sh", "run() {\n echo work\n}\n"},
+		"lua":        {".lua", "function run()\n work()\nend\n"},
 		"markdown":   {".md", "# Section\nwork\n"},
 		"json":       {".json", "{\n  \"items\": [\"work\"]\n}\n"},
 		"yaml":       {".yaml", "config:\n  value: work\n"},

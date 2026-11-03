@@ -36,6 +36,7 @@ func TestScopeAnnotationsExactRegisteredContentMatrix(t *testing.T) {
 		"rust":       {"fn run() {\n work();\n}\n", 1, 2, same("func", 1, 3), same("func", 1, 3)},
 		"php":        {"<?php\nfunction run() {\n work();\n}\n", 2, 3, same("func", 2, 4), same("func", 2, 4)},
 		"shell":      {"run() {\n echo work\n}\n", 1, 2, same("func", 1, 3), same("func", 1, 3)},
+		"lua":        {"function run()\n work()\nend\n", 1, 2, same("func", 1, 3), same("func", 1, 3)},
 		"markdown":   {"# Section\nwork\n", 1, 2, same("section", 1, 2), same("section", 1, 2)},
 		"json":       {"{\n  \"items\": [\"work\"]\n}\n", 1, 2, same("object", 1, 3), expected{span("array", 2, 2), span("object", 1, 3)}},
 		"yaml":       {"config:\n  value: work\n", 1, 2, same("mapping", 1, 2), same("mapping", 1, 2)},

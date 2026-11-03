@@ -5993,6 +5993,10 @@
         },
         {
           "type": "STRING",
+          "value": "lua"
+        },
+        {
+          "type": "STRING",
           "value": "elixir"
         }
       ]

@@ -35,6 +35,7 @@ func TestAdapterScopeKindVocabulary(t *testing.T) {
 		"rust":       {"func": "function_item closure_expression", "struct": "struct_item", "interface": "trait_item", "enum": "enum_item", "if": "if_expression if_let_expression", "while": "while_expression while_let_expression", "for": "for_expression", "case": "match_arm"},
 		"php":        {"for": "for_of_statement foreach_statement", "case": "switch_case", "func": "function_definition anonymous_function_creation_expression arrow_function", "class": "trait_declaration"},
 		"shell":      {"func": "function_definition", "case": "case_statement"},
+		"lua":        {"func": "function_declaration function_definition", "if": "if_statement", "while": "while_statement repeat_statement", "for": "for_statement"},
 	}
 	// Expand independently specified common grammars and family differences.
 	for _, id := range []string{"go", "java", "csharp", "dart", "swift", "javascript", "typescript", "tsx", "c", "cpp", "php"} {
