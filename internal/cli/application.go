@@ -52,7 +52,7 @@ type Arguments struct {
 	Graph        *graphcommand.Args          `arg:"subcommand:graph" help:"query navigation graphs"`
 	Ask          *askcommand.Args            `arg:"subcommand:ask" help:"research local and indexed repositories with an AI provider"`
 	Anchors      *anchorscommand.Args        `arg:"subcommand:anchors" help:"diagnose edit-anchor providers"`
-	Setup        *setupcommand.Args          `arg:"subcommand:setup" help:"install version-matched skills for pi, claude, opencode, or codex"`
+	Setup        *setupcommand.Args          `arg:"subcommand:setup" help:"install version-matched skills for grip, pi, claude, opencode, or codex"`
 	Examples     *examplescommand.Args       `arg:"subcommand:examples" help:"print task-oriented CLI workflows"`
 	Artifacts    *artifactscommand.Args      `arg:"subcommand:artifacts" help:"manage spilled output artifacts"`
 	Architecture *architecturecommand.Args   `arg:"subcommand:architecture" help:"inspect directory architecture"`

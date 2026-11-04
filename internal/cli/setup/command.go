@@ -18,9 +18,10 @@ import (
 
 // Args owns agent selection, installation scope and explicit development overrides.
 type Args struct {
-	Agent     string `arg:"positional" help:"agent harness: pi, claude, opencode, or codex"`
+	Agent     string `arg:"positional" help:"agent harness: grip, pi, claude, opencode, or codex"`
 	AgentFlag string `arg:"--agent" help:"agent harness (alternative to positional agent)"`
 	Project   bool   `arg:"--project" help:"install into this project's agent skills directory instead of user skills"`
+	SkillsDir string `arg:"--skills-dir" placeholder:"PATH" help:"install into PATH instead of the default skills directory (incompatible with --project)"`
 	DryRun    bool   `arg:"--dry-run" help:"download and validate, then report without filesystem changes"`
 	List      bool   `arg:"--list" help:"list active skills and append-only owned names without downloading"`
 	SourceDir string `arg:"--source-dir" placeholder:"PATH" help:"explicit development checkout; must match this binary's skill catalog"`
@@ -59,13 +60,25 @@ func Execute(application cliruntime.Context, values *Args, version string) error
 	if err != nil {
 		return err
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return err
+	if values.Project && values.SkillsDir != "" {
+		return fmt.Errorf("--project and --skills-dir cannot be used together")
 	}
-	root, err := destination(agent, home, application.Repository().WorkingDirectory(), values.Project, os.Getenv)
-	if err != nil {
-		return err
+	cwd := application.Repository().WorkingDirectory()
+	root := values.SkillsDir
+	if root != "" {
+		if !filepath.IsAbs(root) {
+			root = filepath.Join(cwd, root)
+		}
+		root = filepath.Clean(root)
+	} else {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return err
+		}
+		root, err = destination(agent, home, cwd, values.Project, os.Getenv)
+		if err != nil {
+			return err
+		}
 	}
 	source, ref, err := selectedSource(values.SourceDir, version)
 	if err != nil {
@@ -110,15 +123,17 @@ func selectedAgent(values *Args) (string, error) {
 		agent = values.AgentFlag
 	}
 	switch agent {
-	case "pi", "claude", "opencode", "codex":
+	case "grip", "pi", "claude", "opencode", "codex":
 		return agent, nil
 	default:
-		return "", fmt.Errorf("setup requires pi, claude, opencode, or codex (or --list)")
+		return "", fmt.Errorf("setup requires grip, pi, claude, opencode, or codex (or --list)")
 	}
 }
 func destination(agent, home, cwd string, project bool, getenv func(string) string) (string, error) {
 	if project {
 		switch agent {
+		case "grip":
+			return filepath.Join(cwd, ".grip", "skills"), nil
 		case "pi":
 			return filepath.Join(cwd, ".pi", "skills"), nil
 		case "claude":
@@ -130,12 +145,20 @@ func destination(agent, home, cwd string, project bool, getenv func(string) stri
 		}
 	}
 	switch agent {
-	case "pi":
-		base := getenv("PI_CODING_AGENT_DIR")
-		if base == "" {
-			base = filepath.Join(home, ".pi", "agent")
+	case "grip", "pi":
+		variable := "PI_CODING_AGENT_DIR"
+		name := ".pi"
+		if agent == "grip" {
+			variable, name = "GRIP_CODING_AGENT_DIR", ".grip"
 		}
-		return absoluteSkills(base)
+		base := getenv(variable)
+		if base == "" {
+			base = filepath.Join(home, name, "agent")
+		}
+		if !filepath.IsAbs(base) {
+			return "", fmt.Errorf("%s must be absolute", variable)
+		}
+		return filepath.Join(base, "skills"), nil
 	case "claude":
 		return filepath.Join(home, ".claude", "skills"), nil
 	case "opencode":
@@ -152,12 +175,6 @@ func destination(agent, home, cwd string, project bool, getenv func(string) stri
 	default:
 		return "", fmt.Errorf("unsupported agent %q", agent)
 	}
-}
-func absoluteSkills(base string) (string, error) {
-	if !filepath.IsAbs(base) {
-		return "", fmt.Errorf("PI_CODING_AGENT_DIR must be absolute")
-	}
-	return filepath.Join(base, "skills"), nil
 }
 func selectedSource(local, version string) (agentskills.Source, string, error) {
 	if local != "" {
