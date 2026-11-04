@@ -1,6 +1,6 @@
 # Agent setup
 
-`grepple setup pi|claude|opencode|codex` installs the complete active Grepple skill
+`grepple setup grip|pi|claude|opencode|codex` installs the complete active Grepple skill
 bundle for one selected harness. `--agent NAME` is an alternative to the positional
 name. Grepple must be on the agent's PATH; this command installs instructions and
 supporting documents, not the agent itself, hooks, extensions, or MCP servers.
@@ -13,13 +13,17 @@ from its marketplace; it uses the same source-owned skills, without running `gre
 
 | Agent | Default user skills | `--project` skills under the current directory |
 | --- | --- | --- |
+| Grip | `~/.grip/agent/skills` | `.grip/skills` |
 | Pi | `~/.pi/agent/skills` | `.pi/skills` |
 | Claude Code | `~/.claude/skills` | `.claude/skills` |
 | OpenCode | `~/.config/opencode/skills` | `.opencode/skills` |
 | Codex | `~/.agents/skills` | `.agents/skills` |
 
-Pi respects an absolute `PI_CODING_AGENT_DIR`; OpenCode respects an absolute
-`XDG_CONFIG_HOME`. Project installation ignores these user-directory overrides.
+Grip respects an absolute `GRIP_CODING_AGENT_DIR`; Pi respects an absolute
+`PI_CODING_AGENT_DIR`; OpenCode respects an absolute `XDG_CONFIG_HOME`.
+Project installation ignores these user-directory overrides. `--skills-dir PATH`
+selects the skills directory itself for any harness, resolving relative paths against
+the invocation directory. It cannot be combined with `--project`.
 Project skills may require your harness's normal project-trust approval. Restart
 or reload the agent after installing. Pi and OpenCode also discover shared
 `.agents/skills` locations, so installing both a shared Codex copy and a native
@@ -27,6 +31,7 @@ copy can expose duplicate names; keep their Grepple versions aligned or keep onl
 one location. Setup does not silently modify another harness's directories.
 
 ```sh
+grepple setup grip --skills-dir /absolute/host/agent/skills
 grepple setup codex --dry-run
 grepple setup --agent claude --project
 grepple setup --list
