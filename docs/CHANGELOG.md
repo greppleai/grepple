@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.0.9](https://github.com/greppleai/grepple/compare/v0.0.8...v0.0.9) (2026-11-05)
+
+
+### Features
+
+* **directory-metadata:** describe directories in init and tree ([e21f421](https://github.com/greppleai/grepple/commit/e21f421c6fdab68f1d7968617b5e9749906d50ee))
+* **lua:** add parsing, navigation, flow, and structural search support ([c02fb9c](https://github.com/greppleai/grepple/commit/c02fb9cd4df20f04391a73e9c8635e01bc79f19a))
+* **setup:** install Grip skills with a custom destination ([063556c](https://github.com/greppleai/grepple/commit/063556ccff66239f1c4ab7e30c415ccb6aa102ef))
+
+
+### Bug Fixes
+
+* **search:** [#60](https://github.com/greppleai/grepple/issues/60) - preserve server-side remote pagination offsets ([ca94a52](https://github.com/greppleai/grepple/commit/ca94a52d9a90ea15a20c11c6c97c79069cf942df))
+
+
+### Performance Improvements
+
+* bound source discovery and cache tree metadata roots ([fd108e1](https://github.com/greppleai/grepple/commit/fd108e1c394658d5bc1e03f8a21af2a251bcee79))
+* overlap inventory checksum reads with bounded workers ([f8076ce](https://github.com/greppleai/grepple/commit/f8076ce4884ce5db5cb0dfb3e8d1604a36d32ad5))
+* short-circuit orientation in uninitialized git checkouts ([8eea71a](https://github.com/greppleai/grepple/commit/8eea71a8a837707af26121a2fd19ace0add91d8a))
+
 ## [0.0.8](https://github.com/greppleai/grepple/compare/v0.0.7...v0.0.8) (2026-10-19)
 
 
