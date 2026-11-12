@@ -56,7 +56,7 @@ func TestConfiguredCLITracesFlushOnSuccessAndCommandError(t *testing.T) {
 	if exports.Load() != 1 {
 		t.Fatalf("successful invocation exports: %d", exports.Load())
 	}
-	if err := Run([]string{"ask"}); err == nil {
+	if err := Run([]string{"init", "--concurrency", "0"}); err == nil {
 		t.Fatal("expected a command error")
 	}
 	if exports.Load() != 2 {

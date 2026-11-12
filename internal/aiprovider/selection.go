@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-// ResolveSelection applies explicit and configured provider/model precedence.
-func ResolveSelection(explicitProvider, explicitModel, configuredModel string) (string, string, error) {
+// ResolveSelection applies explicit provider/model selection.
+func ResolveSelection(explicitProvider, explicitModel string) (string, string, error) {
 	provider := defaultSelectionProvider(explicitProvider)
 	if explicit := strings.TrimSpace(explicitModel); explicit != "" {
 		selectedProvider, model, prefixed, err := parseModelSelector(explicit)
@@ -20,23 +20,6 @@ func ResolveSelection(explicitProvider, explicitModel, configuredModel string) (
 			return "", "", fmt.Errorf("--provider %q conflicts with --model provider %q", provider, selectedProvider)
 		}
 		return selectedProvider, model, nil
-	}
-	configured := strings.TrimSpace(configuredModel)
-	if configured == "" {
-		return provider, "", nil
-	}
-	selectedProvider, model, prefixed, err := parseModelSelector(configured)
-	if err != nil {
-		return "", "", fmt.Errorf("configured ask.model: %w", err)
-	}
-	if prefixed {
-		if strings.TrimSpace(explicitProvider) == "" || provider == selectedProvider {
-			return selectedProvider, model, nil
-		}
-		return provider, "", nil
-	}
-	if provider == "codex" {
-		return provider, model, nil
 	}
 	return provider, "", nil
 }

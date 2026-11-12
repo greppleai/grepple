@@ -55,17 +55,6 @@ func (configuration invocationConfiguration) UserSettings() (config.UserSettings
 	return settings.UserSettings()
 }
 
-func (configuration invocationConfiguration) AskPreferences() (config.AskPreferences, error) {
-	if configuration.config != nil {
-		return configuration.config.Ask, nil
-	}
-	settings, err := config.LoadConfig(WorkingDirectory(), configuration.invocation.NoRepositoryConfig)
-	if err != nil {
-		return config.AskPreferences{}, err
-	}
-	return settings.Ask, nil
-}
-
 // NewRepository creates repository context for one CLI invocation.
 func NewRepository(invocation RepositoryInvocationOptions, notices io.Writer) Repository {
 	return newRepositoryWithConfig(invocation, notices, nil)

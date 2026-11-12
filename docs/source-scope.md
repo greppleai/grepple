@@ -18,7 +18,7 @@ Repository configuration lives at `.grepple/grepple.json`; use [`examples/greppl
 - `--production-only` excludes non-production classifications during recursive discovery.
 - Explicit files retain precedence over configured ignores and `--production-only`; the command emits a bypass notice. The internal `.grepple/grepple.yaml` snapshot remains excluded from local search and file listings even when named explicitly (including a symlink alias), and `grepple --at` rejects direct reads. Use `grepple overview` or `grepple verify` instead. Other YAML files, such as `hooks/bin/grepple.yaml`, remain searchable. These rules do not modify repository configuration, metadata generation, or remote indexes.
 
-These are global flags and may appear with search, graph, GritQL, ask, or architecture commands. Artifact reruns and generated continuation commands retain the active scope flags.
+These are global flags and may appear with search, graph, GritQL, or architecture commands. Artifact reruns and generated continuation commands retain the active scope flags.
 
 ## Classifications
 

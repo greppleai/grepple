@@ -88,7 +88,7 @@ func TestForbiddenImportRules(t *testing.T) {
 	tests := []struct {
 		file, imported string
 	}{
-		{"internal/cli/ask/command.go", modulePath + "internal/cli/graph"},
+		{"internal/cli/init/command.go", modulePath + "internal/cli/graph"},
 		{"internal/cliruntime/context.go", modulePath + "internal/render"},
 		{"analysis/graph.go", modulePath + "internal/cli"},
 		{"navigation/external_dependencies.go", modulePath + "api"},
@@ -100,7 +100,7 @@ func TestForbiddenImportRules(t *testing.T) {
 			t.Errorf("%s -> %s was allowed", test.file, test.imported)
 		}
 	}
-	if reason := forbiddenImport("internal/cli/ask/command.go", modulePath+"internal/aiprovider"); reason != "" {
+	if reason := forbiddenImport("internal/cli/init/command.go", modulePath+"internal/aiprovider"); reason != "" {
 		t.Fatalf("valid import rejected: %s", reason)
 	}
 }

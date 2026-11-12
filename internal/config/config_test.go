@@ -121,7 +121,7 @@ func TestLoadConfigIncludesAllSourcesWithoutLeakingCredentials(t *testing.T) {
 	}
 	files := map[string]string{
 		filepath.Join(root, ".grepple", "grepple.json"):  `{"server":"https://repository.example"}`,
-		filepath.Join(home, ".grepple", "settings.json"): `{"anchors":{"default_provider":"native"},"ask":{"model":"anthropic/claude","logs":{"retentionPeriod":"2d"}}}`,
+		filepath.Join(home, ".grepple", "settings.json"): `{"anchors":{"default_provider":"native"}}`,
 		filepath.Join(home, ".grepple", "config.json"):   `{"server":"https://user.example","token":"sensitive-token"}`,
 	}
 	for path, content := range files {
@@ -133,7 +133,7 @@ func TestLoadConfigIncludesAllSourcesWithoutLeakingCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if settings.Repository.Server != "https://repository.example" || settings.User.Anchors.DefaultProvider != "native" || settings.Ask.Model != "anthropic/claude" || settings.Ask.LogRetention.Hours() != 48 || settings.AuthToken() != "sensitive-token" {
+	if settings.Repository.Server != "https://repository.example" || settings.User.Anchors.DefaultProvider != "native" || settings.AuthToken() != "sensitive-token" {
 		t.Fatal("one configuration source was not loaded")
 	}
 	assertNoCredentialLeak(t, settings)

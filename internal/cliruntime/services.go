@@ -9,9 +9,8 @@ import (
 
 // ConfigurationServices adapts command configuration functions for tests and embedding.
 type ConfigurationServices struct {
-	ResolveServer      func(string) string
-	LoadUserSettings   func() (config.UserSettings, error)
-	LoadAskPreferences func() (config.AskPreferences, error)
+	ResolveServer    func(string) string
+	LoadUserSettings func() (config.UserSettings, error)
 }
 
 func (services ConfigurationServices) ServerDefault(value string) string {
@@ -25,18 +24,6 @@ func (services ConfigurationServices) UserSettings() (config.UserSettings, error
 		return services.LoadUserSettings()
 	}
 	return config.UserSettings{}, nil
-}
-
-// AskPreferences returns injected preferences, or the complete user-owned snapshot.
-func (services ConfigurationServices) AskPreferences() (config.AskPreferences, error) {
-	if services.LoadAskPreferences != nil {
-		return services.LoadAskPreferences()
-	}
-	settings, err := config.LoadConfig("", true)
-	if err != nil {
-		return config.AskPreferences{}, err
-	}
-	return settings.Ask, nil
 }
 
 // RepositoryServices adapts command repository functions for tests and embedding.

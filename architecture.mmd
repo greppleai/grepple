@@ -14,7 +14,6 @@ flowchart LR
     d12["internal/cli/anchors"]
     d13["internal/cli/architecture"]
     d14["internal/cli/artifacts"]
-    d15["internal/cli/ask"]
     d16["internal/cli/auth"]
     d17["internal/cli/context"]
     d18["internal/cli/examples"]
@@ -81,7 +80,6 @@ flowchart LR
     style d12 stroke:#7a7a0c,stroke-width:2px
     style d13 stroke:#117eab,stroke-width:2px
     style d14 stroke:#e3166b,stroke-width:2px
-    style d15 stroke:#1d880d,stroke-width:2px
     style d16 stroke:#765def,stroke-width:2px
     style d17 stroke:#b65e12,stroke-width:2px
     style d18 stroke:#0d8668,stroke-width:2px
@@ -163,7 +161,6 @@ flowchart LR
     d11 -->|import, resolved-call, type-reference| d12
     d11 -->|import, resolved-call, type-reference| d13
     d11 -->|import, resolved-call, type-reference| d14
-    d11 -->|import, resolved-call, type-reference| d15
     d11 -->|import, resolved-call, type-reference| d16
     d11 -->|import, resolved-call, type-reference| d17
     d11 -->|import, resolved-call, type-reference| d18
@@ -211,24 +208,6 @@ flowchart LR
     d14 -->|import, resolved-call, type-reference| d35
     d14 -->|resolved-call| d53
     d14 -->|import, resolved-call| d62
-    d15 -->|import, resolved-call, type-reference| d5
-    d15 -->|import, resolved-call, type-reference| d6
-    d15 -->|import, resolved-call, type-reference| d7
-    d15 -->|import, resolved-call| d8
-    d15 -->|import, resolved-call, type-reference| d9
-    d15 -->|resolved-call| d30
-    d15 -->|import, resolved-call, type-reference| d35
-    d15 -->|import, resolved-call, type-reference| d36
-    d15 -->|import, resolved-call| d39
-    d15 -->|import, resolved-call| d42
-    d15 -->|import, resolved-call| d45
-    d15 -->|import, resolved-call| d48
-    d15 -->|import, resolved-call, type-reference| d53
-    d15 -->|import, resolved-call| d55
-    d15 -->|import, resolved-call| d56
-    d15 -->|import, resolved-call, type-reference| d59
-    d15 -->|import, resolved-call, type-reference| d61
-    d15 -->|import, type-reference| d63
     d16 -->|import, resolved-call, type-reference| d6
     d16 -->|import, resolved-call, type-reference| d9
     d16 -->|resolved-call| d30

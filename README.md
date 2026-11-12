@@ -93,6 +93,5 @@ A reliable agent loop: **tree → narrow search/outline → verify with `--at` �
 ## Optional and advanced
 
 - **Remote indexed repositories:** use a compatible service and an explicit `OWNER/REPO[@REF]` selector. Local search requires no service. [Remote indexing](docs/versioned-indexing.md).
-- **AI-assisted research:** `grepple ask` needs a configured provider; it is read-only. [Ask setup](docs/ask.md).
 - **CLI traces:** opt in through user-owned settings. [Telemetry](docs/cli-telemetry.md).
 - **Reference and design notes:** browse the [documentation index](docs/README.md) and [supported file types](docs/file-type-support.md).
