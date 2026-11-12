@@ -53,7 +53,6 @@ Legacy source-reading `PATH:START-END` ranges use inclusive, 1-based EOF handlin
 | --- | ---: | ---: | --- |
 | `search`, `grit` | Yes, default | Yes | Add `--remote`; local and remote results are merged. `--local` disables remote execution. |
 | `graph`, `architecture` | Yes, default | Yes, one exact selector | Use `--repo OWNER/REPO[@REF]` for remote execution; local paths and an exact remote selector are mutually exclusive where applicable. |
-| `ask` | Yes, default | Yes, via typed tools with exact repository selectors | Authenticate an AI provider; `--server URL` selects a remote Grepple service but does not select a repository on its own. |
 | `write`, `sources`, `anchors`, `artifacts`, `init`, `verify` | Yes | No | These commands are local-only and reject unsupported remote selectors. |
 | `repos`, `refs`, `get`, `rules`, `login` | No source analysis | Yes | These commands operate on the configured remote service. |
 | `tree` | Yes, default | Yes | A local path is the default; use `--repo OWNER/REPO[@REF]` for an indexed tree. Directory descriptions are available when the tree payload contains them. |

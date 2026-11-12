@@ -12,7 +12,7 @@ Start with the [README](../README.md) for installation and a first search. Comma
 | Keep local research notes | [Repository memories](repository-memories.md) |
 | Search patterns and rules | [GritQL compatibility](gritql-compatibility.md) · [Hook assertions](hook-string-assertions.md) |
 | Use an indexed service | [Versioned indexing](versioned-indexing.md) |
-| Configure integrations | [Agent skills](agent-setup.md) · [Ask research](ask.md) · [CLI telemetry](cli-telemetry.md) |
+| Configure integrations | [Agent skills](agent-setup.md) · [CLI telemetry](cli-telemetry.md) |
 | Build and ship | [Releases](releases.md) · [Changelog](CHANGELOG.md) |
 
 ## Engineering records

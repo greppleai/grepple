@@ -9,7 +9,7 @@ import (
 	"charm.land/fantasy"
 )
 
-const performanceSchema = "grepple-ask-performance-v1"
+const performanceSchema = "grepple-agent-performance-v1"
 
 // Telemetry accumulates agent stream and tool execution measurements.
 type Telemetry struct {

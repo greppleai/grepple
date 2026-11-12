@@ -19,12 +19,12 @@ func TestNewContextSharesInvocationConfigSnapshot(t *testing.T) {
 	}
 	home := t.TempDir()
 	t.Setenv("HOME", home)
-	askPath := filepath.Join(home, ".grepple", "settings.json")
-	t.Setenv("GREPPLE_SETTINGS", askPath)
-	if err := os.MkdirAll(filepath.Dir(askPath), 0o700); err != nil {
+	settingsPath := filepath.Join(home, ".grepple", "settings.json")
+	t.Setenv("GREPPLE_SETTINGS", settingsPath)
+	if err := os.MkdirAll(filepath.Dir(settingsPath), 0o700); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(askPath, []byte(`{"ask":{"model":"first-model"}}`), 0o600); err != nil {
+	if err := os.WriteFile(settingsPath, []byte(`{"anchors":{"default_provider":"native"}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("GREPPLE_SERVER", "")
@@ -37,14 +37,14 @@ func TestNewContextSharesInvocationConfigSnapshot(t *testing.T) {
 	if err := os.WriteFile(path, []byte(`{"server":"https://second.example","ignore":{"paths":["second/**"]}}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(askPath, []byte(`{"ask":{"model":"second-model"}}`), 0o600); err != nil {
+	if err := os.WriteFile(settingsPath, []byte(`{}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if got := context.Configuration().ServerDefault(""); got != "https://first.example" {
 		t.Fatalf("server reloaded: %q", got)
 	}
-	if ask, err := context.Configuration().AskPreferences(); err != nil || ask.Model != "first-model" {
-		t.Fatalf("Ask settings reloaded: %+v, %v", ask, err)
+	if user, err := context.Configuration().UserSettings(); err != nil || user.Anchors.DefaultProvider != "native" {
+		t.Fatalf("user settings reloaded: %+v, %v", user, err)
 	}
 	assertRepositorySnapshot(t, context, path)
 }

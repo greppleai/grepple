@@ -19,9 +19,8 @@ const (
 
 // UserSettings is user-owned Grepple configuration.
 type UserSettings struct {
-	Ask       AskSettings `json:"ask,omitempty"`
-	Anchors   Anchors     `json:"anchors"`
-	Telemetry *Telemetry  `json:"telemetry,omitempty"`
+	Anchors   Anchors    `json:"anchors"`
+	Telemetry *Telemetry `json:"telemetry,omitempty"`
 }
 
 // Telemetry controls user-owned, opt-in CLI traces; it cannot be set by repository config.

@@ -12,32 +12,18 @@ func TestTopLevelHelpListsCommandFamilies(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
-	for _, expected := range []string{"search", "write", "grit", "hook", "graph", "ask", "anchors", "examples", "architecture", "sources", "artifacts", "overview", "languages", "rules", "get", "tree", "repos", "refs", "ai-provider", "login", "logout", "version", "--production-only", "--no-repo-config"} {
+	for _, expected := range []string{"search", "write", "grit", "hook", "graph", "anchors", "examples", "architecture", "sources", "artifacts", "overview", "languages", "rules", "get", "tree", "repos", "refs", "ai-provider", "login", "logout", "version", "--production-only", "--no-repo-config"} {
 		if !strings.Contains(output, expected) {
 			t.Fatalf("top-level help missing %q:\n%s", expected, output)
 		}
 	}
-	for _, removed := range []string{"boundaries", "extract", "area", "start"} {
+	for _, removed := range []string{"ask", "boundaries", "extract", "area", "start"} {
 		if strings.Contains(output, "  "+removed+" ") {
 			t.Fatalf("top-level help exposes removed command %q:\n%s", removed, output)
 		}
 	}
 	if count := strings.Count(output, "  refs         "); count != 1 {
 		t.Fatalf("top-level help lists refs %d times:\n%s", count, output)
-	}
-}
-
-func TestAskCommandIsReachableWithoutContactingProvider(t *testing.T) {
-	help := captureStdout(t, func() {
-		if err := Run([]string{"ask", "--help"}); err != nil {
-			t.Fatal(err)
-		}
-	})
-	if !strings.Contains(help, "Usage: grepple ask") || !strings.Contains(help, "--timeout-seconds") {
-		t.Fatalf("ask help was not dispatched:\n%s", help)
-	}
-	if err := Run([]string{"ask"}); err == nil || !strings.Contains(err.Error(), "ask requires a question") {
-		t.Fatalf("empty ask argument error = %v", err)
 	}
 }
 

@@ -52,9 +52,9 @@ func contextFor(t *testing.T, root string, ignored ...string) (cliruntime.Enviro
 				return sourcedomain.Options{WorkingDirectory: root, IgnoreRoot: root, IgnorePaths: ignored}, nil
 			},
 		},
-		Config: cliruntime.ConfigurationServices{LoadAskPreferences: func() (config.AskPreferences, error) {
-			t.Fatal("overview read model preferences")
-			return config.AskPreferences{}, nil
+		Config: cliruntime.ConfigurationServices{LoadUserSettings: func() (config.UserSettings, error) {
+			t.Fatal("overview read user settings")
+			return config.UserSettings{}, nil
 		}},
 	}
 	return application, &output

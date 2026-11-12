@@ -16,6 +16,8 @@ import (
 )
 
 type Args struct {
+	Provider      string   `arg:"--provider" help:"AI provider (default: codex)"`
+	Model         string   `arg:"--model" help:"model name or <provider>/<model> (default: provider default)"`
 	Force         bool     `arg:"--force" help:"regenerate all selected directory entries, including current ones"`
 	Concurrency   int      `arg:"--concurrency" default:"1" placeholder:"N" help:"generate metadata for N directories in parallel (default: 1)"`
 	OnlyDirectory string   `arg:"--only-directory" placeholder:"PATH" help:"generate metadata for exactly one directory without its ancestors"`
@@ -36,7 +38,7 @@ func Execute(application cliruntime.Context, values *Args) error {
 	if !plan.needsGeneration() {
 		return runGenerationV1(ctx, application, root, plan, values.Concurrency, nil)
 	}
-	provider, modelID, err := configuredModel(ctx, application.Configuration())
+	provider, modelID, err := configuredModel(ctx, values)
 	if err != nil {
 		return err
 	}
@@ -53,12 +55,8 @@ func Execute(application cliruntime.Context, values *Args) error {
 	})
 }
 
-func configuredModel(ctx context.Context, settings cliruntime.Configuration) (aiprovider.Provider, string, error) {
-	preferences, err := settings.AskPreferences()
-	if err != nil {
-		return nil, "", err
-	}
-	providerName, modelID, err := aiprovider.ResolveSelection("", "", preferences.Model)
+func configuredModel(ctx context.Context, values *Args) (aiprovider.Provider, string, error) {
+	providerName, modelID, err := aiprovider.ResolveSelection(values.Provider, values.Model)
 	if err != nil {
 		return nil, "", err
 	}

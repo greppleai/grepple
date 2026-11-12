@@ -10,7 +10,6 @@ flowchart LR
     d8["internal/cli"]
     d9["internal/cli/anchors"]
     d10["internal/cli/artifacts"]
-    d11["internal/cli/ask"]
     d12["internal/cli/auth"]
     d13["internal/cli/context"]
     d14["internal/cli/grit"]
@@ -44,7 +43,6 @@ flowchart LR
     style d8 stroke:#4f69ee,stroke-width:2px
     style d9 stroke:#e03016,stroke-width:2px
     style d10 stroke:#0d8841,stroke-width:2px
-    style d11 stroke:#b531eb,stroke-width:2px
     style d12 stroke:#7a7a0c,stroke-width:2px
     style d13 stroke:#117eab,stroke-width:2px
     style d14 stroke:#e3166b,stroke-width:2px
@@ -77,10 +75,6 @@ flowchart LR
     d9 -->|import, resolved-call, type-reference| d31
     d10 -->|import, resolved-call, type-reference| d19
     d10 -->|import, resolved-call| d30
-    d11 -->|import, resolved-call, type-reference| d2
-    d11 -->|import, resolved-call, type-reference| d3
-    d11 -->|import, resolved-call, type-reference| d19
-    d11 -->|import, resolved-call, type-reference| d31
     d12 -->|import, resolved-call, type-reference| d3
     d12 -->|import, resolved-call| d7
     d12 -->|import, resolved-call, type-reference| d19

@@ -15,7 +15,6 @@ import (
 type Configuration interface {
 	ServerDefault(string) string
 	UserSettings() (config.UserSettings, error)
-	AskPreferences() (config.AskPreferences, error)
 }
 
 // Repository exposes the repository invocation context. Command-specific source

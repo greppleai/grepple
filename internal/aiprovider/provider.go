@@ -1,4 +1,4 @@
-// Package aiprovider defines provider-agnostic authentication and model construction for grepple ask.
+// Package aiprovider defines provider-agnostic authentication and model construction for directory metadata generation.
 package aiprovider
 
 import (

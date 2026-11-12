@@ -6,7 +6,6 @@ import (
 	anchorscommand "github.com/greppleai/grepple/internal/cli/anchors"
 	architecturecommand "github.com/greppleai/grepple/internal/cli/architecture"
 	artifactscommand "github.com/greppleai/grepple/internal/cli/artifacts"
-	askcommand "github.com/greppleai/grepple/internal/cli/ask"
 	authcommand "github.com/greppleai/grepple/internal/cli/auth"
 	examplescommand "github.com/greppleai/grepple/internal/cli/examples"
 	getcommand "github.com/greppleai/grepple/internal/cli/get"
@@ -50,7 +49,6 @@ type Arguments struct {
 	Grit         *gritcommand.Args           `arg:"subcommand:grit" help:"run native structural queries"`
 	Hook         *hookcommand.Args           `arg:"subcommand:hook" help:"run repository-owned local GritQL hooks"`
 	Graph        *graphcommand.Args          `arg:"subcommand:graph" help:"query navigation graphs"`
-	Ask          *askcommand.Args            `arg:"subcommand:ask" help:"research local and indexed repositories with an AI provider"`
 	Anchors      *anchorscommand.Args        `arg:"subcommand:anchors" help:"diagnose edit-anchor providers"`
 	Setup        *setupcommand.Args          `arg:"subcommand:setup" help:"install version-matched skills for grip, pi, claude, opencode, or codex"`
 	Examples     *examplescommand.Args       `arg:"subcommand:examples" help:"print task-oriented CLI workflows"`
@@ -107,8 +105,6 @@ func (values *Arguments) traceCommandName() string {
 		default:
 			return "graph"
 		}
-	case values.Ask != nil:
-		return "ask"
 	case values.Anchors != nil:
 		return "anchors"
 	case values.Examples != nil:
@@ -182,8 +178,6 @@ func executeArguments(context cliruntime.Context, values *Arguments) error {
 		return hookcommand.Execute(context, values.Hook)
 	case values.Graph != nil:
 		return graphcommand.ExecuteWithDaemon(context, values.Graph, values.Daemon)
-	case values.Ask != nil:
-		return askcommand.Execute(context, values.Ask)
 	case values.Anchors != nil:
 		return anchorscommand.Execute(context, values.Anchors)
 	case values.Examples != nil:

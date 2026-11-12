@@ -1,4 +1,4 @@
-// Package config owns repository, user, Ask, and protected Grepple backend
+// Package config owns repository, user, and protected Grepple backend
 // authentication state in one invocation configuration. AI-provider credentials
 // remain separate in aiprovider.
 package config
@@ -17,13 +17,12 @@ type Config struct {
 	RepositoryPath string
 	User           UserSettings
 	SettingsPath   string
-	Ask            AskPreferences
 
 	auth backendAuthState
 }
 
-// LoadConfig reads every configuration source once, including user settings
-// and Ask preferences, and returns one validated snapshot. On failure
+// LoadConfig reads every configuration source once, including user settings,
+// and returns one validated snapshot. On failure
 // it returns an incomplete snapshot with the protected backend auth state so
 // login, refresh, and logout can still recover from unrelated invalid settings.
 // Disabling repository configuration does not disable user-owned settings.
@@ -44,10 +43,6 @@ func LoadConfig(start string, noRepositoryConfig bool) (*Config, error) {
 	settings.User, err = loadUserSettings(settings.SettingsPath)
 	if err != nil {
 		return settings, err
-	}
-	settings.Ask, err = resolveAskPreferences(settings.User.Ask)
-	if err != nil {
-		return settings, fmt.Errorf("parse %s: %w", settings.SettingsPath, err)
 	}
 	return settings, nil
 }
